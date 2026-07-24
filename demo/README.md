@@ -200,5 +200,3 @@ Pour déboguer un problème de démarrage de la base de données :
 ```bash
 docker compose logs -f postgres
 ```
- 
-
