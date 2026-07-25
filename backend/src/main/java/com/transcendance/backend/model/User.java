@@ -1,4 +1,4 @@
-package com.transcendance.demo.model;
+package com.transcendance.backend.model;
 
 import java.sql.Time;
 import java.util.UUID;

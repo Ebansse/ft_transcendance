@@ -1,0 +1,39 @@
+# Env
+.env
+
+# Java / Maven
+target/
+bin/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Eclipse / Java Language Server (VS Code)
+.project
+.classpath
+.factorypath
+.settings/
+.apt_generated/
+
+# IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# OS
+.DS_Store
