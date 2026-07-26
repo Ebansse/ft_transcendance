@@ -29,7 +29,7 @@ docker compose version
 # setup le projet
 Créez un fichier `.env` à la racine du projet à partir du fichier exemple :
 ```bash
-cp .env.example .env
+cd backend && cp .env.example .env
 ```
  
 Adaptez les valeurs dans le fichier `.env` selon vos besoins :
@@ -45,23 +45,27 @@ SPRING_DATASOURCE_USERNAME=myuser
 SPRING_DATASOURCE_PASSWORD=my_password
 ```
 
-# lancer postgresql
+# lancer le back (sprint-boot)
  
-Depuis la racine du projet, lancez le conteneur PostgreSQL :
-```bash
-docker compose up -d
-```
-PostgreSQL sera accessible sur `localhost:5432` pour que le back (soit sprint-boot) puisse se connecter.
- 
-```bash
-docker ps
-```
-Vous devez voir un conteneur actif nommé `db`
- 
-💡 A capter : Lors du premier lancement, PostgreSQL crée automatiquement la base de données (`POSTGRES_DB`), l'utilisateur (`POSTGRES_USER`) et le mot de passe (`POSTGRES_PASSWORD`).
-  d'ou le .env
+apres que postgresql tourne bien
 
-une fois le container qui tourne, faut verifier que les bases soient bien creent.
+terminal :
+```bash
+cd backend && mvn spring-boot:run
+```
+
+dans l'IDE (pour les faible):
+1. Ouvrez le projet en tant que Projet Maven.
+2. Naviguez vers `backend/src/main/java/com/transcendance/backend/BackendApplication.java`.
+3. Exécutez la méthode `main()`.
+L'application démarrera sur [http://localhost:8080](http://localhost:8080).
+
+
+dans pom.xml il y a spring-boot-docker-compose qui permet de 
+lancer automatiquement docker compose up -d pour lancer la db
+ca evite de le faire soit meme
+
+# verifier que la db est ok
 
 ```bash
 docker exec -it db psql -U myuser -d mydatabase
@@ -75,28 +79,20 @@ Commandes utiles `psql` :
 - `\q` : Quitter PostgreSQL.
 
 c'est du mysql classique, juste les raccourcis permettent d'aller plus vite
- 
-# lancer le back (sprint-boot)
- 
-apres que postgresql tourne bien
 
-terminal :
+# pour lancer le front
+
 ```bash
-mvn spring-boot:run
+cd front && npm install && npm run dev
 ```
- 
-# dans l'IDE (pour les faible)
-1. Ouvrez le projet en tant que Projet Maven.
-2. Naviguez vers `backend/src/main/java/com/transcendance/backend/BackendApplication.java`.
-3. Exécutez la méthode `main()`.
-L'application démarrera sur [http://localhost:8080](http://localhost:8080).
 
- 
+le front tourne sur vite.js
+
 # stop le projet
 
-control + c dans le terminal pour stopper sprint-boot
+control + c dans le terminal pour stopper sprint-boot et dans l'autre terminal pour stopper vite.js
  
 puis pour postgres
 ```bash
-docker compose down
+cd backend && docker compose down
 ```
