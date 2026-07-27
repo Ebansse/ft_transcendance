@@ -1,6 +1,6 @@
 package com.transcendance.backend.model;
 
-import java.sql.Time;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -43,5 +43,5 @@ public class User {
 
     @NotBlank
     @Column(name = "created_at", nullable = false)
-    private Time createdAt;
+    private LocalDateTime createdAt;
 }
