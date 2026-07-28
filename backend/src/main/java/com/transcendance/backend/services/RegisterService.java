@@ -14,9 +14,11 @@ public class RegisterService {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(RegisterService.class);
 
     private final UserService userService;
+    private final UserRoleService userRoleService;
 
-    public RegisterService(UserService userService) {
+    public RegisterService(UserService userService, UserRoleService userRoleService) {
         this.userService = userService;
+        this.userRoleService = userRoleService;
     }
     
     /**
@@ -69,6 +71,8 @@ public class RegisterService {
         // Save the new user
         User savedUser = userService.createUser(newUser);
         log.info("User registered successfully with email: {}", savedUser.getEmail());
+        // Assign the default USER role to the new user
+        userRoleService.assignRoleUserToNewUser(savedUser);
         return savedUser;
     }
 }
