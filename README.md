@@ -96,3 +96,36 @@ puis pour postgres
 ```bash
 cd backend && docker compose down
 ```
+
+## Testing the Backend API
+
+You can test the backend endpoints using **Postman**.
+
+### Steps
+
+1. Start the application
+   or run the Spring Boot application from your IDE.
+
+2. Open Postman.
+
+3. Create a new request and use the appropriate HTTP method (`GET`, `POST`, `PUT`, `DELETE`, etc.).
+
+4. Use the backend URL, for example:
+   ```
+   http://localhost:8080/api/auth/register
+   ```
+
+5. For `POST` and `PUT` requests:
+   - Select **Body** → **raw**
+   - Choose **JSON**
+   - Send a JSON payload, for example:
+     ```json
+     {
+       "userName": "john_doe",
+       "email": "john@example.com",
+       "password": "password123",
+       "confirmedPassword": "password123"
+     }
+     ```
+
+6. Click **Send** and verify the response status and body.

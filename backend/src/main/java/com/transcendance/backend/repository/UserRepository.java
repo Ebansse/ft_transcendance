@@ -1,0 +1,15 @@
+package com.transcendance.backend.repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import com.transcendance.backend.model.User;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
+    
+    // Method to find a user by email
+    Optional<User> findByEmail(String email);
+}
