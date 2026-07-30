@@ -9,7 +9,7 @@ import com.transcendance.backend.dto.HelloResponse;
 @CrossOrigin(origins = "*")
 public class HelloController {
 
-	@GetMapping("/hello")
+	@GetMapping("/api/hello")
 	public HelloResponse hello() {
 		return new HelloResponse("HELOOO WOORLDD");
 	}
