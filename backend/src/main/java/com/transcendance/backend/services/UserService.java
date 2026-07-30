@@ -40,6 +40,12 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    // Method to check if the provided password matches the stored password for the user
+    public boolean checkPassword(User user, String rawPassword) {
+        Log.debug("Checking password for user: {}", user.getEmail());
+        return securityConfig.passwordEncoder().matches(rawPassword, user.getPassword());
+    }
+
     // Method to create and save a new user
     public User createUser(User user) {
         Log.debug("Saving user with email: {}", user.getEmail());

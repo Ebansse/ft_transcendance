@@ -1,7 +1,6 @@
 package com.transcendance.backend.controller;
 
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.Logger;
@@ -48,16 +47,8 @@ public class RegisterController {
         log.warn("Registration failed due to validation error: {}",
                 bindingResult.getAllErrors().get(0).getDefaultMessage());
 
-        // Store validation errors in a map:
-        // key = field name, value = validation message.
-        Map<String, String> errors = new HashMap<>();
-
-        bindingResult.getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
-
         // Return HTTP 400 with the validation errors.
-        return ResponseEntity.badRequest().body(errors);
+        return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
     }
 
     try {
