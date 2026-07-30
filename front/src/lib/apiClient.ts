@@ -1,0 +1,85 @@
+const BASE_URL = "/api";
+
+export class ApiError extends Error {
+  readonly status: number;
+  readonly fieldErrors: Record<string, string>;
+
+  constructor(status: number, message: string, fieldErrors: Record<string, string> = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.fieldErrors = fieldErrors;
+  }
+}
+
+type RequestOptions = Omit<RequestInit, "body" | "method">;
+
+async function parseError(res: Response): Promise<ApiError> {
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    // try and catch obligatoire sinon res.json() raise un syntaxError si le body n'est pas un json
+  }
+
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+
+    // Le back renvoie { "error": "message" } sur IllegalArgumentException
+    if (typeof record.error === "string") {
+      return new ApiError(res.status, record.error);
+    }
+
+    // ou une map { champ: message } sur erreur de validation (400)
+    const fieldErrors: Record<string, string> = {};
+    for (const [key, value] of Object.entries(record)) {
+      if (typeof value === "string") fieldErrors[key] = value;
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      return new ApiError(res.status, "Données invalides.", fieldErrors);
+    }
+  }
+
+  return new ApiError(res.status, `Erreur ${res.status} (${res.statusText}).`);
+}
+
+async function request<T>(
+  path: string,
+  method: string,
+  body?: unknown,
+  options: RequestOptions = {},
+): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (body !== undefined) headers.set("Content-Type", "application/json");
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      method,
+      headers,
+      credentials: "include", // indispensable pour le cookie de session / JWT
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new ApiError(0, "Impossible de joindre le serveur.");
+  }
+
+  if (!res.ok) throw await parseError(res);
+
+  if (res.status === 204 || res.headers.get("Content-Length") === "0") {
+    return undefined as T;
+  }
+  return (await res.json()) as T;
+}
+
+export const api = {
+  get: <T>(path: string, options?: RequestOptions) => request<T>(path, "GET", undefined, options),
+  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(path, "POST", body, options),
+  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(path, "PUT", body, options),
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+    request<T>(path, "PATCH", body, options),
+  del: <T>(path: string, options?: RequestOptions) => request<T>(path, "DELETE", undefined, options),
+};
