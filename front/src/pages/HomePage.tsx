@@ -5,6 +5,7 @@ import { GameCard } from '../components/GameCard.tsx'
 import { Navbar } from '../components/Navbar.tsx'
 import { Sidebar } from '../components/Sidebar.tsx'
 import { handleAction } from '../lib/actions.ts'
+import s from './HomePage.module.css'
 
 const GAMES = [
   {
@@ -34,11 +35,11 @@ export function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="app-shell">
+    <div className={s.shell}>
       <Navbar
         title="ft_transcendence"
         leading={
-          <span className="navbar-menu-toggle">
+          <span className={s.menuToggle}>
             <Button
               variant="ghost"
               ariaLabel={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
@@ -60,16 +61,16 @@ export function HomePage() {
         }
       />
 
-      <div className="app-body">
+      <div className={s.body}>
         <Sidebar open={menuOpen} current="nav:home" />
 
-        <main className="main" aria-label="Contenu principal">
-          <section className="hero">
-            <h2 className="hero-title">Bienvenue sur le hub</h2>
-            <p className="hero-subtitle">
+        <main className={s.main} aria-label="Contenu principal">
+          <section className={s.hero}>
+            <h2 className={s.heroTitle}>Bienvenue sur le hub</h2>
+            <p className={s.heroSubtitle}>
               Échecs, Blackjack et Uno : contre des bots ou en ligne, avec tes amis.
             </p>
-            <div className="hero-actions">
+            <div className={s.heroActions}>
               <Button variant="primary" onClick={() => handleAction('auth:register')}>
                 Créer un compte
               </Button>
@@ -80,10 +81,10 @@ export function HomePage() {
           </section>
 
           <section aria-labelledby="games-title">
-            <h2 id="games-title" className="section-title">
+            <h2 id="games-title" className={s.sectionTitle}>
               Les jeux
             </h2>
-            <div className="game-grid">
+            <div className={s.gameGrid}>
               {GAMES.map((game) => (
                 <GameCard key={game.slug} {...game} />
               ))}

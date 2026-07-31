@@ -1,5 +1,6 @@
 import { Button } from './Button.tsx'
 import { handleAction } from '../lib/actions.ts'
+import s from './Sidebar.module.css'
 
 type NavItem = {
   action: string
@@ -52,27 +53,23 @@ export function Sidebar({ open, current = 'nav:home' }: SidebarProps) {
   return (
     <aside
       id="sidebar"
-      className={open ? 'sidebar sidebar-open' : 'sidebar'}
+      className={open ? `${s.sidebar} ${s.open}` : s.sidebar}
       aria-label="Menu principal"
     >
       {GROUPS.map((group) => (
-        <nav key={group.title} className="sidebar-group" aria-label={group.title}>
-          <p className="sidebar-group-title">{group.title}</p>
-          <ul className="sidebar-list">
+        <nav key={group.title} className={s.group} aria-label={group.title}>
+          <p className={s.groupTitle}>{group.title}</p>
+          <ul className={s.list}>
             {group.items.map((item) => (
               <li key={item.action}>
-                <span
-                  className={
-                    item.action === current ? 'sidebar-item sidebar-item-active' : 'sidebar-item'
-                  }
-                >
+                <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
                   <Button variant="nav" fullWidth onClick={() => handleAction(item.action)}>
-                    <span aria-hidden="true" className="sidebar-icon">
+                    <span aria-hidden="true" className={s.icon}>
                       {item.icon}
                     </span>
-                    <span className="sidebar-label">{item.label}</span>
+                    <span className={s.label}>{item.label}</span>
                     {item.badge ? (
-                      <span className="sidebar-badge">
+                      <span className={s.badge}>
                         {item.badge}
                         <span className="sr-only"> notifications</span>
                       </span>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import s from './Button.module.css'
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'nav'
 
@@ -19,8 +20,8 @@ export function Button({
   fullWidth = false,
   ariaLabel,
 }: ButtonProps) {
-  const classes = ['btn', `btn-${variant}`]
-  if (fullWidth) classes.push('btn-full')
+  const classes = [s.btn, s[variant]]
+  if (fullWidth) classes.push(s.full)
 
   return (
     <button

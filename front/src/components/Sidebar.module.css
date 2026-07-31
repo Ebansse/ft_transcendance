@@ -1,0 +1,183 @@
+.sidebar {
+  flex: 0 0 244px;
+  padding: 1.5rem 0.85rem;
+  background: var(--ink-900);
+  border-right: 1px solid var(--line);
+}
+
+.group {
+  animation: slide-in 520ms var(--ease) both;
+}
+
+.group:nth-child(1) {
+  animation-delay: 140ms;
+}
+
+.group:nth-child(2) {
+  animation-delay: 210ms;
+}
+
+.group:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.group:nth-child(4) {
+  animation-delay: 350ms;
+}
+
+.group + .group {
+  margin-top: 1.6rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.groupTitle {
+  margin: 0 0 0.6rem 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--red-bright);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.item {
+  display: block;
+  position: relative;
+  border-radius: var(--radius);
+  transition: background-color 160ms ease;
+}
+
+/* Filet rouge qui se déploie sous le curseur, permanent sur la page courante. */
+.item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--red-bright);
+  transform: scaleY(0);
+  transition: transform 220ms var(--ease);
+}
+
+.item:hover::before,
+.item:focus-within::before {
+  transform: scaleY(1);
+}
+
+.item:hover {
+  background: rgba(245, 241, 234, 0.05);
+}
+
+/* Doit suivre .item pour gagner à spécificité égale. */
+.itemActive {
+  background: rgba(200, 22, 29, 0.12);
+
+  /* Contrat Button : l'entrée courante s'affirme. */
+  --btn-nav-color: var(--bone);
+  --btn-nav-weight: 500;
+}
+
+.itemActive::before {
+  transform: scaleY(1);
+}
+
+.icon {
+  width: 1.3rem;
+  text-align: center;
+  font-size: 0.95rem;
+  transition: transform 220ms var(--ease);
+}
+
+.item:hover .icon {
+  transform: translateX(2px) scale(1.12);
+}
+
+.label {
+  flex: 1;
+  text-align: left;
+}
+
+.badge {
+  position: relative;
+  min-width: 1.3rem;
+  padding: 0.05rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #fff;
+  background: var(--red);
+  border-radius: 999px;
+}
+
+/* Halo lent : il y a quelque chose à lire. */
+.badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--red);
+  animation: badge-ring 3s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+@keyframes badge-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  /* Suit .sidebar : même spécificité, donc c'est l'ordre qui tranche. */
+  .open {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+    width: 260px;
+    overflow-y: auto;
+    box-shadow: 24px 0 48px -24px rgba(0, 0, 0, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item:hover .icon {
+    transform: none;
+  }
+
+  .badge::after {
+    display: none;
+  }
+}

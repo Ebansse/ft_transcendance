@@ -1,0 +1,40 @@
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1.15rem 1.5rem;
+  background: var(--ink-900);
+  border-top: 1px solid var(--line);
+}
+
+.copy {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+/* Les liens légaux se comportent en liens, pas en boutons : pas de fond au
+   survol, mais un soulignement rouge qui se trace. Tout passe par le contrat
+   Button — le footer ne touche jamais aux classes du bouton. */
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+
+  --btn-padding: 0.35rem 0.6rem;
+  --btn-font-size: 0.82rem;
+  --btn-weight: 300;
+  --btn-ghost-bg-hover: transparent;
+  --btn-underline: 1;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    justify-content: flex-start;
+  }
+}

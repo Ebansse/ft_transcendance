@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import s from './Navbar.module.css'
 
 type NavbarProps = {
   title: string
@@ -10,10 +11,10 @@ type NavbarProps = {
 
 export function Navbar({ title, leading, action }: NavbarProps) {
   return (
-    <nav className="navbar">
-      <div className="navbar-side">{leading}</div>
-      <h1 className="navbar-title">{title}</h1>
-      <div className="navbar-side navbar-side-end">{action}</div>
+    <nav className={s.navbar}>
+      <div className={s.side}>{leading}</div>
+      <h1 className={s.title}>{title}</h1>
+      <div className={`${s.side} ${s.sideEnd}`}>{action}</div>
     </nav>
   )
 }
