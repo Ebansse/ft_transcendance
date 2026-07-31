@@ -1,15 +1,44 @@
-:root {
-  font-family: system-ui, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap');
 
-  --bg: #0f1117;
-  --surface: #171a23;
-  --surface-hover: #1f2430;
-  --border: #272c39;
-  --text: #e9ecf2;
-  --text-muted: #9aa3b5;
-  --accent: #6c8cff;
-  --accent-text: #0f1117;
-  --radius: 12px;
+:root {
+  /* Noir de table, du plus profond au plus éclairé */
+  --void: #0a0a0b;
+  --ink-900: #111114;
+  --ink-800: #17171b;
+  --ink-700: #202027;
+
+  /* Rouge : rempli pour les surfaces, éclairci pour le texte (contraste) */
+  --red: #c8161d;
+  --red-hot: #e42a31;
+  --red-bright: #f04a50;
+  --red-deep: #6d0c11;
+
+  /* Ivoire : la carte, et le texte posé dessus */
+  --bone: #f5f1ea;
+  --mute: #8e8e99;
+  --card: #2e2e34;
+  --card-ink: #f5f1ea;
+  --card-ink-dim: #a8a8b2;
+
+  --line: rgba(245, 241, 234, 0.09);
+  --line-strong: rgba(245, 241, 234, 0.18);
+  --card-line: rgba(245, 241, 234, 0.16);
+
+  /* Vert de présence : la pastille « quelqu'un est là » */
+  --live: #3ddc84;
+
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-body: 'Jost', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  --radius: 8px;
+  --radius-card: 14px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  font-family: var(--font-body);
+  font-weight: 400;
+  color-scheme: dark;
 }
 
 * {
@@ -18,8 +47,35 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  color: var(--bone);
+  background-color: var(--void);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(245, 241, 234, 0.012) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(245, 241, 234, 0.012) 0 2px, transparent 2px 4px);
+  background-attachment: fixed;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Lumière au-dessus de la table : elle respire lentement. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 55% at 50% -12%, rgba(228, 42, 49, 0.14), transparent 64%),
+    radial-gradient(70% 45% at 50% -6%, rgba(245, 241, 234, 0.05), transparent 60%);
+  animation:
+    lamp-up 1200ms var(--ease) both,
+    lamp-breathe 14s ease-in-out 1200ms infinite;
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
 }
 
 /* Accessibilité: texte réservé aux lecteurs d'écran */
@@ -36,29 +92,118 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 2px solid var(--red-bright);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@keyframes lamp-up {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes lamp-breathe {
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+}
+
+@keyframes wipe-up {
+  from {
+    opacity: 0;
+    clip-path: inset(100% -0.12em -0.3em -0.12em);
+    transform: translateY(0.16em);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes board-in {
+  from {
+    opacity: 0;
+    transform: translate(28px, -52%);
+  }
+}
+
+@keyframes deal {
+  from {
+    opacity: 0;
+    transform: translate(18px, 34px) rotate(calc(var(--tilt) * 5)) scale(0.96);
+  }
+}
+
+@keyframes badge-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.9);
+  }
 }
 
 /* ---------- Boutons ---------- */
 
 .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.9rem;
-  font: inherit;
+  gap: 0.55rem;
+  padding: 0.6rem 1rem;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  color: var(--text);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--bone);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
+  overflow: hidden;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 120ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -66,43 +211,68 @@ body {
   width: 100%;
 }
 
+/* L'action principale est toujours rouge — sur la table comme sur la carte. */
 .btn-primary {
-  color: var(--accent-text);
-  background: var(--accent);
+  color: #fff;
+  background: var(--red);
   font-weight: 600;
+  box-shadow: 0 0 0 0 rgba(228, 42, 49, 0);
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.1);
+  background: var(--red-hot);
+  box-shadow: 0 6px 22px -8px rgba(228, 42, 49, 0.75);
+}
+
+/* Reflet qui traverse le bouton au survol */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -40%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: translateX(-260%) skewX(-18deg);
+  transition: transform 620ms var(--ease);
+  pointer-events: none;
+}
+
+.btn-primary:hover:not(:disabled)::before {
+  transform: translateX(560%) skewX(-18deg);
 }
 
 .btn-secondary {
-  background: var(--surface);
-  border-color: var(--border);
+  color: var(--bone);
+  border-color: var(--line-strong);
+  background: rgba(245, 241, 234, 0.03);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--surface-hover);
+  border-color: var(--red-bright);
+  background: rgba(228, 42, 49, 0.08);
 }
 
 .btn-ghost {
-  color: var(--text-muted);
+  color: var(--mute);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--surface-hover);
+  color: var(--bone);
+  background: rgba(245, 241, 234, 0.06);
 }
 
 .btn-nav {
   justify-content: flex-start;
-  color: var(--text-muted);
-  padding: 0.5rem 0.75rem;
+  color: var(--mute);
+  padding: 0.5rem 0.8rem;
+  font-weight: 400;
+  overflow: visible;
 }
 
 .btn-nav:hover:not(:disabled) {
-  color: var(--text);
-  background: var(--surface-hover);
+  color: var(--bone);
+  background: transparent;
 }
 
 /* ---------- Layout ---------- */
@@ -117,6 +287,7 @@ body {
   display: flex;
   flex: 1;
   align-items: stretch;
+  position: relative;
 }
 
 /* ---------- Navbar ---------- */
@@ -126,15 +297,26 @@ body {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 1rem;
-  padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
+  padding: 0.85rem 1.5rem;
+  background: var(--ink-900);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(200, 22, 29, 0.35);
+  position: relative;
+  z-index: 20;
+  animation: drop-in 620ms var(--ease) both;
 }
 
+/* Enseigne du salon : centrée, gravée. */
 .navbar-title {
   margin: 0;
-  font-size: 1.25rem;
-  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 2.4vw, 1.35rem);
+  font-weight: 400;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--bone);
+  white-space: nowrap;
 }
 
 .navbar-side {
@@ -154,22 +336,46 @@ body {
 /* ---------- Sidebar ---------- */
 
 .sidebar {
-  flex: 0 0 240px;
-  padding: 1rem 0.75rem;
-  border-right: 1px solid var(--border);
-  background: var(--surface);
+  flex: 0 0 244px;
+  padding: 1.5rem 0.85rem;
+  background: var(--ink-900);
+  border-right: 1px solid var(--line);
+}
+
+.sidebar-group {
+  animation: slide-in 520ms var(--ease) both;
+}
+
+.sidebar-group:nth-child(1) {
+  animation-delay: 140ms;
+}
+
+.sidebar-group:nth-child(2) {
+  animation-delay: 210ms;
+}
+
+.sidebar-group:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+.sidebar-group:nth-child(4) {
+  animation-delay: 350ms;
 }
 
 .sidebar-group + .sidebar-group {
-  margin-top: 1.25rem;
+  margin-top: 1.6rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line);
 }
 
 .sidebar-group-title {
-  margin: 0 0 0.4rem 0.75rem;
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  margin: 0 0 0.6rem 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--red-bright);
 }
 
 .sidebar-list {
@@ -178,26 +384,61 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .sidebar-item {
   display: block;
+  position: relative;
   border-radius: var(--radius);
+  transition: background-color 160ms ease;
+}
+
+/* Filet rouge qui se déploie sous le curseur, permanent sur la page courante. */
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--red-bright);
+  transform: scaleY(0);
+  transition: transform 220ms var(--ease);
+}
+
+.sidebar-item:hover::before,
+.sidebar-item:focus-within::before {
+  transform: scaleY(1);
+}
+
+.sidebar-item:hover {
+  background: rgba(245, 241, 234, 0.05);
 }
 
 .sidebar-item-active {
-  background: var(--surface-hover);
+  background: rgba(200, 22, 29, 0.12);
+}
+
+.sidebar-item-active::before {
+  transform: scaleY(1);
 }
 
 .sidebar-item-active .btn-nav {
-  color: var(--text);
-  font-weight: 600;
+  color: var(--bone);
+  font-weight: 500;
 }
 
 .sidebar-icon {
-  width: 1.25rem;
+  width: 1.3rem;
   text-align: center;
+  font-size: 0.95rem;
+  transition: transform 220ms var(--ease);
+}
+
+.sidebar-item:hover .sidebar-icon {
+  transform: translateX(2px) scale(1.12);
 }
 
 .sidebar-label {
@@ -206,13 +447,27 @@ body {
 }
 
 .sidebar-badge {
-  min-width: 1.35rem;
-  padding: 0.1rem 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent-text);
-  background: var(--accent);
+  position: relative;
+  min-width: 1.3rem;
+  padding: 0.05rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  line-height: 1.5;
+  color: #fff;
+  background: var(--red);
   border-radius: 999px;
+}
+
+/* Halo lent : il y a quelque chose à lire. */
+.sidebar-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--red);
+  animation: badge-ring 3s ease-out infinite;
+  pointer-events: none;
 }
 
 /* ---------- Main ---------- */
@@ -220,75 +475,233 @@ body {
 .main {
   flex: 1;
   min-width: 0;
-  padding: 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
   width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 4rem;
 }
 
+/* ---------- Hero : pas de panneau, on est déjà sur la table ---------- */
+
 .hero {
-  padding: 2rem 1.5rem;
-  margin-bottom: 2rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  position: relative;
+  margin-bottom: 4.5rem;
+  padding: 0 0 2.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Signature : un échiquier 8×8 qui affleure le noir puis s'y dissout. */
+.hero::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -0.5rem;
+  width: 264px;
+  height: 264px;
+  transform: translate(0, -52%);
+  background-image: repeating-conic-gradient(
+    rgba(245, 241, 234, 0.08) 0% 25%,
+    transparent 0% 50%
+  );
+  background-size: 66px 66px;
+  -webkit-mask-image: linear-gradient(88deg, transparent 2%, rgba(0, 0, 0, 0.45) 46%, #000 100%);
+  mask-image: linear-gradient(88deg, transparent 2%, rgba(0, 0, 0, 0.45) 46%, #000 100%);
+  pointer-events: none;
+  z-index: 0;
+  animation: board-in 900ms var(--ease) 480ms both;
 }
 
 .hero-title {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  margin: 0 0 1rem;
+  max-width: 16ch;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 4.75rem);
+  line-height: 0.94;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--bone);
+  clip-path: inset(-0.12em -0.12em -0.3em -0.12em);
+  animation: wipe-up 760ms var(--ease) 180ms both;
 }
 
 .hero-subtitle {
-  margin: 0 0 1.25rem;
-  color: var(--text-muted);
+  margin: 0 0 2rem;
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation: rise-in 620ms var(--ease) 380ms both;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  animation: rise-in 620ms var(--ease) 480ms both;
 }
 
-.section-title {
-  margin: 0 0 1rem;
-  font-size: 1.1rem;
+.hero-actions .btn {
+  padding: 0.75rem 1.4rem;
 }
+
+/* ---------- Titre de section ---------- */
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red-bright);
+  animation: rise-in 520ms var(--ease) 600ms both;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+  transform-origin: left center;
+  animation: draw-line 900ms var(--ease) 700ms both;
+}
+
+/* ---------- Cartes de jeu : ivoire, distribuées sur le noir ---------- */
 
 .game-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+  gap: 1.35rem;
 }
 
 .game-card {
+  --tilt: 0deg;
+
   display: flex;
   flex-direction: column;
-  padding: 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  padding: 1.5rem 1.35rem 1.35rem;
+  color: var(--card-ink);
+  background: var(--card);
+  border: none;
+  border-radius: var(--radius-card);
+  /* Filet imprimé en retrait, comme sur une face de carte */
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 241, 234, 0.09),
+    0 16px 30px -20px rgba(0, 0, 0, 1);
+  transform: translate(0, 0) rotate(var(--tilt)) scale(1);
+  transform-origin: 50% 92%;
+  transition:
+    transform 260ms var(--ease),
+    box-shadow 260ms ease;
+  animation: deal 620ms var(--ease) backwards;
+}
+
+.game-card:nth-child(1) {
+  --tilt: -0.7deg;
+  animation-delay: 760ms;
+}
+
+.game-card:nth-child(2) {
+  --tilt: 0.2deg;
+  animation-delay: 880ms;
+}
+
+.game-card:nth-child(3) {
+  --tilt: 0.8deg;
+  animation-delay: 1000ms;
+}
+
+.game-card:hover,
+.game-card:focus-within {
+  transform: translate(0, -8px) rotate(0deg) scale(1);
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 22, 29, 0.35),
+    0 30px 44px -24px rgba(0, 0, 0, 1);
 }
 
 .game-card-icon {
-  font-size: 2rem;
+  font-size: 1.6rem;
+  line-height: 1;
+  transition: transform 260ms var(--ease);
+  transform-origin: left center;
 }
 
 .game-card-title {
-  margin: 0.5rem 0 0.35rem;
-  font-size: 1.1rem;
+  margin: 0.7rem 0 0.4rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--card-ink);
+  transition: color 200ms ease;
+}
+
+.game-card:hover .game-card-title {
+  color: var(--red-bright);
 }
 
 .game-card-desc {
-  margin: 0 0 0.5rem;
+  margin: 0 0 1.1rem;
   font-size: 0.9rem;
-  color: var(--text-muted);
+  font-weight: 300;
+  color: var(--card-ink-dim);
 }
 
+/* Compteur : donnée de table, donc chiffres en chasse fixe. */
 .game-card-online {
-  margin: 0 0 1rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--card-line);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--card-ink-dim);
+}
+
+.game-card-online::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--card-line);
+  box-shadow: 0 0 0 3px rgba(245, 241, 234, 0.06);
+}
+
+/* Au moins un joueur connecté : la pastille s'allume et respire. */
+.game-card-online.is-live {
+  color: var(--card-ink);
+}
+
+.game-card-online.is-live::before {
+  background: var(--live);
+  box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.16);
+  animation: live-pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.16);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgba(61, 220, 132, 0.04);
+  }
 }
 
 .game-card-actions {
@@ -296,6 +709,22 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   margin-top: auto;
+}
+
+.game-card .btn-secondary {
+  color: var(--card-ink);
+  background: transparent;
+  border-color: rgba(245, 241, 234, 0.24);
+}
+
+.game-card .btn-secondary:hover:not(:disabled) {
+  color: var(--red-bright);
+  background: rgba(228, 42, 49, 0.14);
+  border-color: var(--red-bright);
+}
+
+.game-card :focus-visible {
+  outline-color: var(--red-bright);
 }
 
 /* ---------- Footer ---------- */
@@ -306,15 +735,18 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 1rem 1.25rem;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
+  padding: 1.15rem 1.5rem;
+  background: var(--ink-900);
+  border-top: 1px solid var(--line);
 }
 
 .footer-copy {
   margin: 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
 }
 
 .footer-links {
@@ -323,9 +755,71 @@ body {
   gap: 0.25rem;
 }
 
+.footer-links .btn {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+  font-weight: 300;
+}
+
+.footer-links .btn:hover:not(:disabled) {
+  background: transparent;
+}
+
+/* Soulignement qui se trace de gauche à droite */
+.footer-links .btn::after {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.25rem;
+  height: 1px;
+  background: var(--red-bright);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms var(--ease);
+}
+
+.footer-links .btn:hover::after,
+.footer-links .btn:focus-visible::after {
+  transform: scaleX(1);
+}
+
 /* ---------- Responsive ---------- */
 
+@media (max-width: 900px) {
+  .hero::after {
+    opacity: 0.5;
+  }
+}
+
 @media (max-width: 768px) {
+  /* L'enseigne quitte le centre : en étroit, la barre doit tenir sur une ligne. */
+  .navbar {
+    display: flex;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+    gap: 0.4rem;
+  }
+
+  .navbar-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .navbar-side {
+    flex: 0 0 auto;
+  }
+
+  .navbar .btn {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.8rem;
+  }
+
   .navbar-menu-toggle {
     display: inline-flex;
   }
@@ -337,15 +831,84 @@ body {
   .sidebar-open {
     display: block;
     position: absolute;
-    top: 3.5rem;
+    top: 0;
     left: 0;
     bottom: 0;
     z-index: 10;
-    width: 240px;
+    width: 260px;
     overflow-y: auto;
+    box-shadow: 24px 0 48px -24px rgba(0, 0, 0, 1);
   }
 
   .main {
-    padding: 1rem;
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .hero {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+  }
+
+  /* L'échiquier ne survit pas au format étroit : il gênerait le titre. */
+  .hero::after {
+    display: none;
+  }
+
+  .game-card {
+    --tilt: 0deg;
+  }
+
+  .footer {
+    justify-content: flex-start;
+  }
+}
+
+/* Sous 430px, l'enseigne se resserre plutôt que de se faire tronquer. */
+@media (max-width: 430px) {
+  .navbar {
+    padding: 0.65rem 0.7rem;
+    gap: 0.25rem;
+  }
+
+  .navbar-title {
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+  }
+
+  .navbar .btn {
+    padding: 0.45rem 0.55rem;
+    font-size: 0.76rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-card {
+    --tilt: 0deg;
+  }
+
+  .game-card:hover,
+  .game-card:focus-within,
+  .game-card:hover .game-card-icon,
+  .sidebar-item:hover .sidebar-icon {
+    transform: none;
+  }
+
+  .hero-title {
+    clip-path: none;
+  }
+
+  .sidebar-badge::after {
+    display: none;
+  }
+
+  .game-card-online.is-live::before {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
   }
 }

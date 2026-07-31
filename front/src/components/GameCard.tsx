@@ -18,7 +18,9 @@ export function GameCard({ name, description, icon, slug, playersOnline }: GameC
       </span>
       <h3 className="game-card-title">{name}</h3>
       <p className="game-card-desc">{description}</p>
-      <p className="game-card-online">{playersOnline} joueurs en ligne</p>
+      <p className={playersOnline > 0 ? 'game-card-online is-live' : 'game-card-online'}>
+        {playersOnline} joueurs en ligne
+      </p>
       <div className="game-card-actions">
         <Button variant="primary" fullWidth onClick={() => handleAction(`play:${slug}:online`)}>
           Partie en ligne
