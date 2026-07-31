@@ -10,6 +10,8 @@ type ButtonProps = {
   variant?: ButtonVariant
   fullWidth?: boolean
   ariaLabel?: string
+  /** 'submit' pour valider le formulaire parent ; 'button' partout ailleurs. */
+  type?: 'button' | 'submit'
 }
 
 export function Button({
@@ -19,13 +21,14 @@ export function Button({
   variant = 'secondary',
   fullWidth = false,
   ariaLabel,
+  type = 'button',
 }: ButtonProps) {
   const classes = [s.btn, s[variant]]
   if (fullWidth) classes.push(s.full)
 
   return (
     <button
-      type="button"
+      type={type}
       className={classes.join(' ')}
       onClick={onClick}
       disabled={disabled}

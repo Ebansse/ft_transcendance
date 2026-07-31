@@ -1,0 +1,179 @@
+/* Le <dialog> natif arrive avec ses propres marges, bordure et fond blanc : on repart de zéro. */
+.dialog {
+  width: min(420px, calc(100vw - 2rem));
+  max-height: calc(100vh - 3rem);
+  padding: 1.6rem 1.5rem 1.5rem;
+  margin: auto;
+  overflow: auto;
+  color: var(--bone);
+  background: var(--ink-900);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 241, 234, 0.06),
+    0 40px 60px -30px rgba(0, 0, 0, 1);
+}
+
+.dialog[open] {
+  /* Même geste que les cartes de la home : la modale est distribuée sur la table. */
+  animation: deal-in 320ms var(--ease);
+}
+
+.dialog::backdrop {
+  background: rgba(10, 10, 11, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  --btn-padding: 0.25rem 0.5rem;
+  --btn-font-size: 0.85rem;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Onglets : un simple filet sous l'actif, pas de pilule. */
+.tabs {
+  display: flex;
+  gap: 1.4rem;
+  margin-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  position: relative;
+  padding: 0 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mute);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--red-hot);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 240ms var(--ease);
+}
+
+.tab:hover {
+  color: var(--bone);
+}
+
+/* Après `.tab` : à spécificité égale, c'est l'ordre qui tranche. */
+.tabActive {
+  color: var(--bone);
+}
+
+.tabActive::after {
+  transform: scaleX(1);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--card-ink-dim);
+}
+
+.input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--bone);
+  background: var(--ink-800);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.input:hover {
+  border-color: rgba(245, 241, 234, 0.28);
+}
+
+.input:focus {
+  outline: none;
+  background: var(--ink-700);
+  border-color: var(--red-hot);
+}
+
+.inputError {
+  border-color: var(--red-bright);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--red-bright);
+}
+
+.globalError {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--red-bright);
+  background: rgba(228, 42, 49, 0.1);
+  border-left: 2px solid var(--red-bright);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.submit {
+  margin-top: 0.4rem;
+  --btn-padding: 0.7rem 1.2rem;
+  --btn-font-size: 0.92rem;
+}
+
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(-1.2deg) scale(0.97);
+  }
+}
+
+@media (max-width: 430px) {
+  .dialog {
+    padding: 1.3rem 1.1rem 1.2rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+}

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useAuthModal } from '../auth/authModalContext.ts'
+import { AuthStatus } from '../components/AuthStatus.tsx'
 import { Button } from '../components/Button.tsx'
 import { Footer } from '../components/Footer.tsx'
 import { GameCard } from '../components/GameCard.tsx'
@@ -33,6 +35,7 @@ const GAMES = [
 
 export function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { openModal, isLoggedIn } = useAuthModal()
 
   return (
     <div className={s.shell}>
@@ -50,14 +53,18 @@ export function HomePage() {
           </span>
         }
         action={
-          <>
-            <Button variant="ghost" onClick={() => handleAction('auth:login')}>
-              Se connecter
-            </Button>
-            <Button variant="primary" onClick={() => handleAction('auth:register')}>
-              S'inscrire
-            </Button>
-          </>
+          isLoggedIn ? (
+            <AuthStatus />
+          ) : (
+            <>
+              <Button variant="ghost" onClick={() => openModal('login')}>
+                Se connecter
+              </Button>
+              <Button variant="primary" onClick={() => openModal('signup')}>
+                S'inscrire
+              </Button>
+            </>
+          )
         }
       />
 
@@ -71,7 +78,7 @@ export function HomePage() {
               Échecs, Blackjack et Uno : contre des bots ou en ligne, avec tes amis.
             </p>
             <div className={s.heroActions}>
-              <Button variant="primary" onClick={() => handleAction('auth:register')}>
+              <Button variant="primary" onClick={() => openModal('signup')}>
                 Créer un compte
               </Button>
               <Button variant="secondary" onClick={() => handleAction('play:quick')}>
