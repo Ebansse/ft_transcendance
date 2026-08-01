@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.transcendance.backend.dto.LoginRequestDto;
+import com.transcendance.backend.dto.LoginResponseDto;
 import com.transcendance.backend.services.LoginService;
 
 import jakarta.validation.Valid;
@@ -23,7 +24,7 @@ public class LoginController {
 
     private final LoginService loginService;
 
-     public LoginController(LoginService loginService) {
+    public LoginController(LoginService loginService) {
         this.loginService = loginService;
     }
 
@@ -48,10 +49,10 @@ public class LoginController {
         }
 
         try {
-            String token = loginService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
+            LoginResponseDto loginResponse = loginService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
             log.info("Login successful for email: {}", loginRequest.getEmail());
             
-            ResponseCookie cookie = ResponseCookie.from("access_token", token)
+            ResponseCookie accessCookie = ResponseCookie.from("access_token", loginResponse.getAccessToken())
                     .httpOnly(true)
                     .secure(false) //TODO: Change to true in production
                     .sameSite("strict")
@@ -59,8 +60,17 @@ public class LoginController {
                     .maxAge(15 * 60)
                     .build();
             
-             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", loginResponse.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false) //TODO: Change to true in production
+                    .sameSite("strict")
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body("Login successful");
         
         } catch (Exception e) {

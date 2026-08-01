@@ -31,6 +31,12 @@ public class RefreshTokenService {
     @Value("${jwt.refresh-token-validity-days}")
     private int refreshTokenValidityDays;
 
+    /**
+     * Generates a new refresh token for the given user.
+     *
+     * @param user the user for whom to generate a refresh token
+     * @return the generated refresh token
+     */
     public String generateRefreshToken(User user) {
         
         log.info("Generating refresh token for user: {}", user.getEmail());
@@ -55,6 +61,11 @@ public class RefreshTokenService {
         return rawToken;
     }
 
+    /**
+     * Generates a secure random token.
+     *
+     * @return the generated token
+     */
     private String generateSecureRandomToken() {
         
         // Initialize the secure random number generator
@@ -70,6 +81,12 @@ public class RefreshTokenService {
         return Base64.getEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
+    /**
+     * Hashes the given raw token.
+     *
+     * @param rawToken the raw token to hash
+     * @return the hashed token
+     */
     private String hashToken(String rawToken) {
         try {
             // Initialize the message digest
