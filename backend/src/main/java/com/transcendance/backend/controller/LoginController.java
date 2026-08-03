@@ -1,5 +1,8 @@
 package com.transcendance.backend.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.transcendance.backend.dto.LoginRequestDto;
+import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.LoginService;
 
 import jakarta.validation.Valid;
@@ -23,7 +27,7 @@ public class LoginController {
 
     private final LoginService loginService;
 
-     public LoginController(LoginService loginService) {
+    public LoginController(LoginService loginService) {
         this.loginService = loginService;
     }
 
@@ -40,18 +44,19 @@ public class LoginController {
         log.info("Processing login for email: {}", loginRequest.getEmail());
         
         if (bindingResult.hasErrors()) {
-            
-            log.warn("Login failed due to validation error: {}",
-                    bindingResult.getAllErrors().get(0).getDefaultMessage());
-            
-            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
-        }
+        Map<String, String> errors = new HashMap<>();
+        bindingResult.getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage())
+        );
+        log.warn("Login failed due to validation error: {}", errors);
+        return ResponseEntity.badRequest().body(errors);
+    }
 
         try {
-            String token = loginService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
+            LoginResponseTokenDto loginResponse = loginService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
             log.info("Login successful for email: {}", loginRequest.getEmail());
             
-            ResponseCookie cookie = ResponseCookie.from("access_token", token)
+            ResponseCookie accessCookie = ResponseCookie.from("access_token", loginResponse.getAccessToken())
                     .httpOnly(true)
                     .secure(false) //TODO: Change to true in production
                     .sameSite("strict")
@@ -59,13 +64,22 @@ public class LoginController {
                     .maxAge(15 * 60)
                     .build();
             
-             return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, cookie.toString())
+            ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", loginResponse.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false) //TODO: Change to true in production
+                    .sameSite("strict")
+                    .path("/api/auth/refresh-token")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body("Login successful");
         
-        } catch (Exception e) {
-            log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
-            return ResponseEntity.status(401).body("Invalid credentials");
-        }
+        } catch (IllegalArgumentException e) {
+        log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
+        return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+    }
     }
 }

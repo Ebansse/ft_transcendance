@@ -26,7 +26,7 @@ public class JWTService {
      * @param user the user for whom the token is generated
      * @return a JWT token as a String
      */
-    public String generateToken(User user) {  
+    public String generateAccessToken(User user) {  
 
         // Create a signing key from the secret
         Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); 
