@@ -12,20 +12,26 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.model.RefreshToken;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.repository.RefreshTokenRepository;
-
 
 @Service
 public class RefreshTokenService {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(RefreshTokenService.class);
 
-    private RefreshTokenRepository RefreshTokenRepository;
-    
-    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository) {
-        this.RefreshTokenRepository = refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRotationService rotationService;
+    private final JWTService jwtService;
+
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository,
+                                RefreshTokenRotationService rotationService,
+                                JWTService jwtService) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.rotationService = rotationService;
+        this.jwtService = jwtService;
     }
 
     @Value("${jwt.refresh-token-validity-days}")
@@ -38,15 +44,12 @@ public class RefreshTokenService {
      * @return the generated refresh token
      */
     public String generateRefreshToken(User user) {
-        
-        log.info("Generating refresh token for user: {}", user.getEmail());
-        // Generate a secure random token
-        String rawToken = generateSecureRandomToken();
 
-        // Hash the token
+        log.info("Generating refresh token for user: {}", user.getEmail());
+
+        String rawToken = generateSecureRandomToken();
         String hashedToken = hashToken(rawToken);
 
-        // Create a new refresh token
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
         refreshToken.setTokenHash(hashedToken);
@@ -54,8 +57,7 @@ public class RefreshTokenService {
         refreshToken.setRevoked(false);
         refreshToken.setCreatedAt(Instant.now());
 
-        // Save the refresh token
-        RefreshTokenRepository.save(refreshToken);
+        refreshTokenRepository.save(refreshToken);
 
         log.info("Refresh token generated for user: {}", user.getEmail());
         return rawToken;
@@ -67,17 +69,9 @@ public class RefreshTokenService {
      * @return the generated token
      */
     private String generateSecureRandomToken() {
-        
-        // Initialize the secure random number generator
         SecureRandom secureRandom = new SecureRandom();
-        
-        // Generate 64 random bytes
         byte[] tokenBytes = new byte[64];
-        
-        // Fill the byte array with random values
         secureRandom.nextBytes(tokenBytes);
-        
-        // Encode the token bytes to a Base64 string
         return Base64.getEncoder().withoutPadding().encodeToString(tokenBytes);
     }
 
@@ -89,9 +83,7 @@ public class RefreshTokenService {
      */
     private String hashToken(String rawToken) {
         try {
-            // Initialize the message digest
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            // Hash the raw token
             byte[] hashedBytes = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return Base64.getEncoder().encodeToString(hashedBytes);
         } catch (NoSuchAlgorithmException e) {
@@ -99,4 +91,23 @@ public class RefreshTokenService {
         }
     }
 
+    /**
+     * Refreshes the access token using the provided raw refresh token.
+     * Validation + revocation of the old token happens in a separate
+     * bean (RefreshTokenRotationService) so the transaction is real.
+     *
+     * @param rawRefreshToken the raw refresh token from the cookie
+     * @return the new access token and new refresh token
+     */
+    public LoginResponseTokenDto refreshAccessToken(String rawRefreshToken) {
+
+        String hashedToken = hashToken(rawRefreshToken);
+
+        User user = rotationService.validateAndRevoke(hashedToken);
+
+        String newRefreshToken = generateRefreshToken(user);
+        String newAccessToken = jwtService.generateAccessToken(user);
+
+        return new LoginResponseTokenDto(newAccessToken, newRefreshToken);
+    }
 }

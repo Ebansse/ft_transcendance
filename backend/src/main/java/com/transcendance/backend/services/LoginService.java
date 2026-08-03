@@ -2,7 +2,7 @@ package com.transcendance.backend.services;
 
 import org.springframework.stereotype.Service;
 
-import com.transcendance.backend.dto.LoginResponseDto;
+import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.model.User;
 
 import jakarta.transaction.Transactional;
@@ -21,6 +21,7 @@ public class LoginService {
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
+    
     /**
      * Authenticates a user based on the provided email and password.
      * @param email the user's email
@@ -29,7 +30,7 @@ public class LoginService {
      * @throws IllegalArgumentException if the email or password is invalid
      */
     @Transactional
-    public LoginResponseDto authenticate(String email, String password) {
+    public LoginResponseTokenDto authenticate(String email, String password) {
 
         // Fetch the user by email
         User user = userService.getUserByEmail(email)
@@ -42,7 +43,7 @@ public class LoginService {
         }
         
         // Generate the access and refresh tokens
-        LoginResponseDto loginResponse = new LoginResponseDto(
+        LoginResponseTokenDto loginResponse = new LoginResponseTokenDto(
             jwtService.generateAccessToken(user), 
             refreshTokenService.generateRefreshToken(user));
 
