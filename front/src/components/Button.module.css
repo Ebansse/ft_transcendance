@@ -1,0 +1,124 @@
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: var(--btn-padding, 0.6rem 1rem);
+  font-family: var(--font-body);
+  font-size: var(--btn-font-size, 0.9rem);
+  font-weight: var(--btn-weight, 500);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--bone);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease,
+    transform 120ms ease;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.full {
+  width: 100%;
+}
+
+/* Soulignement qui se trace de gauche à droite. Inerte par défaut : seul un
+   parent qui pose --btn-underline: 1 le fait apparaître (voir le footer). */
+.btn::after {
+  content: '';
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  bottom: 0.25rem;
+  height: 1px;
+  background: var(--red-bright);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 260ms var(--ease);
+  pointer-events: none;
+}
+
+.btn:hover::after,
+.btn:focus-visible::after {
+  transform: scaleX(var(--btn-underline, 0));
+}
+
+/* L'action principale est toujours rouge — sur la table comme sur la carte. */
+.primary {
+  color: #fff;
+  background: var(--red);
+  font-weight: 600;
+  box-shadow: 0 0 0 0 rgba(228, 42, 49, 0);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--red-hot);
+  box-shadow: 0 6px 22px -8px rgba(228, 42, 49, 0.75);
+}
+
+/* Reflet qui traverse le bouton au survol */
+.primary::before {
+  content: '';
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -40%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.32), transparent);
+  transform: translateX(-260%) skewX(-18deg);
+  transition: transform 620ms var(--ease);
+  pointer-events: none;
+}
+
+.primary:hover:not(:disabled)::before {
+  transform: translateX(560%) skewX(-18deg);
+}
+
+.secondary {
+  color: var(--btn-secondary-color, var(--bone));
+  border-color: var(--btn-secondary-border, var(--line-strong));
+  background: var(--btn-secondary-bg, rgba(245, 241, 234, 0.03));
+}
+
+.secondary:hover:not(:disabled) {
+  color: var(--btn-secondary-color-hover, var(--bone));
+  border-color: var(--btn-secondary-border-hover, var(--red-bright));
+  background: var(--btn-secondary-bg-hover, rgba(228, 42, 49, 0.08));
+}
+
+.ghost {
+  color: var(--mute);
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--bone);
+  background: var(--btn-ghost-bg-hover, rgba(245, 241, 234, 0.06));
+}
+
+.nav {
+  justify-content: flex-start;
+  padding: 0.5rem 0.8rem;
+  color: var(--btn-nav-color, var(--mute));
+  font-weight: var(--btn-nav-weight, 400);
+  overflow: visible;
+}
+
+.nav:hover:not(:disabled) {
+  color: var(--bone);
+  background: transparent;
+}
