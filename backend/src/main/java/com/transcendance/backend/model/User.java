@@ -1,5 +1,6 @@
 package com.transcendance.backend.model;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -51,6 +52,12 @@ public class User {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(name = "online", nullable = false)
+    private Instant online = Instant.now();
 
     public User(String userName, String email, String password) {
         this.userName = userName;

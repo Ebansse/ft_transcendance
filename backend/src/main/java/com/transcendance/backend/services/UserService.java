@@ -1,6 +1,7 @@
 package com.transcendance.backend.services;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,12 @@ public class UserService {
     public Optional<User> getUserByEmail(String email) {
         Log.debug("Fetching user by email: {}", email);
         return userRepository.findByEmail(email);
+    }
+
+    // Method to fetch a user by their id
+    public Optional<User> getUserById(UUID idUser) {
+        Log.debug("Fetching user by id: {}", idUser);
+        return userRepository.findById(idUser);
     }
 
     // Method to check if the provided password matches the stored password for the user
