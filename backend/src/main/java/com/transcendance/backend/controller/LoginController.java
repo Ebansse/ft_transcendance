@@ -68,7 +68,7 @@ public class LoginController {
                     .httpOnly(true)
                     .secure(false) //TODO: Change to true in production
                     .sameSite("strict")
-                    .path("/api/auth/refresh-token")
+                    .path("/api/auth")
                     .maxAge(7 * 24 * 60 * 60)
                     .build();
 
