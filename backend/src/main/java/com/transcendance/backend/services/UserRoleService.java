@@ -1,6 +1,9 @@
 package com.transcendance.backend.services;
 
+import java.util.List;
+
 import org.apache.logging.log4j.Logger;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import com.transcendance.backend.model.Role;
@@ -38,5 +41,20 @@ public class UserRoleService {
 
         userRoleRepository.save(userRole);
         log.info("Assigned role 'USER' to user with email: {}", user.getEmail());
+    }
+
+    /**
+     * Get the roles assigned to a user.
+     *
+     * @param user the user for which to retrieve roles
+     * @return a list of granted authorities representing the user's roles
+     */
+    public List<SimpleGrantedAuthority> getRoleUser(User user) {
+    return userRoleRepository.findByUser(user)
+        .stream()
+        .map(userRole -> new SimpleGrantedAuthority(
+            "ROLE_" + userRole.getRole().getRoleName()
+        ))
+        .toList();
     }
 }
