@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +25,26 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    /**
+     * Retrieves the authenticated user's public profile.
+     *
+     * @param user the authenticated user
+     * @return an HTTP 200 response containing the {@link UserPublicProfileDto}
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getMeProfile(@AuthenticationPrincipal User user) {
+        log.info("Fetching public profile for user id: {}", user.getIdUser());
+
+        UserPublicProfileDto dto = new UserPublicProfileDto();
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setId(user.getIdUser());
+        dto.setOnline(user.getOnline());
+        dto.setUserName(user.getUserName());
+
+        log.info("Public profile fetched for user: {}", user.getIdUser());
+        return ResponseEntity.ok(dto);
     }
 
     /**
