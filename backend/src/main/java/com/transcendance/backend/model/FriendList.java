@@ -34,8 +34,8 @@ import lombok.Setter;
 public class FriendList {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "user_id1", nullable = false)
     private UUID userId1;
