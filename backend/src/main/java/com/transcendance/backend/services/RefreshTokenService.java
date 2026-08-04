@@ -81,7 +81,7 @@ public class RefreshTokenService {
      * @param rawToken the raw token to hash
      * @return the hashed token
      */
-    private String hashToken(String rawToken) {
+    public String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hashedBytes = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
