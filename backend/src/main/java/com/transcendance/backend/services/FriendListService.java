@@ -28,6 +28,12 @@ public class FriendListService {
         this.friendListRepository = friendListRepository;
     }
 
+    /**
+     * Sends a friend request from one user to another.
+     *
+     * @param user     The user sending the request.
+     * @param username The username of the user receiving the request.
+     */
     @Transactional
     public void sendFriendRequest(User user, String username) {
 
@@ -87,5 +93,3 @@ public class FriendListService {
     }
 
 }
-
-#TODO JE DOIS FAIRE UN DTO pour recuperer lusername qui est envoyer en JSON et apres je peux le traiter dans mon controller et service
