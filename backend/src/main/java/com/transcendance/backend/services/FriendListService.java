@@ -141,6 +141,49 @@ public class FriendListService {
     }
 
     /**
+     * Declines a friend request from one user to another.
+     *
+     * @param user     The user declining the request.
+     * @param idUser   The ID of the user sending the request.
+     */
+    @Transactional
+    public void declineFriendRequest(User user, UUID idUser) {
+
+        if (user == null) {
+            throw new IllegalArgumentException("User must be authenticated");
+        }
+
+        log.info("Declining friend request from {} to {}", user.getUserName(), idUser);
+
+        User userTarget = userRepository.findById(idUser)
+                .orElseThrow(() -> {
+                    log.info("User not found: {}", idUser);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (user.equals(userTarget)) {
+            log.info("You cannot decline yourself");
+            throw new IllegalArgumentException("You cannot decline yourself");
+        }
+        List<UUID> ids = compareUUIDs(user, userTarget);
+        UUID id1 = ids.get(0);
+        UUID id2 = ids.get(1);
+
+        var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
+        if (existing.isPresent()) {
+            if (existing.get().getStatus() == FriendshipStatus.PENDING) {
+                existing.get().setStatus(FriendshipStatus.DECLINED);
+                existing.get().setCreatedAt(LocalDateTime.now());
+                friendListRepository.save(existing.get());
+                log.info("Friend request declined from {} to {}", user.getUserName(), userTarget.getUserName());
+                return;
+            }
+        }
+        log.warn("No friend request from {} to {} is pending", user.getUserName(), userTarget.getUserName());
+        throw new IllegalArgumentException("No friend request is pending");
+    }
+
+    /**
      * Compares the UUIDs of two users and returns them in a sorted list.
      *
      * @param user     The first user.
