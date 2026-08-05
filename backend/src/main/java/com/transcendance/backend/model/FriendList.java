@@ -49,4 +49,7 @@ public class FriendList {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "sender_id", nullable = false)
+    private UUID senderId;
 }
