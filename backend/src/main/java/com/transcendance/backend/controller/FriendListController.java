@@ -1,11 +1,13 @@
 package com.transcendance.backend.controller;
 
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,6 +52,22 @@ public class FriendListController {
         } catch (IllegalArgumentException e) {
             log.error("Friend request failed: {}", e.getMessage());
             return ResponseEntity.status(401).body(Map.of("error", "Failed to send friend request"));
+        }
+    }
+
+    @PostMapping("/{idUser}/accept")
+    public ResponseEntity<?> acceptFriendRequest(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.acceptFriendRequest(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to accept friend request: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to accept friend request"));
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.transcendance.backend.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
@@ -49,16 +52,9 @@ public class FriendListService {
             throw new IllegalArgumentException("You cannot add yourself as a friend");
         }
 
-        UUID id1;
-        UUID id2;
-
-        if (user.getIdUser().compareTo(target.getIdUser()) < 0) {
-            id1 = user.getIdUser();
-            id2 = target.getIdUser();
-        } else {
-            id1 = target.getIdUser();
-            id2 = user.getIdUser();
-}
+        List<UUID> ids = compareUUIDs(user, target);
+        UUID id1 = ids.get(0);
+        UUID id2 = ids.get(1);
 
         var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
 
@@ -87,9 +83,77 @@ public class FriendListService {
         friendList.setUserId2(id2);
         friendList.setStatus(FriendshipStatus.PENDING);
         friendList.setCreatedAt(LocalDateTime.now());
+        friendList.setSenderId(user.getIdUser());
         friendListRepository.save(friendList);
 
         log.info("Friend request sent from {} to {}", user.getUserName(), username);
     }
 
+    /**
+     * Accepts a friend request from one user to another.
+     *
+     * @param user     The user accepting the request.
+     * @param idUser   The ID of the user sending the request.
+     */
+    @Transactional
+    public void acceptFriendRequest(User user, UUID idUser) {
+
+        if (user == null) {
+            throw new IllegalArgumentException("User must be authenticated");
+        }
+        
+        log.info("Accepting friend request from {} to {}", user.getUserName(), idUser);
+
+        User userTarget = userRepository.findById(idUser)
+                .orElseThrow(() -> {
+                    log.info("User not found: {}", idUser);
+                    return new IllegalArgumentException("User not found");
+                });
+        
+        if (user.equals(userTarget)) {
+            log.info("You cannot accept your own friend request");
+            throw new IllegalArgumentException("You cannot accept your own friend request");
+        }
+        List<UUID> ids = compareUUIDs(user, userTarget);
+        UUID id1 = ids.get(0);
+        UUID id2 = ids.get(1);
+
+        var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
+        if (existing.isPresent()) {
+            if (existing.get().getSenderId().equals(user.getIdUser())) {
+                log.warn("Friend request from {} to {} is already pending", user.getUserName(), userTarget.getUserName());
+                throw new IllegalArgumentException("Friend request is already pending");
+            }
+            if (existing.get().getStatus() == FriendshipStatus.PENDING) {
+                existing.get().setStatus(FriendshipStatus.ACCEPTED);
+                existing.get().setCreatedAt(LocalDateTime.now());
+                friendListRepository.save(existing.get());
+                log.info("Friend request accepted from {} to {}", user.getUserName(), userTarget.getUserName());
+                return;
+            }
+            if (existing.get().getStatus() == FriendshipStatus.ACCEPTED) {
+                log.info("Users {} and {} are already friends", user.getUserName(), userTarget.getUserName());
+                throw new IllegalArgumentException("Users are already friends");
+            }
+        }
+        log.warn("No friend request from {} to {} is pending", user.getUserName(), userTarget.getUserName());
+        throw new IllegalArgumentException("No friend request is pending");
+    }
+
+    /**
+     * Compares the UUIDs of two users and returns them in a sorted list.
+     *
+     * @param user     The first user.
+     * @param userTarget The second user.
+     * @return A list containing the sorted UUIDs.
+     */
+    public List<UUID> compareUUIDs(User user, User userTarget) {
+         List<UUID> ids = new ArrayList<>();
+        ids.add(user.getIdUser());
+        ids.add(userTarget.getIdUser());
+
+        Collections.sort(ids);
+
+        return ids;
+    }
 }
