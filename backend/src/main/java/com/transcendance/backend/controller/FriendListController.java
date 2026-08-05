@@ -70,5 +70,21 @@ public class FriendListController {
             return ResponseEntity.status(400).body(Map.of("error", "Failed to accept friend request"));
         }
     }
+
+    @PostMapping("/{idUser}/decline")
+    public ResponseEntity<?> declineFriendRequest(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.declineFriendRequest(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to decline friend request: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to decline friend request"));
+        }
+    }
 }
 
