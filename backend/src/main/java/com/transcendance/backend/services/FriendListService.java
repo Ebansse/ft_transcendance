@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.transcendance.backend.model.FriendshipStatus;
 import com.transcendance.backend.model.User;
+import com.transcendance.backend.dto.FriendListDto;
 import com.transcendance.backend.model.FriendList;
 import com.transcendance.backend.repository.UserRepository;
 import com.transcendance.backend.repository.FriendListRepository;
@@ -24,10 +26,12 @@ public class FriendListService {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(FriendListService.class);
 
     private UserRepository userRepository;
+    private UserService userService;
     private FriendListRepository friendListRepository;
 
-    public FriendListService(UserRepository userRepository, FriendListRepository friendListRepository) {
+    public FriendListService(UserRepository userRepository, UserService userService, FriendListRepository friendListRepository) {
         this.userRepository = userRepository;
+        this.userService = userService;
         this.friendListRepository = friendListRepository;
     }
 
@@ -274,6 +278,34 @@ public class FriendListService {
             return;
         }
         
+    }
+
+    /**
+     * Retrieves the friend list for a given user.
+     *
+     * @param user The user for whom to retrieve the friend list.
+     * @return A list of friend details.
+     */
+    @Transactional
+    public List<FriendListDto> getFriendList(User user) {
+        List<FriendList> friendLists = friendListRepository.findByUserId1OrUserId2(user.getIdUser(), user.getIdUser());
+
+        List<FriendListDto> friendListDtos = new ArrayList<>();
+        for (FriendList friendList : friendLists) {
+            UUID targetId;
+            if (friendList.getUserId1().equals(user.getIdUser())) {
+                targetId = friendList.getUserId2();
+            } else {
+                targetId = friendList.getUserId1();
+            }
+
+            Optional<User> targetUser = userService.getUserById(targetId);
+            if (targetUser.isEmpty()) {
+                continue;
+            }
+            friendListDtos.add(new FriendListDto(targetUser.get().getUserName(), friendList.getCreatedAt(), friendList.getStatus()));
+        }
+        return friendListDtos;
     }
 
     /**
