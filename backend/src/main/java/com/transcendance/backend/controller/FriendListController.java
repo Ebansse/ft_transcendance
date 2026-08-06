@@ -102,5 +102,20 @@ public class FriendListController {
             return ResponseEntity.status(400).body(Map.of("error", "Failed to delete friend"));
         }
     }
-}
 
+    @PostMapping("/{idUser}/block")
+    public ResponseEntity<?> blockUser(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.blockFriend(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to block user: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to block user"));
+        }
+    }
+}
