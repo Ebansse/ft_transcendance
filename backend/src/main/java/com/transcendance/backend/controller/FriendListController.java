@@ -86,5 +86,21 @@ public class FriendListController {
             return ResponseEntity.status(400).body(Map.of("error", "Failed to decline friend request"));
         }
     }
+
+    @PostMapping("/{idUser}/delete")
+    public ResponseEntity<?> deleteFriend(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.deleteFriend(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to delete friend: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to delete friend"));
+        }
+    }
 }
 
