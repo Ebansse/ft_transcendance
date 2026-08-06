@@ -184,6 +184,47 @@ public class FriendListService {
     }
 
     /**
+     * Deletes a friend from the friend list.
+     *
+     * @param user     The user deleting the friend.
+     * @param idUser   The ID of the user to delete as a friend.
+     */
+    @Transactional
+    public void deleteFriend(User user, UUID idUser) {
+
+        if (user == null) {
+            throw new IllegalArgumentException("User must be authenticated");
+        }
+
+        log.info("Deleting friend from {} to {}", user.getUserName(), idUser);
+
+        User userTarget = userRepository.findById(idUser)
+                .orElseThrow(() -> {
+                    log.info("User not found: {}", idUser);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (user.equals(userTarget)) {
+            log.info("You cannot delete yourself");
+            throw new IllegalArgumentException("You cannot delete yourself");
+        }
+        List<UUID> ids = compareUUIDs(user, userTarget);
+        UUID id1 = ids.get(0);
+        UUID id2 = ids.get(1);
+
+        var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
+        if (existing.isPresent()) {
+            if (existing.get().getStatus() == FriendshipStatus.ACCEPTED) {
+                friendListRepository.delete(existing.get());
+                log.info("Friend deleted from {} to {}", user.getUserName(), userTarget.getUserName());
+                return;
+            }
+        }
+        log.warn("No friend relationship found between {} and {}", user.getUserName(), userTarget.getUserName());
+        throw new IllegalArgumentException("No friend relationship is established");
+    }
+
+    /**
      * Compares the UUIDs of two users and returns them in a sorted list.
      *
      * @param user     The first user.
