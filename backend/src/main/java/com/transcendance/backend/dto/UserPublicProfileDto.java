@@ -15,5 +15,6 @@ public class UserPublicProfileDto {
         private String          userName;
         private Instant         online;
         private String          avatarUrl;
+        private String          role;
         //private UserStatsDto    stats;
 }

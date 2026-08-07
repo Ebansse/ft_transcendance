@@ -35,7 +35,9 @@ const GAMES = [
 
 export function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { openModal, isLoggedIn } = useAuthModal()
+  const { openModal, isLoggedIn, user, authChecked } = useAuthModal()
+
+  const isAdmin = user?.role === 'ADMIN'
 
   return (
     <div className={s.shell}>
@@ -53,8 +55,17 @@ export function HomePage() {
           </span>
         }
         action={
-          isLoggedIn ? (
-            <AuthStatus />
+          // Tant que la session n'est pas vérifiée, on n'affiche rien : sinon un
+          // utilisateur connecté verrait « Se connecter » clignoter à chaque F5.
+          !authChecked ? null : isLoggedIn ? (
+            <>
+              {isAdmin && (
+                <Button variant="secondary" onClick={() => handleAction('nav:admin')}>
+                  Admin
+                </Button>
+              )}
+              <AuthStatus />
+            </>
           ) : (
             <>
               <Button variant="ghost" onClick={() => openModal('login')}>
@@ -81,7 +92,7 @@ export function HomePage() {
               <Button variant="primary" onClick={() => openModal('signup')}>
                 Créer un compte
               </Button>
-              <Button variant="secondary" onClick={() => handleAction('play:quick')}>
+              <Button variant="secondary" onClick={() => handleAction('quick-play')}>
                 Partie rapide
               </Button>
             </div>

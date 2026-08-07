@@ -14,6 +14,8 @@ export class ApiError extends Error {
 
 type RequestOptions = Omit<RequestInit, "body" | "method">;
 
+let refreshing: Promise<unknown> | null = null;
+
 /** Forme d'un ObjectError Spring sérialisé (body de `bindingResult.getAllErrors()`). */
 type SpringError = { field?: string; defaultMessage?: string };
 
@@ -71,6 +73,7 @@ async function request<T>(
   method: string,
   body?: unknown,
   options: RequestOptions = {},
+  retried = false,
 ): Promise<T> {
   const headers = new Headers(options.headers);
   if (body !== undefined) headers.set("Content-Type", "application/json");
@@ -86,6 +89,20 @@ async function request<T>(
     });
   } catch {
     throw new ApiError(0, "Impossible de joindre le serveur.");
+  }
+
+  // si l'access_token est expiré, on tente de le rafraîchir avec le refresh_token (7 jours)
+  if ((res.status === 401 || res.status === 403) && !retried && !path.startsWith("/auth/")) {
+    refreshing ??= request("/auth/refresh-token", "POST").finally(() => {
+      refreshing = null;
+    });
+    try {
+      await refreshing;
+    } catch {
+      // Refresh token expiré ou révoqué : c'est une vraie déconnexion.
+      throw await parseError(res);
+    }
+    return request<T>(path, method, body, options, true);
   }
 
   if (!res.ok) throw await parseError(res);
