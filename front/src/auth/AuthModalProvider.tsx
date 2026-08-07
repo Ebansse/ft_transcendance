@@ -1,6 +1,8 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
+import { GetUserPublicProfile } from '../lib/actions.ts'
+import type { UserPublicProfileDto } from '../lib/actions.ts'
 import { api, ApiError } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
 import type { AuthMode } from './authModalContext.ts'
@@ -23,11 +25,33 @@ const EMPTY_LOGIN: LoginForm = { email: '', password: '' }
 /**
  * Détient l'état d'authentification et parle au back. La modale n'est qu'une vue :
  * elle reçoit tout par props, ce qui la garde testable et sans logique réseau.
+ * Contient aussi l'etat de session.
  */
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [mode, setMode] = useState<AuthMode>('login')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState<UserPublicProfileDto | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  const isLoggedIn = user !== null
+
+  // Persistance de session
+  useEffect(() => {
+    let cancelled = false
+    GetUserPublicProfile()
+      .then((me) => {
+        if (!cancelled) setUser(me)
+      })
+      .catch(() => {
+        if (!cancelled) setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setAuthChecked(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const [signup, setSignup] = useState<SignupForm>(EMPTY_SIGNUP)
   const [login, setLogin] = useState<LoginForm>(EMPTY_LOGIN)
@@ -72,9 +96,8 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }
 
   const submitLogin = async (credentials: LoginForm) => {
-    // Le cookie access_token est httpOnly : le back l'attache, on ne le lit jamais.
     await api.post<string>('/auth/login', credentials)
-    setIsLoggedIn(true)
+    setUser(await GetUserPublicProfile())
     setSignup(EMPTY_SIGNUP)
     setLogin(EMPTY_LOGIN)
     setIsOpen(false)
@@ -116,8 +139,8 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }
 
   const value = useMemo(
-    () => ({ isOpen, mode, isLoggedIn, openModal, closeModal, setMode: switchMode }),
-    [isOpen, mode, isLoggedIn, openModal, closeModal, switchMode],
+    () => ({ isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, setMode: switchMode }),
+    [isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, switchMode],
   )
 
   return (

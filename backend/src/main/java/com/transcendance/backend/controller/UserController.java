@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.transcendance.backend.dto.UserPublicProfileDto;
 import com.transcendance.backend.model.User;
+import com.transcendance.backend.services.UserRoleService;
 import com.transcendance.backend.services.UserService;
 
 @RestController
@@ -22,9 +23,27 @@ public class UserController {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(UserController.class);
 
     private final UserService userService;
+    private final UserRoleService userRoleService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserRoleService userRoleService) {
         this.userService = userService;
+        this.userRoleService = userRoleService;
+    }
+
+    /**
+     * Maps a user entity to its public profile representation.
+     *
+     * @param user the user to map
+     * @return the corresponding {@link UserPublicProfileDto}
+     */
+    private UserPublicProfileDto toDto(User user) {
+        UserPublicProfileDto dto = new UserPublicProfileDto();
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setId(user.getIdUser());
+        dto.setOnline(user.getOnline());
+        dto.setUserName(user.getUserName());
+        dto.setRole(userRoleService.getRoleName(user));
+        return dto;
     }
 
     /**
@@ -37,11 +56,7 @@ public class UserController {
     public ResponseEntity<?> getMeProfile(@AuthenticationPrincipal User user) {
         log.info("Fetching public profile for user id: {}", user.getIdUser());
 
-        UserPublicProfileDto dto = new UserPublicProfileDto();
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setId(user.getIdUser());
-        dto.setOnline(user.getOnline());
-        dto.setUserName(user.getUserName());
+        UserPublicProfileDto dto = toDto(user);
 
         log.info("Public profile fetched for user: {}", user.getIdUser());
         return ResponseEntity.ok(dto);
@@ -66,11 +81,7 @@ public class UserController {
         }
 
         User user = userOpt.get();
-        UserPublicProfileDto dto = new UserPublicProfileDto();
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setId(user.getIdUser());
-        dto.setOnline(user.getOnline());
-        dto.setUserName(user.getUserName());
+        UserPublicProfileDto dto = toDto(user);
 
         return ResponseEntity.ok(dto);
     }

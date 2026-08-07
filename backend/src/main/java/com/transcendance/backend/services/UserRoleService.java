@@ -57,4 +57,16 @@ public class UserRoleService {
         ))
         .toList();
     }
+
+    /**
+     * Get the raw role name assigned to a user, without the "ROLE_" prefix.
+     *
+     * @param user the user for which to retrieve the role name
+     * @return the role name (e.g. "USER"), or null if the user has no role
+     */
+    public String getRoleName(User user) {
+        return userRoleRepository.findByUser(user)
+                .map(userRole -> userRole.getRole().getRoleName())
+                .orElse(null);
+    }
 }
