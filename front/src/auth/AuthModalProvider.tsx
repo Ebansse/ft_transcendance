@@ -76,6 +76,14 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     clearErrors()
   }, [])
 
+  const logout = useCallback(async () => {
+    try {
+      await api.post<string>('/auth/logout')
+    } finally {
+      setUser(null)
+    }
+  }, [])
+
   const switchMode = useCallback((next: AuthMode) => {
     clearErrors()
     setMode(next)
@@ -139,8 +147,18 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }
 
   const value = useMemo(
-    () => ({ isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, setMode: switchMode }),
-    [isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, switchMode],
+    () => ({
+      isOpen,
+      mode,
+      isLoggedIn,
+      user,
+      authChecked,
+      openModal,
+      closeModal,
+      setMode: switchMode,
+      logout,
+    }),
+    [isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, switchMode, logout],
   )
 
   return (

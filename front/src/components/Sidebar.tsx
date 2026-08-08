@@ -1,4 +1,5 @@
 import { Button } from './Button.tsx'
+import { useAuthModal } from '../auth/authModalContext.ts'
 import { handleAction } from '../lib/actions.ts'
 import s from './Sidebar.module.css'
 
@@ -44,19 +45,28 @@ const GROUPS: NavGroup[] = [
   },
 ]
 
+/** Groupe réservé aux comptes ADMIN, ajouté en bas du menu. */
+const ADMIN_GROUP: NavGroup = {
+  title: 'Administration',
+  items: [{ action: 'nav:admin', label: 'Admin', icon: '🛡️' }],
+}
+
 type SidebarProps = {
   open: boolean
   current?: string
 }
 
 export function Sidebar({ open, current = 'nav:home' }: SidebarProps) {
+  const { user } = useAuthModal()
+  const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
+
   return (
     <aside
       id="sidebar"
       className={open ? `${s.sidebar} ${s.open}` : s.sidebar}
       aria-label="Menu principal"
     >
-      {GROUPS.map((group) => (
+      {groups.map((group) => (
         <nav key={group.title} className={s.group} aria-label={group.title}>
           <p className={s.groupTitle}>{group.title}</p>
           <ul className={s.list}>

@@ -13,6 +13,7 @@ export type AuthModalValue = {
   openModal: (mode?: AuthMode) => void
   closeModal: () => void
   setMode: (mode: AuthMode) => void
+  logout: () => Promise<void>
 }
 
 /** Fichier sans composant : le hook et le contexte peuvent être exportés ensemble. */
