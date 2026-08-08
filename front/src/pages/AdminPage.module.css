@@ -1,0 +1,16 @@
+/* Ce qui reste propre à l'admin : la grille des sections et le message de refus.
+   L'en-tête, le titre de section et les cartes viennent de composants partagés. */
+
+.sectionGrid {
+  composes: cardGrid from '../style/page.module.css';
+}
+
+.denied {
+  composes: riseIn from '../style/page.module.css';
+
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 480ms;
+}

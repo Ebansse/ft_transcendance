@@ -54,9 +54,11 @@ const ADMIN_GROUP: NavGroup = {
 type SidebarProps = {
   open: boolean
   current?: string
+  /** Fourni par le layout : route vers la page. À défaut, on log l'action. */
+  onNavigate?: (action: string) => void
 }
 
-export function Sidebar({ open, current = 'nav:home' }: SidebarProps) {
+export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction }: SidebarProps) {
   const { user } = useAuthModal()
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
 
@@ -73,7 +75,7 @@ export function Sidebar({ open, current = 'nav:home' }: SidebarProps) {
             {group.items.map((item) => (
               <li key={item.action}>
                 <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
-                  <Button variant="nav" fullWidth onClick={() => handleAction(item.action)}>
+                  <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
                     <span aria-hidden="true" className={s.icon}>
                       {item.icon}
                     </span>
