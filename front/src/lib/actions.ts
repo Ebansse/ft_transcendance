@@ -17,3 +17,8 @@ export type UserPublicProfileDto = {
 export function GetUserPublicProfile() {
   return api.get<UserPublicProfileDto>("/users/me")
 }
+
+/** Liste tous les comptes : le back réserve la route aux ADMIN. */
+export function GetAllUserPublicProfiles() {
+  return api.get<UserPublicProfileDto[]>("/users")
+}

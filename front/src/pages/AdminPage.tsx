@@ -1,27 +1,45 @@
+import { useEffect, useState } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
-import { InfoCard } from '../components/InfoCard.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
+import { MenuActions } from '../components/MenuActions.tsx'
+import { Tableau, type Colonne } from '../components/Tableau.tsx'
+import { GetAllUserPublicProfiles, handleAction, type UserPublicProfileDto } from '../lib/actions.ts'
+import { ApiError } from '../lib/apiClient.ts'
 import s from './AdminPage.module.css'
 
-const SECTIONS = [
+/** Actions du menu « … ». Placeholders tant que les routes n'existent pas. */
+const USER_ACTIONS = ['test1', 'test2', 'test3', 'test4']
+
+const COLUMNS: Colonne<UserPublicProfileDto>[] = [
+  { key: 'userName', header: 'Utilisateur', render: (u) => u.userName },
+  { key: 'email', header: 'E-mail', render: (u) => u.email },
+  { key: 'role', header: 'Rôle', render: (u) => u.role ?? '—' },
+  { key: 'online', header: 'Vu à', render: (u) => formatDate(u.online) },
+  { key: 'id', header: 'Identifiant', render: (u) => u.id },
   {
-    key: 'users',
-    title: 'Utilisateurs',
-    text: 'Rechercher un compte, consulter son profil, suspendre ou réactiver.',
-  },
-  {
-    key: 'roles',
-    title: 'Rôles & permissions',
-    text: 'Attribuer les rôles USER / ADMIN et les permissions associées.',
-  },
-  {
-    key: 'moderation',
-    title: 'Modération',
-    text: 'Signalements du chat, sanctions et journal des actions.',
+    key: 'actions',
+    header: 'Actions',
+    render: (u) => (
+      <MenuActions
+        ariaLabel={`Actions sur ${u.userName}`}
+        items={USER_ACTIONS.map((action) => ({
+          key: action,
+          label: action,
+          onSelect: () => handleAction(`admin:user:${action}:${u.id}`),
+        }))}
+      />
+    ),
   },
 ]
+
+/** Les dates viennent du back en ISO (Instant Java) ; null tant que jamais connecté. */
+function formatDate(value: string | null) {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
+}
 
 type AdminPageProps = {
   onNavigate: (action: string) => void
@@ -31,6 +49,35 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   const { user } = useAuthModal()
   // Garde cosmétique : le back reste seul juge sur les routes d'administration.
   const isAdmin = user?.role === 'ADMIN'
+
+  const [users, setUsers] = useState<UserPublicProfileDto[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isAdmin) return
+
+    // Le composant peut être démonté avant la réponse : on ignore alors le résultat.
+    let alive = true
+    setLoading(true)
+    setError(null)
+
+    GetAllUserPublicProfiles()
+      .then((list) => {
+        if (alive) setUsers(list)
+      })
+      .catch((err: unknown) => {
+        if (!alive) return
+        setError(err instanceof ApiError ? err.message : 'Chargement des comptes impossible.')
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [isAdmin])
 
   return (
     <AppLayout current="nav:admin" onNavigate={onNavigate}>
@@ -45,13 +92,21 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
           reconnecte-toi.
         </p>
       ) : (
-        <section aria-labelledby="admin-sections-title">
-          <SectionTitle id="admin-sections-title">Sections</SectionTitle>
-          <div className={s.sectionGrid}>
-            {SECTIONS.map((section) => (
-              <InfoCard key={section.key} title={section.title} text={section.text} />
-            ))}
-          </div>
+        <section aria-labelledby="admin-users-title">
+          <SectionTitle id="admin-users-title">Utilisateurs</SectionTitle>
+
+          {loading && <p className={s.state}>Chargement des comptes…</p>}
+          {error && <p className={s.state}>{error}</p>}
+
+          {!loading && !error && (
+            <Tableau
+              caption="Liste de tous les comptes enregistrés"
+              columns={COLUMNS}
+              rows={users}
+              rowKey={(u) => u.id}
+              emptyText="Aucun compte enregistré."
+            />
+          )}
         </section>
       )}
     </AppLayout>
