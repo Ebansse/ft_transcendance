@@ -1,5 +1,6 @@
 package com.transcendance.backend.services;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +46,12 @@ public class UserService {
     public Optional<User> getUserById(UUID idUser) {
         Log.debug("Fetching user by id: {}", idUser);
         return userRepository.findById(idUser);
+    }
+
+    // Method to fetch every user stored in the database (SELECT * FROM users)
+    public List<User> getAllUsers() {
+        Log.debug("Fetching all users");
+        return userRepository.findAll();
     }
 
     // Method to check if the provided password matches the stored password for the user

@@ -1,5 +1,6 @@
 package com.transcendance.backend.controller;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,6 +45,28 @@ public class UserController {
         dto.setUserName(user.getUserName());
         dto.setRole(userRoleService.getRoleName(user));
         return dto;
+    }
+
+    /**
+     * Retrieves the public profile of every user stored in the database.
+     * <p>
+     * Public route: no JWT is read here, the data comes straight from the
+     * database.
+     *
+     * @return an HTTP 200 response containing one {@link UserPublicProfileDto}
+     *         per user, or an empty list if the table is empty
+     */
+    @GetMapping
+    public ResponseEntity<List<UserPublicProfileDto>> getAllUsers() {
+        log.info("Fetching public profiles of all users");
+
+        List<UserPublicProfileDto> profiles = userService.getAllUsers()
+                .stream()
+                .map(this::toDto)
+                .toList();
+
+        log.info("{} public profiles fetched", profiles.size());
+        return ResponseEntity.ok(profiles);
     }
 
     /**
