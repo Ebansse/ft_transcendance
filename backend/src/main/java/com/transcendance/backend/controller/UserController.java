@@ -43,6 +43,7 @@ public class UserController {
         dto.setId(user.getIdUser());
         dto.setOnline(user.getOnline());
         dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
         dto.setRole(userRoleService.getRoleName(user));
         return dto;
     }

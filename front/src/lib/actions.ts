@@ -7,6 +7,7 @@ export function handleAction(action: string) {
 export type UserPublicProfileDto = {
   id: string,
   userName: string,
+  email: string,
   online: string,
   avatarUrl: string,
   role: string | null,

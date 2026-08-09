@@ -25,12 +25,9 @@ public class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/refresh-token",
                     "/api/auth/logout",
-                    // Liste complète des utilisateurs : lecture directe en base,
-                    // sans passer par le JWT.
-                    "/api/users",
                     "/hello"
                 ).permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().hasRole("ADMIN")
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
