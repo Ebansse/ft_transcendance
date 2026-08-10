@@ -1,19 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { MenuActions } from '../components/MenuActions.tsx'
+import { ConfirmModal } from '../components/ConfirmModal.tsx'
 import { EditUserModal, type EditUserForm } from '../components/EditUserModal.tsx'
 import { Tableau, type Colonne } from '../components/Tableau.tsx'
-import { GetAllUserPublicProfiles, handleAction, type UserPublicProfileDto } from '../lib/actions.ts'
+import {
+  DeleteUser,
+  GetAllUserPublicProfiles,
+  UpdateUser,
+  handleAction,
+  type UserPublicProfileDto,
+} from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './AdminPage.module.css'
 
-const USER_ACTIONS = ['test2', 'test3', 'test4']
+const USER_ACTIONS = ['test3', 'test4']
 
-/** Les colonnes dépendent du callback d'édition : une fabrique, pas une constante. */
-function buildColumns(onEdit: (row: UserPublicProfileDto) => void): Colonne<UserPublicProfileDto>[] {
+/** Les colonnes dépendent des callbacks du menu : une fabrique, pas une constante. */
+function buildColumns(
+  onEdit: (row: UserPublicProfileDto) => void,
+  onDelete: (row: UserPublicProfileDto) => void,
+): Colonne<UserPublicProfileDto>[] {
   return [
     { key: 'userName', header: 'Utilisateur', render: (u) => u.userName },
     { key: 'email', header: 'E-mail', render: (u) => u.email },
@@ -28,6 +38,7 @@ function buildColumns(onEdit: (row: UserPublicProfileDto) => void): Colonne<User
           ariaLabel={`Actions sur ${u.userName}`}
           items={[
             { key: 'edit', label: 'Edit', onSelect: () => onEdit(u) },
+            { key: 'delete', label: 'Delete', onSelect: () => onDelete(u) },
             ...USER_ACTIONS.map((action) => ({
               key: action,
               label: action,
@@ -61,8 +72,25 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   const [error, setError] = useState<string | null>(null)
   // Le compte en cours d'édition ; `null` = modale fermée.
   const [editing, setEditing] = useState<UserPublicProfileDto | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const columns = useMemo(() => buildColumns(setEditing), [])
+  // Le compte dont la suppression est proposée ; `null` = pas de confirmation en cours.
+  const [deleting, setDeleting] = useState<UserPublicProfileDto | null>(null)
+  const [deletePending, setDeletePending] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const openEditor = useCallback((row: UserPublicProfileDto) => {
+    setSaveError(null)
+    setEditing(row)
+  }, [])
+
+  const askDelete = useCallback((row: UserPublicProfileDto) => {
+    setDeleteError(null)
+    setDeleting(row)
+  }, [])
+
+  const columns = useMemo(() => buildColumns(openEditor, askDelete), [openEditor, askDelete])
 
   useEffect(() => {
     if (!isAdmin) return
@@ -89,10 +117,40 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     }
   }, [isAdmin])
 
-  /** Partie UI seulement : l'appel au back (POST + rechargement) viendra ensuite. */
+  /** Le back renvoie le profil à jour : on remplace la ligne au lieu de tout recharger. */
   const saveUser = (idUser: string, values: EditUserForm) => {
-    handleAction(`admin:user:save:${idUser}:${JSON.stringify(values)}`)
-    setEditing(null)
+    setSaving(true)
+    setSaveError(null)
+
+    UpdateUser(idUser, values)
+      .then((updated) => {
+        setUsers((list) => list.map((row) => (row.id === updated.id ? updated : row)))
+        setEditing(null)
+      })
+      .catch((err: unknown) => {
+        // La modale reste ouverte : la saisie refusée est encore là, corrigeable.
+        setSaveError(err instanceof ApiError ? err.message : 'Mise à jour impossible.')
+      })
+      .finally(() => setSaving(false))
+  }
+
+  /** Suppression confirmée : le back répond 204, on retire la ligne localement. */
+  const confirmDelete = () => {
+    if (!deleting) return
+    const idUser = deleting.id
+
+    setDeletePending(true)
+    setDeleteError(null)
+
+    DeleteUser(idUser)
+      .then(() => {
+        setUsers((list) => list.filter((row) => row.id !== idUser))
+        setDeleting(null)
+      })
+      .catch((err: unknown) => {
+        setDeleteError(err instanceof ApiError ? err.message : 'Suppression impossible.')
+      })
+      .finally(() => setDeletePending(false))
   }
 
   return (
@@ -126,9 +184,24 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
 
           <EditUserModal
             user={editing}
+            pending={saving}
+            error={saveError}
             onClose={() => setEditing(null)}
             onSave={saveUser}
           />
+
+          <ConfirmModal
+            open={deleting !== null}
+            title="Supprimer le compte"
+            confirmLabel="Supprimer"
+            pending={deletePending}
+            error={deleteError}
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleting(null)}
+          >
+            Le compte <strong>{deleting?.userName}</strong> ({deleting?.email}) sera supprimé,
+            ainsi que son rôle, ses sessions et ses liens d'amitié. C'est irréversible.
+          </ConfirmModal>
         </section>
       )}
     </AppLayout>

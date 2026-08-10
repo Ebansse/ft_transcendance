@@ -22,3 +22,19 @@ export function GetUserPublicProfile() {
 export function GetAllUserPublicProfiles() {
   return api.get<UserPublicProfileDto[]>("/users")
 }
+
+export type UpdateUserPayload = {
+  userName: string,
+  email: string,
+  role: string,
+}
+
+/** Écrase pseudo, e-mail et rôle d'un compte ; renvoie le profil à jour. Réservé aux ADMIN. */
+export function UpdateUser(idUser: string, payload: UpdateUserPayload) {
+  return api.post<UserPublicProfileDto>(`/users/${idUser}`, payload)
+}
+
+/** Supprime un compte (et ses rôles, tokens et liens d'amitié). Réservé aux ADMIN. */
+export function DeleteUser(idUser: string) {
+  return api.post<void>(`/users/delete/${idUser}`)
+}

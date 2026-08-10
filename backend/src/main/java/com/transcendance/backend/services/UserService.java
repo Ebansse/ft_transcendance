@@ -60,6 +60,24 @@ public class UserService {
         return securityConfig.passwordEncoder().matches(rawPassword, user.getPassword());
     }
 
+    // Method to check if a user with the given username already exists
+    public Optional<User> getUserByUserName(String userName) {
+        Log.debug("Fetching user by username: {}", userName);
+        return userRepository.findByUserName(userName);
+    }
+
+    // Method to persist an already existing user (no password re-encoding)
+    public User saveUser(User user) {
+        Log.debug("Saving user with id: {}", user.getIdUser());
+        return userRepository.save(user);
+    }
+
+    // Method to remove a user (DELETE FROM users WHERE id_user = ...)
+    public void deleteUser(User user) {
+        Log.debug("Deleting user with id: {}", user.getIdUser());
+        userRepository.delete(user);
+    }
+
     // Method to create and save a new user
     public User createUser(User user) {
         Log.debug("Saving user with email: {}", user.getEmail());

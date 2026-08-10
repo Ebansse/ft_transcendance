@@ -104,6 +104,16 @@
   border-color: var(--red-hot);
 }
 
+.globalError {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--red-bright);
+  background: rgba(228, 42, 49, 0.1);
+  border-left: 2px solid var(--red-bright);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;

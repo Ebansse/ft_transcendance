@@ -10,4 +10,7 @@ import com.transcendance.backend.model.FriendList;
 public interface FriendListRepository extends JpaRepository<FriendList, Long> {
     
     Optional<FriendList> findByUserId1AndUserId2(UUID userId1, UUID userId2);
+
+    // A user sits on either side of the pair: both columns have to be swept
+    void deleteByUserId1OrUserId2(UUID userId1, UUID userId2);
 }

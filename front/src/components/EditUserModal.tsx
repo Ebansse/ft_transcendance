@@ -15,6 +15,10 @@ const ROLES = ['USER', 'ADMIN']
 type EditUserModalProps = {
   /** Le compte à éditer, ou `null` quand la modale est fermée. */
   user: UserPublicProfileDto | null
+  /** Requête d'enregistrement en cours : on verrouille le bouton. */
+  pending?: boolean
+  /** Refus du back (e-mail déjà pris, rôle inconnu…) ; la modale reste ouverte. */
+  error?: string | null
   onClose: () => void
   onSave: (idUser: string, values: EditUserForm) => void
 }
@@ -23,7 +27,7 @@ type EditUserModalProps = {
  * Modale d'édition d'un compte. Même parti pris que `AuthModal` : le <dialog>
  * natif fournit le piège de focus, la fermeture par Échap et l'inertie de la page.
  */
-export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
+export function EditUserModal({ user, pending = false, error, onClose, onSave }: EditUserModalProps) {
   const ref = useRef<HTMLDialogElement>(null)
   const [form, setForm] = useState<EditUserForm>({ email: '', userName: '', role: 'USER' })
 
@@ -125,12 +129,18 @@ export function EditUserModal({ user, onClose, onSave }: EditUserModalProps) {
           </select>
         </div>
 
+        {error && (
+          <p className={s.globalError} role="alert">
+            {error}
+          </p>
+        )}
+
         <div className={s.actions}>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose} disabled={pending}>
             Annuler
           </Button>
-          <Button type="submit" variant="primary">
-            Sauvegarder
+          <Button type="submit" variant="primary" disabled={pending}>
+            {pending ? 'Enregistrement…' : 'Sauvegarder'}
           </Button>
         </div>
       </form>

@@ -59,6 +59,34 @@ public class UserRoleService {
     }
 
     /**
+     * Replace the role assigned to a user.
+     * <p>
+     * The join table allows several roles per user, but the application assigns
+     * exactly one: the existing row is updated rather than a second one added.
+     *
+     * @param user     the user whose role is being set
+     * @param roleName the raw role name (e.g. "ADMIN"), without the "ROLE_" prefix
+     * @return the saved {@link UserRole}
+     * @throws IllegalArgumentException if no role matches the given name
+     */
+    public UserRole setRole(User user, String roleName) {
+        Role role = roleRepository.findByRoleName(roleName)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("The role provided is invalid: " + roleName));
+
+        UserRole userRole = userRoleRepository.findByUser(user)
+                .orElseGet(() -> {
+                    UserRole created = new UserRole();
+                    created.setUser(user);
+                    return created;
+                });
+        userRole.setRole(role);
+
+        log.info("Assigned role '{}' to user with id: {}", roleName, user.getIdUser());
+        return userRoleRepository.save(userRole);
+    }
+
+    /**
      * Get the raw role name assigned to a user, without the "ROLE_" prefix.
      *
      * @param user the user for which to retrieve the role name

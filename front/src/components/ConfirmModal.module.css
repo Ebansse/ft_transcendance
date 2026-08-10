@@ -1,0 +1,65 @@
+/* Le <dialog> natif arrive avec ses propres marges, bordure et fond blanc : on repart de zéro. */
+.dialog {
+  width: min(400px, calc(100vw - 2rem));
+  padding: 1.6rem 1.5rem 1.4rem;
+  margin: auto;
+  color: var(--bone);
+  background: var(--ink-900);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 241, 234, 0.06),
+    0 40px 60px -30px rgba(0, 0, 0, 1);
+}
+
+.dialog[open] {
+  animation: deal-in 320ms var(--ease);
+}
+
+.dialog::backdrop {
+  background: rgba(10, 10, 11, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.title {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.4rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.body {
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.globalError {
+  margin: 0.9rem 0 0;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--red-bright);
+  background: rgba(228, 42, 49, 0.1);
+  border-left: 2px solid var(--red-bright);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.3rem;
+  --btn-padding: 0.6rem 1.1rem;
+  --btn-font-size: 0.9rem;
+}
+
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(-1.2deg) scale(0.97);
+  }
+}
