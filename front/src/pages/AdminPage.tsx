@@ -1,38 +1,44 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { MenuActions } from '../components/MenuActions.tsx'
+import { EditUserModal, type EditUserForm } from '../components/EditUserModal.tsx'
 import { Tableau, type Colonne } from '../components/Tableau.tsx'
 import { GetAllUserPublicProfiles, handleAction, type UserPublicProfileDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './AdminPage.module.css'
 
-/** Actions du menu « … ». Placeholders tant que les routes n'existent pas. */
-const USER_ACTIONS = ['test1', 'test2', 'test3', 'test4']
+const USER_ACTIONS = ['test2', 'test3', 'test4']
 
-const COLUMNS: Colonne<UserPublicProfileDto>[] = [
-  { key: 'userName', header: 'Utilisateur', render: (u) => u.userName },
-  { key: 'email', header: 'E-mail', render: (u) => u.email },
-  { key: 'role', header: 'Rôle', render: (u) => u.role ?? '—' },
-  { key: 'online', header: 'Vu à', render: (u) => formatDate(u.online) },
-  { key: 'id', header: 'Identifiant', render: (u) => u.id },
-  {
-    key: 'actions',
-    header: 'Actions',
-    render: (u) => (
-      <MenuActions
-        ariaLabel={`Actions sur ${u.userName}`}
-        items={USER_ACTIONS.map((action) => ({
-          key: action,
-          label: action,
-          onSelect: () => handleAction(`admin:user:${action}:${u.id}`),
-        }))}
-      />
-    ),
-  },
-]
+/** Les colonnes dépendent du callback d'édition : une fabrique, pas une constante. */
+function buildColumns(onEdit: (row: UserPublicProfileDto) => void): Colonne<UserPublicProfileDto>[] {
+  return [
+    { key: 'userName', header: 'Utilisateur', render: (u) => u.userName },
+    { key: 'email', header: 'E-mail', render: (u) => u.email },
+    { key: 'role', header: 'Rôle', render: (u) => u.role ?? '—' },
+    { key: 'online', header: 'Vu à', render: (u) => formatDate(u.online) },
+    { key: 'id', header: 'Identifiant', render: (u) => u.id },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (u) => (
+        <MenuActions
+          ariaLabel={`Actions sur ${u.userName}`}
+          items={[
+            { key: 'edit', label: 'Edit', onSelect: () => onEdit(u) },
+            ...USER_ACTIONS.map((action) => ({
+              key: action,
+              label: action,
+              onSelect: () => handleAction(`admin:user:${action}:${u.id}`),
+            })),
+          ]}
+        />
+      ),
+    },
+  ]
+}
 
 /** Les dates viennent du back en ISO (Instant Java) ; null tant que jamais connecté. */
 function formatDate(value: string | null) {
@@ -53,6 +59,10 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   const [users, setUsers] = useState<UserPublicProfileDto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Le compte en cours d'édition ; `null` = modale fermée.
+  const [editing, setEditing] = useState<UserPublicProfileDto | null>(null)
+
+  const columns = useMemo(() => buildColumns(setEditing), [])
 
   useEffect(() => {
     if (!isAdmin) return
@@ -79,6 +89,12 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     }
   }, [isAdmin])
 
+  /** Partie UI seulement : l'appel au back (POST + rechargement) viendra ensuite. */
+  const saveUser = (idUser: string, values: EditUserForm) => {
+    handleAction(`admin:user:save:${idUser}:${JSON.stringify(values)}`)
+    setEditing(null)
+  }
+
   return (
     <AppLayout current="nav:admin" onNavigate={onNavigate}>
       <PageHeader
@@ -101,12 +117,18 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
           {!loading && !error && (
             <Tableau
               caption="Liste de tous les comptes enregistrés"
-              columns={COLUMNS}
+              columns={columns}
               rows={users}
               rowKey={(u) => u.id}
               emptyText="Aucun compte enregistré."
             />
           )}
+
+          <EditUserModal
+            user={editing}
+            onClose={() => setEditing(null)}
+            onSave={saveUser}
+          />
         </section>
       )}
     </AppLayout>
