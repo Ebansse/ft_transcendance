@@ -1,44 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
-import { GetUserPublicProfile } from '../lib/actions.ts'
+import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
+import { getMyProfile } from '../lib/actions.ts'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
-import { api, ApiError } from '../lib/apiClient.ts'
+import { api } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
 import type { AuthMode } from './authModalContext.ts'
 
-export type SignupForm = {
-  userName: string
-  email: string
-  password: string
-  confirmedPassword: string
-}
-
-export type LoginForm = {
-  email: string
-  password: string
-}
-
-const EMPTY_SIGNUP: SignupForm = { userName: '', email: '', password: '', confirmedPassword: '' }
-const EMPTY_LOGIN: LoginForm = { email: '', password: '' }
-
 /**
- * Détient l'état d'authentification et parle au back. La modale n'est qu'une vue :
- * elle reçoit tout par props, ce qui la garde testable et sans logique réseau.
- * Contient aussi l'etat de session.
+ * Détient la session et parle au back. La modale garde ses propres champs et ses
+ * erreurs : elle ne reçoit d'ici que de quoi s'ouvrir et de quoi envoyer.
  */
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [mode, setMode] = useState<AuthMode>('login')
   const [user, setUser] = useState<UserPublicProfileDto | null>(null)
+  // Tant que la session n'est pas vérifiée, l'UI n'affiche ni « connecté » ni « invité ».
   const [authChecked, setAuthChecked] = useState(false)
 
-  const isLoggedIn = user !== null
-
-  // Persistance de session
+  // Restauration de session : le cookie httpOnly survit au rechargement de la page.
   useEffect(() => {
     let cancelled = false
-    GetUserPublicProfile()
+    getMyProfile()
       .then((me) => {
         if (!cancelled) setUser(me)
       })
@@ -53,94 +37,46 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const [signup, setSignup] = useState<SignupForm>(EMPTY_SIGNUP)
-  const [login, setLogin] = useState<LoginForm>(EMPTY_LOGIN)
-
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [globalError, setGlobalError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
-
-  const clearErrors = () => {
-    setFieldErrors({})
-    setGlobalError(null)
-  }
-
   const openModal = useCallback((next: AuthMode = 'login') => {
-    clearErrors()
     setMode(next)
     setIsOpen(true)
   }, [])
 
-  const closeModal = useCallback(() => {
-    setIsOpen(false)
-    clearErrors()
-  }, [])
+  const closeModal = useCallback(() => setIsOpen(false), [])
 
-  const switchMode = useCallback((next: AuthMode) => {
-    clearErrors()
-    setMode(next)
-  }, [])
-
-  /** Traduit une erreur réseau en messages affichables sous les champs concernés. */
-  const reportError = (err: unknown) => {
-    if (err instanceof ApiError) {
-      if (Object.keys(err.fieldErrors).length > 0) {
-        setFieldErrors(err.fieldErrors)
-        return
-      }
-      // Le back répond "Invalid credentials" en anglais et sans détail.
-      setGlobalError(err.status === 401 ? 'Email ou mot de passe incorrect.' : err.message)
-      return
+  const logout = useCallback(async () => {
+    try {
+      await api.post<string>('/auth/logout')
+    } finally {
+      setUser(null)
     }
-    setGlobalError('Erreur inconnue.')
-  }
+  }, [])
 
-  const submitLogin = async (credentials: LoginForm) => {
-    await api.post<string>('/auth/login', credentials)
-    setUser(await GetUserPublicProfile())
-    setSignup(EMPTY_SIGNUP)
-    setLogin(EMPTY_LOGIN)
+  /** Ouvre la session : le back pose les cookies, on lit le profil dans la foulée. */
+  const login = async (values: LoginForm) => {
+    await api.post<string>('/auth/login', values)
+    setUser(await getMyProfile())
     setIsOpen(false)
   }
 
-  const handleSignup = async (event: React.FormEvent) => {
-    event.preventDefault()
-    clearErrors()
-
-    // Validation front (le back revalide) : la confirmation ne lui est pas envoyée.
-    if (signup.password !== signup.confirmedPassword) {
-      setFieldErrors({ confirmedPassword: 'Les mots de passe ne correspondent pas.' })
-      return
-    }
-
-    setPending(true)
-    try {
-      await api.post<void>('/auth/register', signup)
-      // /register renvoie un 201 sans cookie : on enchaîne pour ouvrir la session.
-      await submitLogin({ email: signup.email, password: signup.password })
-    } catch (err) {
-      reportError(err)
-    } finally {
-      setPending(false)
-    }
-  }
-
-  const handleLogin = async (event: React.FormEvent) => {
-    event.preventDefault()
-    clearErrors()
-    setPending(true)
-    try {
-      await submitLogin(login)
-    } catch (err) {
-      reportError(err)
-    } finally {
-      setPending(false)
-    }
+  /** /register renvoie un 201 sans cookie : on enchaîne pour ouvrir la session. */
+  const signup = async (values: SignupForm) => {
+    await api.post<void>('/auth/register', values)
+    await login({ email: values.email, password: values.password })
   }
 
   const value = useMemo(
-    () => ({ isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, setMode: switchMode }),
-    [isOpen, mode, isLoggedIn, user, authChecked, openModal, closeModal, switchMode],
+    () => ({
+      isOpen,
+      mode,
+      isLoggedIn: user !== null,
+      user,
+      authChecked,
+      openModal,
+      closeModal,
+      logout,
+    }),
+    [isOpen, mode, user, authChecked, openModal, closeModal, logout],
   )
 
   return (
@@ -149,17 +85,10 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       <AuthModal
         isOpen={isOpen}
         mode={mode}
-        signup={signup}
-        login={login}
-        fieldErrors={fieldErrors}
-        globalError={globalError}
-        pending={pending}
-        onSignupChange={(field, val) => setSignup((prev) => ({ ...prev, [field]: val }))}
-        onLoginChange={(field, val) => setLogin((prev) => ({ ...prev, [field]: val }))}
-        onSignupSubmit={handleSignup}
-        onLoginSubmit={handleLogin}
-        onModeChange={switchMode}
+        onModeChange={setMode}
         onClose={closeModal}
+        onSignup={signup}
+        onLogin={login}
       />
     </AuthModalContext.Provider>
   )

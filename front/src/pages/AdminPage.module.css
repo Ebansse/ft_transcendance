@@ -1,0 +1,22 @@
+/* Ce qui reste propre à l'admin : le message de refus et les états de chargement.
+   L'en-tête, le titre de section et le tableau viennent de composants partagés. */
+
+.denied {
+  composes: riseIn from '../style/page.module.css';
+
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 480ms;
+}
+
+.state {
+  composes: riseIn from '../style/page.module.css';
+
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 640ms;
+}

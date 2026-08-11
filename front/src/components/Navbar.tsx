@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { Button } from './Button.tsx'
+import { useAuthModal } from '../auth/authModalContext.ts'
 import s from './Navbar.module.css'
 
 type NavbarProps = {
@@ -10,11 +12,20 @@ type NavbarProps = {
 }
 
 export function Navbar({ title, leading, action }: NavbarProps) {
+  const { isLoggedIn, logout } = useAuthModal()
+
   return (
     <nav className={s.navbar}>
       <div className={s.side}>{leading}</div>
       <h1 className={s.title}>{title}</h1>
-      <div className={`${s.side} ${s.sideEnd}`}>{action}</div>
+      <div className={`${s.side} ${s.sideEnd}`}>
+        {action}
+        {isLoggedIn && (
+          <Button variant="ghost" onClick={() => void logout()}>
+            Déconnexion
+          </Button>
+        )}
+      </div>
     </nav>
   )
 }

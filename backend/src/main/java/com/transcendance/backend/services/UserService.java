@@ -1,5 +1,6 @@
 package com.transcendance.backend.services;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,10 +48,34 @@ public class UserService {
         return userRepository.findById(idUser);
     }
 
+    // Method to fetch every user stored in the database (SELECT * FROM users)
+    public List<User> getAllUsers() {
+        Log.debug("Fetching all users");
+        return userRepository.findAll();
+    }
+
     // Method to check if the provided password matches the stored password for the user
     public boolean checkPassword(User user, String rawPassword) {
         Log.debug("Checking password for user: {}", user.getEmail());
         return securityConfig.passwordEncoder().matches(rawPassword, user.getPassword());
+    }
+
+    // Method to check if a user with the given username already exists
+    public Optional<User> getUserByUserName(String userName) {
+        Log.debug("Fetching user by username: {}", userName);
+        return userRepository.findByUserName(userName);
+    }
+
+    // Method to persist an already existing user (no password re-encoding)
+    public User saveUser(User user) {
+        Log.debug("Saving user with id: {}", user.getIdUser());
+        return userRepository.save(user);
+    }
+
+    // Method to remove a user (DELETE FROM users WHERE id_user = ...)
+    public void deleteUser(User user) {
+        Log.debug("Deleting user with id: {}", user.getIdUser());
+        userRepository.delete(user);
     }
 
     // Method to create and save a new user

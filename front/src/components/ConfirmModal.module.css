@@ -1,0 +1,35 @@
+/* Ce qui est propre à la demande de confirmation : une boîte plus étroite, un
+   titre plus discret et un corps de texte. Le reste vient de la coquille partagée. */
+
+.dialog {
+  composes: shell from '../style/dialog.module.css';
+
+  width: min(400px, calc(100vw - 2rem));
+  padding: 1.6rem 1.5rem 1.4rem;
+}
+
+.title {
+  composes: title from '../style/dialog.module.css';
+
+  margin: 0 0 0.9rem;
+  font-size: 1.4rem;
+}
+
+.body {
+  font-size: 0.92rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--mute);
+}
+
+.globalError {
+  composes: globalError from '../style/dialog.module.css';
+
+  margin: 0.9rem 0 0;
+}
+
+.actions {
+  composes: actions from '../style/dialog.module.css';
+
+  margin-top: 1.3rem;
+}

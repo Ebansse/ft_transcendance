@@ -13,6 +13,7 @@ import lombok.Setter;
 public class UserPublicProfileDto {
         private UUID            id;
         private String          userName;
+        private String          email;
         private Instant         online;
         private String          avatarUrl;
         private String          role;

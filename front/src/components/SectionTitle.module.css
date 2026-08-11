@@ -1,0 +1,35 @@
+/* Titre de section : label en chasse fixe suivi d'un filet qui se trace. */
+
+.sectionTitle {
+  composes: riseIn from '../style/page.module.css';
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0 0 1.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red-bright);
+  animation-duration: 520ms;
+  animation-delay: 600ms;
+}
+
+/* `composes` ne marche que sur une classe simple : le filet garde donc son
+   propre keyframe, local à ce module. */
+.sectionTitle::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+  transform-origin: left center;
+  animation: draw-line 900ms var(--ease) 700ms both;
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+  }
+}

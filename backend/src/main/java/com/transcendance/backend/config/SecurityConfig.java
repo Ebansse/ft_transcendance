@@ -27,7 +27,7 @@ public class SecurityConfig {
                     "/api/auth/logout",
                     "/hello"
                 ).permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().hasRole("ADMIN")
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
