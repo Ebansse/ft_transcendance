@@ -1,5 +1,6 @@
 package com.transcendance.backend.controller;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -7,12 +8,14 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.dto.FriendListDto;
 import com.transcendance.backend.dto.UserNameRequestDto;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.FriendListService;
@@ -70,5 +73,64 @@ public class FriendListController {
             return ResponseEntity.status(400).body(Map.of("error", "Failed to accept friend request"));
         }
     }
-}
 
+    @PostMapping("/{idUser}/decline")
+    public ResponseEntity<?> declineFriendRequest(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.declineFriendRequest(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to decline friend request: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to decline friend request"));
+        }
+    }
+
+    @PostMapping("/{idUser}/delete")
+    public ResponseEntity<?> deleteFriend(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.deleteFriend(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to delete friend: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to delete friend"));
+        }
+    }
+
+    @PostMapping("/{idUser}/block")
+    public ResponseEntity<?> blockUser(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.blockFriend(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to block user: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to block user"));
+        }
+    }
+
+    @GetMapping("me/list")
+    public ResponseEntity<?> getFriendList(@AuthenticationPrincipal User user) {
+
+        if (user == null) {
+            log.warn("Friend request failed: Username is null");
+            return ResponseEntity.status(401).body(Map.of("error", "Username is null"));
+        }
+    
+        List<FriendListDto> friendList = friendListService.getFriendList(user);
+        return ResponseEntity.ok(friendList);
+    }
+}
