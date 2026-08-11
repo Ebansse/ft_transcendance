@@ -21,7 +21,6 @@ type AppLayoutProps = {
  */
 export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const { openModal, isLoggedIn, authChecked } = useAuthModal()
 
   return (
     <div className={s.shell}>
@@ -38,22 +37,7 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
             </Button>
           </span>
         }
-        action={
-          // Tant que la session n'est pas vérifiée, on n'affiche rien : sinon un
-          // utilisateur connecté verrait « Se connecter » clignoter à chaque F5.
-          !authChecked ? null : isLoggedIn ? (
-            <AuthStatus />
-          ) : (
-            <>
-              <Button variant="ghost" onClick={() => openModal('login')}>
-                Se connecter
-              </Button>
-              <Button variant="primary" onClick={() => openModal('signup')}>
-                S'inscrire
-              </Button>
-            </>
-          )
-        }
+        action={<SessionActions />}
       />
 
       <div className={s.body}>
@@ -74,5 +58,26 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
 
       <Footer />
     </div>
+  )
+}
+
+/** Coin droit de la navbar : pastille de session, ou invitations à se connecter. */
+function SessionActions() {
+  const { openModal, isLoggedIn, authChecked } = useAuthModal()
+
+  // Tant que la session n'est pas vérifiée on n'affiche rien : sinon un
+  // utilisateur connecté verrait « Se connecter » clignoter à chaque F5.
+  if (!authChecked) return null
+  if (isLoggedIn) return <AuthStatus />
+
+  return (
+    <>
+      <Button variant="ghost" onClick={() => openModal('login')}>
+        Se connecter
+      </Button>
+      <Button variant="primary" onClick={() => openModal('signup')}>
+        S'inscrire
+      </Button>
+    </>
   )
 }

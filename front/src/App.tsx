@@ -3,28 +3,25 @@ import { AdminPage } from './pages/AdminPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { handleAction } from './lib/actions.ts'
 
-/** Actions de la sidebar qui ont une vraie page. Le reste retombe sur handleAction. */
-const ROUTES = ['nav:home', 'nav:admin'] as const
+/** Routeur maison : une action de sidebar par page. Ajouter une page = une ligne. */
+const PAGES = {
+  'nav:home': HomePage,
+  'nav:admin': AdminPage,
+}
 
-type Route = (typeof ROUTES)[number]
+type Route = keyof typeof PAGES
 
 function App() {
   const [route, setRoute] = useState<Route>('nav:home')
 
   const navigate = (action: string) => {
-    if ((ROUTES as readonly string[]).includes(action)) {
-      setRoute(action as Route)
-      return
-    }
-    // Onglets pas encore implémentés : on garde le log en attendant leur page.
-    handleAction(action)
+    // Les onglets qui n'ont pas encore de page se contentent du log.
+    if (action in PAGES) setRoute(action as Route)
+    else handleAction(action)
   }
 
-  return route === 'nav:admin' ? (
-    <AdminPage onNavigate={navigate} />
-  ) : (
-    <HomePage onNavigate={navigate} />
-  )
+  const Page = PAGES[route]
+  return <Page onNavigate={navigate} />
 }
 
 export default App

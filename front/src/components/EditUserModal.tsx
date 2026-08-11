@@ -1,53 +1,41 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './Button.tsx'
-import type { UserPublicProfileDto } from '../lib/actions.ts'
+import { useDialog } from './useDialog.ts'
+import type { UpdateUserPayload, UserPublicProfileDto } from '../lib/actions.ts'
 import s from './EditUserModal.module.css'
 
-/** Ce que l'admin peut réellement changer. L'UUID est affiché mais jamais éditable. */
-export type EditUserForm = {
-  email: string
-  userName: string
-  role: string
-}
+/** Les rôles connus du back, et le libellé montré dans le select. */
+const ROLES = [
+  { value: 'USER', label: 'User' },
+  { value: 'ADMIN', label: 'Admin' },
+]
 
-const ROLES = ['USER', 'ADMIN']
+const EMPTY_FORM: UpdateUserPayload = { userName: '', email: '', role: 'USER' }
 
 type EditUserModalProps = {
   /** Le compte à éditer, ou `null` quand la modale est fermée. */
   user: UserPublicProfileDto | null
-  /** Requête d'enregistrement en cours : on verrouille le bouton. */
+  /** Requête d'enregistrement en cours : on verrouille les boutons. */
   pending?: boolean
   /** Refus du back (e-mail déjà pris, rôle inconnu…) ; la modale reste ouverte. */
   error?: string | null
   onClose: () => void
-  onSave: (idUser: string, values: EditUserForm) => void
+  onSave: (idUser: string, values: UpdateUserPayload) => void
 }
 
-/**
- * Modale d'édition d'un compte. Même parti pris que `AuthModal` : le <dialog>
- * natif fournit le piège de focus, la fermeture par Échap et l'inertie de la page.
- */
+/** Modale d'édition d'un compte. L'UUID y est affiché mais jamais éditable :
+ *  c'est la clé avec laquelle le back retrouve le compte. */
 export function EditUserModal({ user, pending = false, error, onClose, onSave }: EditUserModalProps) {
-  const ref = useRef<HTMLDialogElement>(null)
-  const [form, setForm] = useState<EditUserForm>({ email: '', userName: '', role: 'USER' })
+  const dialog = useDialog(user !== null, '#edit-user-name', onClose)
+  const [form, setForm] = useState<UpdateUserPayload>(EMPTY_FORM)
 
+  // On repart des valeurs du compte à chaque ouverture, sinon la modale rouvrirait
+  // sur les saisies abandonnées du compte précédent.
   useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-
-    if (!user) {
-      if (dialog.open) dialog.close()
-      return
-    }
-
-    // Pré-remplissage : on repart des valeurs du compte à chaque ouverture, sinon
-    // la modale rouvrirait sur les saisies abandonnées du compte précédent.
-    setForm({ email: user.email, userName: user.userName, role: user.role ?? 'USER' })
-    if (!dialog.open) dialog.showModal()
-    dialog.querySelector('input')?.focus()
+    if (user) setForm({ userName: user.userName, email: user.email, role: user.role ?? 'USER' })
   }, [user])
 
-  const update = (field: keyof EditUserForm, value: string) => {
+  const update = (field: keyof UpdateUserPayload, value: string) => {
     setForm((previous) => ({ ...previous, [field]: value }))
   }
 
@@ -57,16 +45,7 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
   }
 
   return (
-    <dialog
-      ref={ref}
-      className={s.dialog}
-      aria-labelledby="edit-user-title"
-      onClose={onClose}
-      onClick={(event) => {
-        // La cible n'est le <dialog> lui-même que sur un clic dans le fond.
-        if (event.target === ref.current) onClose()
-      }}
-    >
+    <dialog {...dialog} className={s.dialog} aria-labelledby="edit-user-title">
       <div className={s.head}>
         <h2 id="edit-user-title" className={s.title}>
           Modifier le compte
@@ -79,7 +58,6 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
       <form className={s.form} onSubmit={submit} noValidate>
         <div className={s.field}>
           <span className={s.label}>Identifiant</span>
-          {/* Non éditable : c'est la clé utilisée par le back pour retrouver le compte. */}
           <p className={s.readonly}>{user?.id ?? '—'}</p>
         </div>
 
@@ -122,8 +100,8 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
             onChange={(event) => update('role', event.target.value)}
           >
             {ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role === 'ADMIN' ? 'Admin' : 'User'}
+              <option key={role.value} value={role.value}>
+                {role.label}
               </option>
             ))}
           </select>

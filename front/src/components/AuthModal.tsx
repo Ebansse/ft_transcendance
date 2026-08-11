@@ -1,74 +1,123 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './Button.tsx'
+import { useDialog } from './useDialog.ts'
 import type { AuthMode } from '../auth/authModalContext.ts'
-import type { LoginForm, SignupForm } from '../auth/AuthModalProvider.tsx'
+import { ApiError } from '../lib/apiClient.ts'
 import s from './AuthModal.module.css'
+
+export type SignupForm = {
+  userName: string
+  email: string
+  password: string
+  confirmedPassword: string
+}
+
+export type LoginForm = {
+  email: string
+  password: string
+}
+
+const EMPTY_SIGNUP: SignupForm = { userName: '', email: '', password: '', confirmedPassword: '' }
+const EMPTY_LOGIN: LoginForm = { email: '', password: '' }
+
+/** Tout ce qui change d'un onglet à l'autre, rassemblé en un endroit. */
+const WORDING = {
+  signup: {
+    title: 'Rejoindre la table',
+    submit: "S'inscrire",
+    submitting: 'Création…',
+    firstField: '#signup-username',
+  },
+  login: {
+    title: 'Reprendre la partie',
+    submit: 'Se connecter',
+    submitting: 'Connexion…',
+    firstField: '#login-email',
+  },
+}
 
 type AuthModalProps = {
   isOpen: boolean
   mode: AuthMode
-  signup: SignupForm
-  login: LoginForm
-  fieldErrors: Record<string, string>
-  globalError: string | null
-  pending: boolean
-  onSignupChange: (field: keyof SignupForm, value: string) => void
-  onLoginChange: (field: keyof LoginForm, value: string) => void
-  onSignupSubmit: (event: React.FormEvent) => void
-  onLoginSubmit: (event: React.FormEvent) => void
   onModeChange: (mode: AuthMode) => void
   onClose: () => void
+  /** Envoient au back et rejettent avec une `ApiError` s'il refuse : la modale
+   *  reste alors ouverte, avec la saisie encore là et le message sous le champ. */
+  onSignup: (values: SignupForm) => Promise<void>
+  onLogin: (values: LoginForm) => Promise<void>
 }
 
 /**
- * Vue pure. On s'appuie sur le <dialog> natif : il fournit gratuitement le piège
- * de focus, la fermeture par Échap et l'inertie du reste de la page.
+ * Formulaire de connexion / inscription. Il tient ses champs, ses erreurs et son
+ * état d'attente ; le provider ne lui donne que de quoi ouvrir et de quoi envoyer.
  */
-export function AuthModal({
-  isOpen,
-  mode,
-  signup,
-  login,
-  fieldErrors,
-  globalError,
-  pending,
-  onSignupChange,
-  onLoginChange,
-  onSignupSubmit,
-  onLoginSubmit,
-  onModeChange,
-  onClose,
-}: AuthModalProps) {
-  const ref = useRef<HTMLDialogElement>(null)
+export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLogin }: AuthModalProps) {
+  const isSignup = mode === 'signup'
+  const wording = isSignup ? WORDING.signup : WORDING.login
 
+  const dialog = useDialog(isOpen, wording.firstField, onClose)
+
+  const [signup, setSignup] = useState<SignupForm>(EMPTY_SIGNUP)
+  const [login, setLogin] = useState<LoginForm>(EMPTY_LOGIN)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [globalError, setGlobalError] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+
+  // Ouverture, fermeture ou changement d'onglet : on repart sans erreur affichée.
   useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (!isOpen) {
-      if (dialog.open) dialog.close()
-      return
-    }
-    if (!dialog.open) dialog.showModal()
-    // Sans ça showModal() poserait le focus sur la croix de fermeture.
-    dialog.querySelector('input')?.focus()
+    setFieldErrors({})
+    setGlobalError(null)
   }, [isOpen, mode])
 
-  const isSignup = mode === 'signup'
+  /** Traduit le refus du back en messages affichables sous les champs concernés. */
+  const report = (err: unknown) => {
+    if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
+      setFieldErrors(err.fieldErrors)
+    } else if (err instanceof ApiError) {
+      // Le back répond "Invalid credentials" en anglais et sans détail.
+      setGlobalError(err.status === 401 ? 'Email ou mot de passe incorrect.' : err.message)
+    } else {
+      setGlobalError('Erreur inconnue.')
+    }
+  }
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setFieldErrors({})
+    setGlobalError(null)
+
+    // Validation front ; le back revalide de son côté.
+    if (isSignup && signup.password !== signup.confirmedPassword) {
+      setFieldErrors({ confirmedPassword: 'Les mots de passe ne correspondent pas.' })
+      return
+    }
+
+    setPending(true)
+    try {
+      await (isSignup ? onSignup(signup) : onLogin(login))
+      // Session ouverte : on ne garde pas les identifiants dans la modale fermée.
+      setSignup(EMPTY_SIGNUP)
+      setLogin(EMPTY_LOGIN)
+    } catch (err) {
+      report(err)
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const updateSignup = (field: keyof SignupForm, value: string) => {
+    setSignup((previous) => ({ ...previous, [field]: value }))
+  }
+
+  const updateLogin = (field: keyof LoginForm, value: string) => {
+    setLogin((previous) => ({ ...previous, [field]: value }))
+  }
 
   return (
-    <dialog
-      ref={ref}
-      className={s.dialog}
-      aria-labelledby="auth-modal-title"
-      onClose={onClose}
-      onClick={(event) => {
-        // La cible n'est le <dialog> lui-même que sur un clic dans le fond.
-        if (event.target === ref.current) onClose()
-      }}
-    >
+    <dialog {...dialog} className={s.dialog} aria-labelledby="auth-modal-title">
       <div className={s.head}>
         <h2 id="auth-modal-title" className={s.title}>
-          {isSignup ? 'Rejoindre la table' : 'Reprendre la partie'}
+          {wording.title}
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
           ✕
@@ -76,117 +125,105 @@ export function AuthModal({
       </div>
 
       <div className={s.tabs} role="tablist" aria-label="Mode d'authentification">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={!isSignup}
-          className={isSignup ? s.tab : `${s.tab} ${s.tabActive}`}
-          onClick={() => onModeChange('login')}
-        >
-          Connexion
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={isSignup}
-          className={isSignup ? `${s.tab} ${s.tabActive}` : s.tab}
-          onClick={() => onModeChange('signup')}
-        >
-          Inscription
-        </button>
+        <Tab label="Connexion" selected={!isSignup} onSelect={() => onModeChange('login')} />
+        <Tab label="Inscription" selected={isSignup} onSelect={() => onModeChange('signup')} />
       </div>
 
-      {isSignup ? (
-        <form className={s.form} onSubmit={onSignupSubmit} noValidate>
-          <Field
-            id="signup-username"
-            label="Nom d'utilisateur"
-            value={signup.userName}
-            error={fieldErrors.userName}
-            onChange={(value) => onSignupChange('userName', value)}
-            autoComplete="username"
-            required
-          />
-          <Field
-            id="signup-email"
-            label="Email"
-            type="email"
-            value={signup.email}
-            error={fieldErrors.email}
-            onChange={(value) => onSignupChange('email', value)}
-            autoComplete="email"
-            required
-          />
-          <Field
-            id="signup-password"
-            label="Mot de passe"
-            type="password"
-            value={signup.password}
-            error={fieldErrors.password}
-            onChange={(value) => onSignupChange('password', value)}
-            autoComplete="new-password"
-            required
-          />
-          <Field
-            id="signup-confirm"
-            label="Confirmer le mot de passe"
-            type="password"
-            value={signup.confirmedPassword}
-            error={fieldErrors.confirmedPassword}
-            onChange={(value) => onSignupChange('confirmedPassword', value)}
-            autoComplete="new-password"
-            required
-          />
+      <form className={s.form} onSubmit={submit} noValidate>
+        {isSignup ? (
+          <>
+            <Field
+              id="signup-username"
+              label="Nom d'utilisateur"
+              value={signup.userName}
+              error={fieldErrors.userName}
+              onChange={(value) => updateSignup('userName', value)}
+              autoComplete="username"
+            />
+            <Field
+              id="signup-email"
+              label="Email"
+              type="email"
+              value={signup.email}
+              error={fieldErrors.email}
+              onChange={(value) => updateSignup('email', value)}
+              autoComplete="email"
+            />
+            <Field
+              id="signup-password"
+              label="Mot de passe"
+              type="password"
+              value={signup.password}
+              error={fieldErrors.password}
+              onChange={(value) => updateSignup('password', value)}
+              autoComplete="new-password"
+            />
+            <Field
+              id="signup-confirm"
+              label="Confirmer le mot de passe"
+              type="password"
+              value={signup.confirmedPassword}
+              error={fieldErrors.confirmedPassword}
+              onChange={(value) => updateSignup('confirmedPassword', value)}
+              autoComplete="new-password"
+            />
+          </>
+        ) : (
+          <>
+            <Field
+              id="login-email"
+              label="Email"
+              type="email"
+              value={login.email}
+              error={fieldErrors.email}
+              onChange={(value) => updateLogin('email', value)}
+              autoComplete="email"
+            />
+            <Field
+              id="login-password"
+              label="Mot de passe"
+              type="password"
+              value={login.password}
+              error={fieldErrors.password}
+              onChange={(value) => updateLogin('password', value)}
+              autoComplete="current-password"
+            />
+          </>
+        )}
 
-          {globalError && (
-            <p className={s.globalError} role="alert">
-              {globalError}
-            </p>
-          )}
+        {globalError && (
+          <p className={s.globalError} role="alert">
+            {globalError}
+          </p>
+        )}
 
-          <div className={s.submit}>
-            <Button type="submit" variant="primary" fullWidth disabled={pending}>
-              {pending ? 'Création…' : "S'inscrire"}
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <form className={s.form} onSubmit={onLoginSubmit} noValidate>
-          <Field
-            id="login-email"
-            label="Email"
-            type="email"
-            value={login.email}
-            error={fieldErrors.email}
-            onChange={(value) => onLoginChange('email', value)}
-            autoComplete="email"
-            required
-          />
-          <Field
-            id="login-password"
-            label="Mot de passe"
-            type="password"
-            value={login.password}
-            error={fieldErrors.password}
-            onChange={(value) => onLoginChange('password', value)}
-            autoComplete="current-password"
-            required
-          />
-
-          {globalError && (
-            <p className={s.globalError} role="alert">
-              {globalError}
-            </p>
-          )}
-
-          <div className={s.submit}>
-            <Button type="submit" variant="primary" fullWidth disabled={pending}>
-              {pending ? 'Connexion…' : 'Se connecter'}
-            </Button>
-          </div>
-        </form>
-      )}
+        <div className={s.submit}>
+          <Button type="submit" variant="primary" fullWidth disabled={pending}>
+            {pending ? wording.submitting : wording.submit}
+          </Button>
+        </div>
+      </form>
     </dialog>
+  )
+}
+
+type TabProps = {
+  label: string
+  selected: boolean
+  onSelect: () => void
+}
+
+function Tab({ label, selected, onSelect }: TabProps) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={selected}
+      className={selected ? `${s.tab} ${s.tabActive}` : s.tab}
+      onClick={onSelect}
+    >
+      {label}
+    </button>
   )
 }
 
@@ -198,10 +235,9 @@ type FieldProps = {
   type?: string
   error?: string
   autoComplete?: string
-  required?: boolean
 }
 
-function Field({ id, label, value, onChange, type = 'text', error, autoComplete, required }: FieldProps) {
+function Field({ id, label, value, onChange, type = 'text', error, autoComplete }: FieldProps) {
   return (
     <div className={s.field}>
       <label className={s.label} htmlFor={id}>
@@ -212,7 +248,7 @@ function Field({ id, label, value, onChange, type = 'text', error, autoComplete,
         className={error ? `${s.input} ${s.inputError}` : s.input}
         type={type}
         value={value}
-        required={required}
+        required
         autoComplete={autoComplete}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : undefined}

@@ -1,40 +1,45 @@
-import { api } from "./apiClient"
+import { api } from './apiClient.ts'
 
+/** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
 export function handleAction(action: string) {
   console.log(`[action] ${action}`)
 }
 
+/** Miroir du `UserPublicProfileDto` du back. `online` est un `Instant` Java,
+ *  donc une date ISO — `null` tant que le compte ne s'est jamais connecté. */
 export type UserPublicProfileDto = {
-  id: string,
-  userName: string,
-  email: string,
-  online: string,
-  avatarUrl: string,
-  role: string | null,
-  //private UserStatsDto    stats;
+  id: string
+  userName: string
+  email: string
+  online: string | null
+  avatarUrl: string | null
+  role: string | null
 }
 
-export function GetUserPublicProfile() {
-  return api.get<UserPublicProfileDto>("/users/me")
-}
-
-/** Liste tous les comptes : le back réserve la route aux ADMIN. */
-export function GetAllUserPublicProfiles() {
-  return api.get<UserPublicProfileDto[]>("/users")
-}
-
+/** Les trois champs qu'un ADMIN peut réécrire sur un compte. */
 export type UpdateUserPayload = {
-  userName: string,
-  email: string,
-  role: string,
+  userName: string
+  email: string
+  role: string
 }
 
-/** Écrase pseudo, e-mail et rôle d'un compte ; renvoie le profil à jour. Réservé aux ADMIN. */
-export function UpdateUser(idUser: string, payload: UpdateUserPayload) {
+/** Profil de l'utilisateur connecté, identifié par son cookie. */
+export function getMyProfile() {
+  return api.get<UserPublicProfileDto>('/users/me')
+}
+
+/** Tous les comptes : le back réserve la route aux ADMIN. */
+export function getAllUsers() {
+  return api.get<UserPublicProfileDto[]>('/users')
+}
+
+/** Écrase pseudo, e-mail et rôle ; renvoie le profil à jour. Réservé aux ADMIN. */
+export function updateUser(idUser: string, payload: UpdateUserPayload) {
   return api.post<UserPublicProfileDto>(`/users/${idUser}`, payload)
 }
 
-/** Supprime un compte (et ses rôles, tokens et liens d'amitié). Réservé aux ADMIN. */
-export function DeleteUser(idUser: string) {
+/** Supprime un compte (et ses rôles, tokens et liens d'amitié). Réservé aux ADMIN.
+ *  Le back expose cette route en POST, pas en DELETE. */
+export function deleteUser(idUser: string) {
   return api.post<void>(`/users/delete/${idUser}`)
 }

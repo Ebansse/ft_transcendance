@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { Button } from './Button.tsx'
+import { useDialog } from './useDialog.ts'
 import s from './ConfirmModal.module.css'
 
 type ConfirmModalProps = {
@@ -9,6 +9,8 @@ type ConfirmModalProps = {
   /** Ce qu'on s'apprête à faire, en clair : l'action est irréversible. */
   children: ReactNode
   confirmLabel: string
+  /** Ce que dit le bouton pendant la requête. */
+  pendingLabel: string
   /** Requête en cours : on verrouille les deux boutons. */
   pending?: boolean
   error?: string | null
@@ -16,45 +18,23 @@ type ConfirmModalProps = {
   onCancel: () => void
 }
 
-/**
- * Demande de confirmation avant une action destructive. Même parti pris que les
- * autres modales : le <dialog> natif fournit le piège de focus et Échap.
- */
+/** Demande de confirmation avant une action destructive. */
 export function ConfirmModal({
   open,
   title,
   children,
   confirmLabel,
+  pendingLabel,
   pending = false,
   error,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  const ref = useRef<HTMLDialogElement>(null)
-
-  useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-
-    if (!open) {
-      if (dialog.open) dialog.close()
-      return
-    }
-    if (!dialog.open) dialog.showModal()
-    // Le focus part sur « Annuler » : rien de destructif sous la touche Entrée.
-    dialog.querySelector('button')?.focus()
-  }, [open])
+  // Le focus part sur le premier bouton, « Annuler » : rien de destructif sous Entrée.
+  const dialog = useDialog(open, 'button', onCancel)
 
   return (
-    <dialog
-      ref={ref}
-      className={s.dialog}
-      aria-labelledby="confirm-modal-title"
-      onClose={onCancel}
-      onClick={(event) => {
-        if (event.target === ref.current) onCancel()
-      }}
-    >
+    <dialog {...dialog} className={s.dialog} aria-labelledby="confirm-modal-title">
       <h2 id="confirm-modal-title" className={s.title}>
         {title}
       </h2>
@@ -72,7 +52,7 @@ export function ConfirmModal({
           Annuler
         </Button>
         <Button variant="primary" onClick={onConfirm} disabled={pending}>
-          {pending ? 'Suppression…' : confirmLabel}
+          {pending ? pendingLabel : confirmLabel}
         </Button>
       </div>
     </dialog>
