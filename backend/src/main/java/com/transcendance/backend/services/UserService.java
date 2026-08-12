@@ -66,6 +66,12 @@ public class UserService {
         return userRepository.findByUserName(userName);
     }
 
+    // Method to tell whether a username is already taken
+    public boolean isUserNameTaken(String userName) {
+        Log.debug("Checking if username is taken: {}", userName);
+        return userRepository.existsByUserName(userName);
+    }
+
     // Method to persist an already existing user (no password re-encoding)
     public User saveUser(User user) {
         Log.debug("Saving user with id: {}", user.getIdUser());

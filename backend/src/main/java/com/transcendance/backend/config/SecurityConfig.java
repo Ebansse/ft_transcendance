@@ -2,6 +2,7 @@ package com.transcendance.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,18 +21,34 @@ public class SecurityConfig {
 			.formLogin(form -> form.disable())
 			.httpBasic(basic -> basic.disable())
 			.authorizeHttpRequests(auth -> auth
-                .requestMatchers(
+                // --- Public : aucune authentification requise ---
+                .requestMatchers(HttpMethod.POST,
                     "/api/auth/register",
                     "/api/auth/login",
                     "/api/auth/refresh-token",
-                    "/api/auth/logout",
-                    "/hello"
+                    "/api/auth/logout"
                 ).permitAll()
-                .requestMatchers(
-                    "/api/users/**",
-                    "/api/friend-list/**"
+                .requestMatchers(HttpMethod.GET,
+                    "/api/hello"
+                ).permitAll()
+
+                // --- USER et ADMIN ---
+                .requestMatchers(HttpMethod.GET,
+                    "/api/users/me",
+                    "/api/users/{idUser}"
                 ).hasAnyRole("USER", "ADMIN")
-                .anyRequest().hasRole("ADMIN")
+
+                // --- ADMIN uniquement ---
+                .requestMatchers(HttpMethod.GET,
+                    "/api/users"
+                ).hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST,
+                    "/api/users/{idUser}",
+                    "/api/users/delete/{idUser}"
+                ).hasRole("ADMIN")
+
+                // --- Tout le reste est refuse ---
+                .anyRequest().denyAll()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
