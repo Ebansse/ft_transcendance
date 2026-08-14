@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { AdminPage } from './pages/AdminPage.tsx'
+import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { handleAction } from './lib/actions.ts'
 
 /** Routeur maison : une action de sidebar par page. Ajouter une page = une ligne. */
 const PAGES = {
   'nav:home': HomePage,
+  'nav:friends': FriendsPage,
   'nav:admin': AdminPage,
 }
 

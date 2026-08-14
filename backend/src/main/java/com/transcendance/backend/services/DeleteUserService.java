@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.transcendance.backend.model.User;
-import com.transcendance.backend.repository.FriendListRepository;
+// import com.transcendance.backend.repository.FriendListRepository;
 import com.transcendance.backend.repository.RefreshTokenRepository;
 import com.transcendance.backend.repository.UserRoleRepository;
 
@@ -20,7 +20,7 @@ public class DeleteUserService {
     private final UserService userService;
     private final UserRoleRepository userRoleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final FriendListRepository friendListRepository;
+    // private final FriendListRepository friendListRepository;
 
     /**
      * Remove a user and everything hanging off them.
@@ -39,7 +39,7 @@ public class DeleteUserService {
 
         refreshTokenRepository.deleteByUser(user);
         userRoleRepository.deleteByUser(user);
-        friendListRepository.deleteByUserId1OrUserId2(user.getIdUser(), user.getIdUser());
+        // friendListRepository.deleteByUserId1OrUserId2(user.getIdUser(), user.getIdUser());
         userService.deleteUser(user);
 
         log.info("User deleted: {}", user.getIdUser());

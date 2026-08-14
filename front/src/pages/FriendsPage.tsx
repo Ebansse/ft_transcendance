@@ -1,0 +1,320 @@
+import { useCallback, useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import { useAuthModal } from '../auth/authModalContext.ts'
+import { AppLayout } from '../components/AppLayout.tsx'
+import { Button } from '../components/Button.tsx'
+import { MenuActions } from '../components/MenuActions.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
+import { SectionTitle } from '../components/SectionTitle.tsx'
+import { Tableau, type Colonne } from '../components/Tableau.tsx'
+import {
+  acceptFriendRequest,
+  blockUser,
+  declineFriendRequest,
+  deleteFriend,
+  getAllUsers,
+  getFriendList,
+  sendFriendRequest,
+  type FriendListDto,
+} from '../lib/actions.ts'
+import { ApiError } from '../lib/apiClient.ts'
+import s from './FriendsPage.module.css'
+
+/** Une ligne de la liste, complétée de l'UUID que le back attend sur ses routes
+ *  d'action mais ne renvoie pas dans `FriendListDto`. `null` = pseudo introuvable
+ *  dans l'annuaire (compte supprimé entre les deux requêtes) : la ligne
+ *  s'affiche, ses actions restent inertes. */
+type FriendRow = FriendListDto & { idUser: string | null }
+
+/** `createAt` est un `LocalDateTime` Java : une date ISO sans fuseau. */
+function formatDate(value: string | null) {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
+}
+
+function messageOf(err: unknown, fallback: string) {
+  return err instanceof ApiError ? err.message : fallback
+}
+
+/** Recolle l'UUID de chaque contact depuis l'annuaire (`GET /users`).
+ *  À supprimer le jour où `FriendListDto` porte l'id du contact.
+ *
+ *  L'annuaire est réservé aux ADMIN : pour un compte USER il répond 403, et la
+ *  page retombe alors sur une liste consultable mais sans actions. */
+async function loadRows(): Promise<FriendRow[]> {
+  const [list, users] = await Promise.all([getFriendList(), getAllUsers().catch(() => [])])
+  const idByName = new Map(users.map((user) => [user.userName, user.id]))
+
+  return list.map((row) => ({ ...row, idUser: idByName.get(row.userName) ?? null }))
+}
+
+/** Les DECLINED ne s'affichent pas : la ligne survit en base uniquement pour
+ *  qu'une nouvelle demande la réactive. */
+function split(rows: FriendRow[]) {
+  return {
+    friends: rows.filter((row) => row.status === 'ACCEPTED'),
+    pending: rows.filter((row) => row.status === 'PENDING'),
+    blocked: rows.filter((row) => row.status === 'BLOCKED'),
+  }
+}
+
+type FriendsPageProps = {
+  onNavigate: (action: string) => void
+}
+
+export function FriendsPage({ onNavigate }: FriendsPageProps) {
+  const { isLoggedIn, authChecked } = useAuthModal()
+
+  const [rows, setRows] = useState<FriendRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // Pseudo de la ligne dont une action est en vol : seuls ses boutons se figent.
+  const [busy, setBusy] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
+  const [userName, setUserName] = useState('')
+  const [sending, setSending] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formNotice, setFormNotice] = useState<string | null>(null)
+
+  const refresh = useCallback(async () => {
+    setRows(await loadRows())
+  }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn) return
+
+    // Le composant peut être démonté avant la réponse : on ignore alors le résultat.
+    let alive = true
+    setLoading(true)
+    setError(null)
+
+    loadRows()
+      .then((list) => {
+        if (alive) setRows(list)
+      })
+      .catch((err: unknown) => {
+        if (alive) setError(messageOf(err, 'Chargement de la liste d’amis impossible.'))
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+
+    return () => {
+      alive = false
+    }
+  }, [isLoggedIn])
+
+  /** Les routes d'action répondent 200 sans corps : on relit la liste pour
+   *  connaître le nouveau statut plutôt que de le deviner localement. */
+  const run = async (row: FriendRow, action: (id: string) => Promise<void>, fallback: string) => {
+    if (!row.idUser) return
+
+    setBusy(row.userName)
+    setActionError(null)
+    try {
+      await action(row.idUser)
+      await refresh()
+    } catch (err) {
+      setActionError(messageOf(err, fallback))
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  /** Le back n'expose pas de recherche : on ajoute par pseudo exact. */
+  const submitRequest = async (event: FormEvent) => {
+    event.preventDefault()
+    const target = userName.trim()
+    if (!target) return
+
+    setSending(true)
+    setFormError(null)
+    setFormNotice(null)
+    try {
+      await sendFriendRequest(target)
+      setUserName('')
+      setFormNotice(`Demande envoyée à ${target}.`)
+      await refresh()
+    } catch (err) {
+      setFormError(messageOf(err, 'Envoi de la demande impossible.'))
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const { friends, pending, blocked } = split(rows)
+
+  const nameColumn: Colonne<FriendRow> = {
+    key: 'userName',
+    header: 'Utilisateur',
+    render: (row) => row.userName,
+  }
+
+  const dateColumn = (header: string): Colonne<FriendRow> => ({
+    key: 'createAt',
+    header,
+    render: (row) => formatDate(row.createAt),
+  })
+
+  const friendColumns: Colonne<FriendRow>[] = [
+    nameColumn,
+    dateColumn('Ami depuis'),
+    {
+      key: 'actions',
+      header: 'Actions',
+      // Sans id résolu, le back n'a aucune route à appeler : pas de menu du tout.
+      render: (row) =>
+        row.idUser ? (
+          <MenuActions
+            ariaLabel={`Actions sur ${row.userName}`}
+            items={[
+              {
+                key: 'delete',
+                label: 'Retirer',
+                onSelect: () => run(row, deleteFriend, 'Suppression impossible.'),
+              },
+              {
+                key: 'block',
+                label: 'Bloquer',
+                onSelect: () => run(row, blockUser, 'Blocage impossible.'),
+              },
+            ]}
+          />
+        ) : (
+          '—'
+        ),
+    },
+  ]
+
+  const pendingColumns: Colonne<FriendRow>[] = [
+    nameColumn,
+    dateColumn('Depuis le'),
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className={s.rowActions}>
+          <Button
+            variant="primary"
+            disabled={busy === row.userName || !row.idUser}
+            onClick={() => run(row, acceptFriendRequest, 'Acceptation impossible.')}
+          >
+            Accepter
+          </Button>
+          <Button
+            disabled={busy === row.userName || !row.idUser}
+            onClick={() => run(row, declineFriendRequest, 'Refus impossible.')}
+          >
+            Refuser
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={busy === row.userName || !row.idUser}
+            onClick={() => run(row, blockUser, 'Blocage impossible.')}
+          >
+            Bloquer
+          </Button>
+        </div>
+      ),
+    },
+  ]
+
+  const blockedColumns: Colonne<FriendRow>[] = [nameColumn, dateColumn('Bloqué le')]
+
+  return (
+    <AppLayout current="nav:friends" onNavigate={onNavigate}>
+      <PageHeader
+        title="Amis"
+        subtitle="Tes amis, tes demandes en attente et les comptes que tu as bloqués."
+      />
+
+      {/* Tant que la session n'est pas vérifiée, on n'affiche ni liste ni refus. */}
+      {!authChecked ? null : !isLoggedIn ? (
+        <p className={s.denied}>Connecte-toi pour voir ta liste d’amis.</p>
+      ) : (
+        <>
+          <section aria-labelledby="friends-add-title">
+            <SectionTitle id="friends-add-title">Ajouter un ami</SectionTitle>
+            <form className={s.form} onSubmit={submitRequest}>
+              <label className={s.label} htmlFor="friend-username">
+                Pseudo exact du joueur
+              </label>
+              <div className={s.formRow}>
+                <input
+                  id="friend-username"
+                  className={s.input}
+                  type="text"
+                  value={userName}
+                  autoComplete="off"
+                  placeholder="pseudo"
+                  onChange={(event) => setUserName(event.target.value)}
+                />
+                <Button type="submit" variant="primary" disabled={sending || !userName.trim()}>
+                  {sending ? 'Envoi…' : 'Envoyer la demande'}
+                </Button>
+              </div>
+              {formError && <p className={s.error}>{formError}</p>}
+              {formNotice && <p className={s.notice}>{formNotice}</p>}
+            </form>
+          </section>
+
+          {loading && <p className={s.state}>Chargement de la liste…</p>}
+          {error && <p className={s.error}>{error}</p>}
+          {actionError && <p className={s.error}>{actionError}</p>}
+
+          {!loading && !error && (
+            <>
+              <section className={s.section} aria-labelledby="friends-pending-title">
+                <SectionTitle id="friends-pending-title">
+                  Demandes en attente ({pending.length})
+                </SectionTitle>
+                {/* Le back ne dit pas qui a envoyé la demande : reçues et envoyées
+                    sont dans le même tableau. « Accepter » n'a d'effet que sur une
+                    demande reçue, « Refuser » annule aussi une demande envoyée. */}
+                <p className={s.hint}>
+                  Demandes reçues et envoyées confondues. « Accepter » ne fonctionne que sur une
+                  demande reçue.
+                </p>
+                <Tableau
+                  caption="Demandes d’amis en attente de réponse"
+                  columns={pendingColumns}
+                  rows={pending}
+                  rowKey={(row) => row.userName}
+                  emptyText="Aucune demande en attente."
+                />
+              </section>
+
+              <section className={s.section} aria-labelledby="friends-list-title">
+                <SectionTitle id="friends-list-title">Amis ({friends.length})</SectionTitle>
+                <Tableau
+                  caption="Liste de tes amis"
+                  columns={friendColumns}
+                  rows={friends}
+                  rowKey={(row) => row.userName}
+                  emptyText="Pas encore d’ami. Ajoute quelqu’un par son pseudo."
+                />
+              </section>
+
+              {blocked.length > 0 && (
+                <section className={s.section} aria-labelledby="friends-blocked-title">
+                  <SectionTitle id="friends-blocked-title">Bloqués ({blocked.length})</SectionTitle>
+                  <p className={s.hint}>Le déblocage n’est pas encore exposé par le serveur.</p>
+                  <Tableau
+                    caption="Comptes que tu as bloqués"
+                    columns={blockedColumns}
+                    rows={blocked}
+                    rowKey={(row) => row.userName}
+                    emptyText="Aucun compte bloqué."
+                  />
+                </section>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </AppLayout>
+  )
+}

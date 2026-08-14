@@ -35,7 +35,15 @@ public class SecurityConfig {
                 // --- USER et ADMIN ---
                 .requestMatchers(HttpMethod.GET,
                     "/api/users/me",
-                    "/api/users/{idUser}"
+                    "/api/users/{idUser}",
+                    "/api/friend-list/me/list"
+                ).hasAnyRole("USER", "ADMIN")
+                .requestMatchers(HttpMethod.POST,
+                    "/api/friend-list/send-request",
+                    "/api/friend-list/{idUser}/accept",
+                    "/api/friend-list/{idUser}/decline",
+                    "/api/friend-list/{idUser}/delete",
+                    "/api/friend-list/{idUser}/block"
                 ).hasAnyRole("USER", "ADMIN")
 
                 // --- ADMIN uniquement ---
