@@ -12,6 +12,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,6 +20,8 @@ import com.transcendance.backend.config.AvatarProperties;
 
 @Service
 public class AvatarStorageService {
+
+    private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(AvatarStorageService.class);
 
     private static final Set<String> ALLOWED_FORMATS = Set.of("png", "jpeg", "jpg");
 
@@ -74,13 +77,12 @@ public class AvatarStorageService {
 
         Path target = Path.of(avatarProperties.getStorageDir()).resolve(filename).normalize();
         try {
-            // TODO 4: delete the file if it exists (one line, Files.___)
+            Files.deleteIfExists(target);
         } catch (IOException e) {
-            // TODO 5: log a warning, do NOT rethrow the exception
-            // (why? think about it before step 3: where is delete() called from?)
+            log.warn("Failed to delete avatar file: {}", filename, e);
         }
     }
-
+    
     /**
      * Actually decodes the file to determine its real image format,
      * never trusting the filename extension or the Content-Type declared by the client.
@@ -91,18 +93,19 @@ public class AvatarStorageService {
 
             Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
             if (!readers.hasNext()) {
-                throw new IllegalArgumentException("Le fichier n'est pas une image valide.");
+                throw new IllegalArgumentException("The file is not a valid image.");
             }
 
             String format = readers.next().getFormatName().toLowerCase();
 
-            // TODO 6: if `format` is not in ALLOWED_FORMATS, throw IllegalArgumentException
-            //         with a clear message (unsupported type)
+            if (!ALLOWED_FORMATS.contains(format)) {
+                throw new IllegalArgumentException("The image format is not allowed. Allowed formats: " + ALLOWED_FORMATS);
+            }
 
             return format.equals("jpeg") ? "jpg" : format;
 
         } catch (IOException e) {
-            throw new IllegalArgumentException("Fichier illisible.");
+            throw new IllegalArgumentException("Failed to read the image file.", e);
         }
     }
 }
