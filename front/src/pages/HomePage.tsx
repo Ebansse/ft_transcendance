@@ -1,12 +1,8 @@
-import { useState } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
-import { AuthStatus } from '../components/AuthStatus.tsx'
-import { Button } from '../components/Button.tsx'
-import { Footer } from '../components/Footer.tsx'
+import { AppLayout } from '../components/AppLayout.tsx'
 import { GameCard } from '../components/GameCard.tsx'
-import { Navbar } from '../components/Navbar.tsx'
-import { Sidebar } from '../components/Sidebar.tsx'
-import { handleAction } from '../lib/actions.ts'
+import { PageHeader } from '../components/PageHeader.tsx'
+import { SectionTitle } from '../components/SectionTitle.tsx'
 import s from './HomePage.module.css'
 
 const GAMES = [
@@ -33,85 +29,36 @@ const GAMES = [
   },
 ]
 
-export function HomePage() {
-  const [menuOpen, setMenuOpen] = useState(false)
-  const { openModal, isLoggedIn, user, authChecked } = useAuthModal()
+type HomePageProps = {
+  onNavigate: (action: string) => void
+}
 
-  const isAdmin = user?.role === 'ADMIN'
+export function HomePage({ onNavigate }: HomePageProps) {
+  const { isLoggedIn, user, authChecked } = useAuthModal()
+
+  /* Tant que la session n'est pas vérifiée, on garde le titre neutre : sinon un
+     visiteur déjà connecté verrait « Bienvenue sur le hub » clignoter. */
+  const title =
+    authChecked && isLoggedIn && user ? `Bienvenue ${user.userName}` : 'Bienvenue sur le hub'
 
   return (
-    <div className={s.shell}>
-      <Navbar
-        title="ft_transcendence"
-        leading={
-          <span className={s.menuToggle}>
-            <Button
-              variant="ghost"
-              ariaLabel={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              ☰
-            </Button>
-          </span>
-        }
-        action={
-          // Tant que la session n'est pas vérifiée, on n'affiche rien : sinon un
-          // utilisateur connecté verrait « Se connecter » clignoter à chaque F5.
-          !authChecked ? null : isLoggedIn ? (
-            <>
-              {isAdmin && (
-                <Button variant="secondary" onClick={() => handleAction('nav:admin')}>
-                  Admin
-                </Button>
-              )}
-              <AuthStatus />
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" onClick={() => openModal('login')}>
-                Se connecter
-              </Button>
-              <Button variant="primary" onClick={() => openModal('signup')}>
-                S'inscrire
-              </Button>
-            </>
-          )
-        }
-      />
+    <AppLayout current="nav:home" onNavigate={onNavigate}>
+      {/* Le décor (échiquier) est propre à l'accueil : il passe par className. */}
+      <PageHeader
+        className={s.heroDecor}
+        title={title}
+        subtitle="Échecs, Blackjack et Uno : contre des bots ou en ligne, avec tes amis."
+      >
+      </PageHeader>
 
-      <div className={s.body}>
-        <Sidebar open={menuOpen} current="nav:home" />
-
-        <main className={s.main} aria-label="Contenu principal">
-          <section className={s.hero}>
-            <h2 className={s.heroTitle}>Bienvenue sur le hub</h2>
-            <p className={s.heroSubtitle}>
-              Échecs, Blackjack et Uno : contre des bots ou en ligne, avec tes amis.
-            </p>
-            <div className={s.heroActions}>
-              <Button variant="primary" onClick={() => openModal('signup')}>
-                Créer un compte
-              </Button>
-              <Button variant="secondary" onClick={() => handleAction('quick-play')}>
-                Partie rapide
-              </Button>
-            </div>
-          </section>
-
-          <section aria-labelledby="games-title">
-            <h2 id="games-title" className={s.sectionTitle}>
-              Les jeux
-            </h2>
-            <div className={s.gameGrid}>
-              {GAMES.map((game) => (
-                <GameCard key={game.slug} {...game} />
-              ))}
-            </div>
-          </section>
-        </main>
-      </div>
-
-      <Footer />
-    </div>
+      <section aria-labelledby="games-title">
+        <SectionTitle id="games-title">Les jeux</SectionTitle>
+        <div className={s.gameGrid}>
+          {GAMES.map((game) => (
+            <GameCard key={game.slug} {...game} />
+          ))}
+        </div>
+      </section>
+    </AppLayout>
   )
 }

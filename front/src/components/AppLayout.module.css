@@ -1,0 +1,40 @@
+/* Squelette commun à toutes les pages : navbar + sidebar + contenu + footer. */
+
+.shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  position: relative;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 3.5rem 2rem 4rem;
+}
+
+/* Le bouton d'ouverture du menu n'existe qu'en étroit. */
+.menuToggle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .menuToggle {
+    display: inline-flex;
+  }
+
+  .main {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+}

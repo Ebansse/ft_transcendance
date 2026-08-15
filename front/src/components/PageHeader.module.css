@@ -1,0 +1,67 @@
+/* En-tête de page : titre, accroche, actions optionnelles, filet de séparation. */
+
+.header {
+  position: relative;
+  margin-bottom: 4.5rem;
+  padding: 0 0 2.75rem;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Le contenu passe devant le décor éventuel posé en ::after par la page. */
+.header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.title {
+  composes: wipeUp from '../style/page.module.css';
+
+  margin: 0 0 1rem;
+  max-width: 16ch;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 4.75rem);
+  line-height: 0.94;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--bone);
+  clip-path: inset(-0.12em -0.12em -0.3em -0.12em);
+  animation-delay: 180ms;
+}
+
+.subtitle {
+  composes: riseIn from '../style/page.module.css';
+
+  margin: 0;
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 380ms;
+}
+
+.actions {
+  composes: riseIn from '../style/page.module.css';
+
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  animation-delay: 480ms;
+
+  /* Contrat Button : les actions d'en-tête sont plus généreuses. */
+  --btn-padding: 0.75rem 1.4rem;
+}
+
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    clip-path: none;
+  }
+}

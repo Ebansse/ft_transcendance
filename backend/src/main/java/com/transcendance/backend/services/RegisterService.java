@@ -38,6 +38,12 @@ public class RegisterService {
             throw new IllegalArgumentException("The username provided is invalid: " + userRegisterDto.getUserName());
         }
 
+        // Check if username is already taken
+        if (userService.isUserNameTaken(userRegisterDto.getUserName())) {
+            log.error("The username is already used: {}", userRegisterDto.getUserName());
+            throw new IllegalArgumentException("Le pseudo est déjà utilisé");
+        }
+
         // Check if passwords match
         if (!userRegisterDto.getPassword().equals(userRegisterDto.getConfirmedPassword())) {
             log.error(LogMessages.PASSWORDS_DO_NOT_MATCH);

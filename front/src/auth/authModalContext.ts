@@ -8,11 +8,12 @@ export type AuthModalValue = {
   mode: AuthMode
   isLoggedIn: boolean
   user: UserPublicProfileDto | null
+  /** `false` tant que la session n'a pas été vérifiée au chargement de la page. */
   authChecked: boolean
   /** Ouvre la modale sur l'onglet demandé (connexion par défaut). */
   openModal: (mode?: AuthMode) => void
   closeModal: () => void
-  setMode: (mode: AuthMode) => void
+  logout: () => Promise<void>
 }
 
 /** Fichier sans composant : le hook et le contexte peuvent être exportés ensemble. */

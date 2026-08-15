@@ -1,50 +1,9 @@
-/* Mise en page de la page d'accueil : squelette, hero, grille des jeux. */
-
-.shell {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.body {
-  display: flex;
-  flex: 1;
-  align-items: stretch;
-  position: relative;
-}
-
-.main {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 3.5rem 2rem 4rem;
-}
-
-/* Le bouton d'ouverture du menu n'existe qu'en étroit. */
-.menuToggle {
-  display: none;
-}
-
-/* ---------- Hero : pas de panneau, on est déjà sur la table ---------- */
-
-.hero {
-  position: relative;
-  margin-bottom: 4.5rem;
-  padding: 0 0 2.75rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.hero > * {
-  position: relative;
-  z-index: 1;
-}
+/* Ce qui reste propre à l'accueil : le décor du hero et la grille des jeux.
+   Le squelette vit dans AppLayout.module.css, le gabarit de l'en-tête et du
+   titre de section dans PageHeader / SectionTitle. */
 
 /* Signature : un échiquier 8×8 qui affleure le noir puis s'y dissout. */
-.hero::after {
+.heroDecor::after {
   content: '';
   position: absolute;
   top: 50%;
@@ -64,91 +23,8 @@
   animation: board-in 900ms var(--ease) 480ms both;
 }
 
-.heroTitle {
-  margin: 0 0 1rem;
-  max-width: 16ch;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(2.6rem, 7vw, 4.75rem);
-  line-height: 0.94;
-  letter-spacing: 0.005em;
-  text-transform: uppercase;
-  color: var(--bone);
-  clip-path: inset(-0.12em -0.12em -0.3em -0.12em);
-  animation: wipe-up 760ms var(--ease) 180ms both;
-}
-
-.heroSubtitle {
-  margin: 0 0 2rem;
-  max-width: 46ch;
-  font-size: 1.05rem;
-  font-weight: 300;
-  color: var(--mute);
-  animation: rise-in 620ms var(--ease) 380ms both;
-}
-
-.heroActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  animation: rise-in 620ms var(--ease) 480ms both;
-
-  /* Contrat Button : les actions du hero sont plus généreuses. */
-  --btn-padding: 0.75rem 1.4rem;
-}
-
-/* ---------- Titre de section ---------- */
-
-.sectionTitle {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin: 0 0 1.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--red-bright);
-  animation: rise-in 520ms var(--ease) 600ms both;
-}
-
-.sectionTitle::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--line);
-  transform-origin: left center;
-  animation: draw-line 900ms var(--ease) 700ms both;
-}
-
-/* ---------- Grille des jeux ---------- */
-
 .gameGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
-  gap: 1.35rem;
-}
-
-@keyframes rise-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-}
-
-@keyframes wipe-up {
-  from {
-    opacity: 0;
-    clip-path: inset(100% -0.12em -0.3em -0.12em);
-    transform: translateY(0.16em);
-  }
-}
-
-@keyframes draw-line {
-  from {
-    transform: scaleX(0);
-  }
+  composes: cardGrid from '../style/page.module.css';
 }
 
 @keyframes board-in {
@@ -159,33 +35,14 @@
 }
 
 @media (max-width: 900px) {
-  .hero::after {
+  .heroDecor::after {
     opacity: 0.5;
   }
 }
 
+/* L'échiquier ne survit pas au format étroit : il gênerait le titre. */
 @media (max-width: 768px) {
-  .menuToggle {
-    display: inline-flex;
-  }
-
-  .main {
-    padding: 2.5rem 1.25rem 3rem;
-  }
-
-  .hero {
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-  }
-
-  /* L'échiquier ne survit pas au format étroit : il gênerait le titre. */
-  .hero::after {
+  .heroDecor::after {
     display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heroTitle {
-    clip-path: none;
   }
 }
