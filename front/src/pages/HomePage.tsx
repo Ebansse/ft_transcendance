@@ -1,10 +1,8 @@
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
-import { Button } from '../components/Button.tsx'
 import { GameCard } from '../components/GameCard.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import { handleAction } from '../lib/actions.ts'
 import s from './HomePage.module.css'
 
 const GAMES = [
@@ -36,22 +34,21 @@ type HomePageProps = {
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
-  const { openModal } = useAuthModal()
+  const { isLoggedIn, user, authChecked } = useAuthModal()
+
+  /* Tant que la session n'est pas vérifiée, on garde le titre neutre : sinon un
+     visiteur déjà connecté verrait « Bienvenue sur le hub » clignoter. */
+  const title =
+    authChecked && isLoggedIn && user ? `Bienvenue ${user.userName}` : 'Bienvenue sur le hub'
 
   return (
     <AppLayout current="nav:home" onNavigate={onNavigate}>
       {/* Le décor (échiquier) est propre à l'accueil : il passe par className. */}
       <PageHeader
         className={s.heroDecor}
-        title="Bienvenue sur le hub"
+        title={title}
         subtitle="Échecs, Blackjack et Uno : contre des bots ou en ligne, avec tes amis."
       >
-        <Button variant="primary" onClick={() => openModal('signup')}>
-          Créer un compte
-        </Button>
-        <Button variant="secondary" onClick={() => handleAction('quick-play')}>
-          Partie rapide
-        </Button>
       </PageHeader>
 
       <section aria-labelledby="games-title">

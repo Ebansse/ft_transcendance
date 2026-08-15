@@ -48,18 +48,19 @@ export function deleteUser(idUser: string) {
 export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'BLOCKED'
 
 /** Miroir du `FriendListDto`. Une ligne = la relation vue depuis le compte
- *  connecté : `userName` désigne toujours *l'autre* personne. `createAt` (sic,
+ *  connecté : `idUser` et `userName` désignent toujours *l'autre* personne, et
+ *  `idUser` est l'UUID que prennent toutes les routes d'action. `createAt` (sic,
  *  la faute vient du back) est un `LocalDateTime` Java, donc une date ISO sans
  *  fuseau.
  *
- *  Le back ne renvoie ni l'`id` du contact ni l'auteur de la demande, alors que
- *  toutes les routes d'action prennent un UUID : la page résout l'id par pseudo
- *  via `getAllUsers()`, et ne peut pas distinguer une demande reçue d'une
- *  demande envoyée. */
+ *  `senderId` vaut soit notre propre id, soit `idUser` : c'est ce qui sépare une
+ *  demande reçue (`senderId === idUser`) d'une demande envoyée. */
 export type FriendListDto = {
+  idUser: string
   userName: string
   createAt: string | null
   status: FriendshipStatus
+  senderId: string
 }
 
 /** Toutes les relations du compte connecté, tous statuts confondus. */
@@ -77,8 +78,8 @@ export function acceptFriendRequest(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/accept`)
 }
 
-/** Refuse une demande reçue, ou annule une demande qu'on a envoyée :
- *  le back passe la ligne en DECLINED dans les deux cas. */
+/** Refuse une demande reçue, ou annule une demande qu'on a envoyée : le back
+ *  passe la ligne PENDING en DECLINED sans regarder qui est l'expéditeur. */
 export function declineFriendRequest(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/decline`)
 }

@@ -303,7 +303,8 @@ public class FriendListService {
             if (targetUser.isEmpty()) {
                 continue;
             }
-            friendListDtos.add(new FriendListDto(targetUser.get().getUserName(), friendList.getCreatedAt(), friendList.getStatus()));
+            friendListDtos.add(new FriendListDto(targetId, targetUser.get().getUserName(),
+                    friendList.getCreatedAt(), friendList.getStatus(), friendList.getSenderId()));
         }
         return friendListDtos;
     }
