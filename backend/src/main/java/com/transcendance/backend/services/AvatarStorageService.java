@@ -31,10 +31,7 @@ public class AvatarStorageService {
         this.avatarProperties = avatarProperties;
     }
 
-    /**
-     * Validates and stores the file on disk, returning the generated filename
-     * (never the absolute path, never the original filename).
-     */
+
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("The file is empty");
@@ -56,8 +53,6 @@ public class AvatarStorageService {
 
         Path target = storageDir.resolve(filename).normalize();
 
-        // Security: even though we generate the filename ourselves, we double-check
-        // the final path stays inside the storage directory (defense in depth).
         if (!target.startsWith(storageDir.normalize())) {
             throw new IllegalStateException("Invalid destination path.");
         }
@@ -71,7 +66,6 @@ public class AvatarStorageService {
         return filename;
     }
 
-    /** Deletes an old avatar. Must never make the caller fail if the file is already missing. */
     public void delete(String filename) {
         if (filename == null || filename.isBlank()) return;
 
@@ -82,11 +76,7 @@ public class AvatarStorageService {
             log.warn("Failed to delete avatar file: {}", filename, e);
         }
     }
-    
-    /**
-     * Actually decodes the file to determine its real image format,
-     * never trusting the filename extension or the Content-Type declared by the client.
-     */
+
     private String detectImageFormat(MultipartFile file) {
         try (InputStream rawIn = file.getInputStream();
              ImageInputStream iis = ImageIO.createImageInputStream(rawIn)) {
