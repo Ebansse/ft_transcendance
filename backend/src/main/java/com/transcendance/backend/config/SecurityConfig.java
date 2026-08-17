@@ -29,7 +29,8 @@ public class SecurityConfig {
                     "/api/auth/logout"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET,
-                    "/api/hello"
+                    "/api/hello",
+                    "/avatars/**"
                 ).permitAll()
 
                 // --- USER et ADMIN ---
