@@ -46,6 +46,10 @@ public class SecurityConfig {
                     "/api/friend-list/{idUser}/block"
                 ).hasAnyRole("USER", "ADMIN")
 
+                // --- USER update ---
+                .requestMatchers(HttpMethod.PUT,
+                    "/api/users/{idUser}").hasAnyRole("USER", "ADMIN")
+
                 // --- ADMIN uniquement ---
                 .requestMatchers(HttpMethod.GET,
                     "/api/users"
