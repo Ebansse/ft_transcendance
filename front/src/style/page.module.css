@@ -1,0 +1,42 @@
+/* Primitives partagées par les pages. Rien d'autoportant ici : ces classes sont
+   faites pour être tirées avec `composes:` depuis un autre module CSS.
+
+   Les animations sont exposées en longhands (name / duration / timing / fill)
+   et jamais en shorthand : chaque composant pose son propre `animation-delay`,
+   et un shorthand côté composé le remettrait à zéro selon l'ordre d'injection. */
+
+.riseIn {
+  animation-name: rise-in;
+  animation-duration: 620ms;
+  animation-timing-function: var(--ease);
+  animation-fill-mode: both;
+}
+
+.wipeUp {
+  animation-name: wipe-up;
+  animation-duration: 760ms;
+  animation-timing-function: var(--ease);
+  animation-fill-mode: both;
+}
+
+/* Grille de cartes : jeux sur l'accueil, sections sur l'admin. */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(248px, 1fr));
+  gap: 1.35rem;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes wipe-up {
+  from {
+    opacity: 0;
+    clip-path: inset(100% -0.12em -0.3em -0.12em);
+    transform: translateY(0.16em);
+  }
+}

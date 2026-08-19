@@ -1,19 +1,30 @@
 package com.transcendance.backend.controller;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.dto.UpdateUserRequestDto;
 import com.transcendance.backend.dto.UserPublicProfileDto;
 import com.transcendance.backend.model.User;
+import com.transcendance.backend.services.DeleteUserService;
+import com.transcendance.backend.services.UpdateUserService;
+import com.transcendance.backend.services.UserRoleService;
 import com.transcendance.backend.services.UserService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users")
@@ -22,9 +33,55 @@ public class UserController {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(UserController.class);
 
     private final UserService userService;
+    private final UserRoleService userRoleService;
+    private final UpdateUserService updateUserService;
+    private final DeleteUserService deleteUserService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserRoleService userRoleService,
+            UpdateUserService updateUserService, DeleteUserService deleteUserService) {
         this.userService = userService;
+        this.userRoleService = userRoleService;
+        this.updateUserService = updateUserService;
+        this.deleteUserService = deleteUserService;
+    }
+
+    /**
+     * Maps a user entity to its public profile representation.
+     *
+     * @param user the user to map
+     * @return the corresponding {@link UserPublicProfileDto}
+     */
+    private UserPublicProfileDto toDto(User user) {
+        UserPublicProfileDto dto = new UserPublicProfileDto();
+        dto.setAvatarUrl(user.getAvatarUrl());
+        dto.setId(user.getIdUser());
+        dto.setOnline(user.getOnline());
+        dto.setUserName(user.getUserName());
+        dto.setEmail(user.getEmail());
+        dto.setRole(userRoleService.getRoleName(user));
+        return dto;
+    }
+
+    /**
+     * Retrieves the public profile of every user stored in the database.
+     * <p>
+     * Public route: no JWT is read here, the data comes straight from the
+     * database.
+     *
+     * @return an HTTP 200 response containing one {@link UserPublicProfileDto}
+     *         per user, or an empty list if the table is empty
+     */
+    @GetMapping
+    public ResponseEntity<List<UserPublicProfileDto>> getAllUsers() {
+        log.info("Fetching public profiles of all users");
+
+        List<UserPublicProfileDto> profiles = userService.getAllUsers()
+                .stream()
+                .map(this::toDto)
+                .toList();
+
+        log.info("{} public profiles fetched", profiles.size());
+        return ResponseEntity.ok(profiles);
     }
 
     /**
@@ -37,11 +94,7 @@ public class UserController {
     public ResponseEntity<?> getMeProfile(@AuthenticationPrincipal User user) {
         log.info("Fetching public profile for user id: {}", user.getIdUser());
 
-        UserPublicProfileDto dto = new UserPublicProfileDto();
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setId(user.getIdUser());
-        dto.setOnline(user.getOnline());
-        dto.setUserName(user.getUserName());
+        UserPublicProfileDto dto = toDto(user);
 
         log.info("Public profile fetched for user: {}", user.getIdUser());
         return ResponseEntity.ok(dto);
@@ -66,12 +119,94 @@ public class UserController {
         }
 
         User user = userOpt.get();
-        UserPublicProfileDto dto = new UserPublicProfileDto();
-        dto.setAvatarUrl(user.getAvatarUrl());
-        dto.setId(user.getIdUser());
-        dto.setOnline(user.getOnline());
-        dto.setUserName(user.getUserName());
+        UserPublicProfileDto dto = toDto(user);
 
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * Overwrites a user's username, email and role.
+     * <p>
+     * Administration route: the security chain already restricts it to
+     * ROLE_ADMIN. Every field of the body is written back, even when unchanged.
+     *
+     * @param idUser        the UUID of the user to update
+     * @param updateUserDto the new values
+     * @param bindingResult validation result for the request
+     * @return an HTTP 200 response containing the updated
+     *         {@link UserPublicProfileDto}, an HTTP 404 response if the user does
+     *         not exist, or an HTTP 400 response if the payload is rejected
+     */
+    @PostMapping("/{idUser}")
+    public ResponseEntity<?> updateUser(
+            @PathVariable UUID idUser,
+            @Valid @RequestBody UpdateUserRequestDto updateUserDto,
+            BindingResult bindingResult) {
+
+        log.info("Updating user id: {}", idUser);
+
+        // Check whether validation errors were detected by @Valid.
+        if (bindingResult.hasErrors()) {
+            log.warn("Update failed due to validation error: {}",
+                    bindingResult.getAllErrors().get(0).getDefaultMessage());
+
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+
+        Optional<User> userOpt = userService.getUserById(idUser);
+
+        if (userOpt.isEmpty()) {
+            log.warn("User with id {} not found", idUser);
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            User updatedUser = updateUserService.updateUser(userOpt.get(), updateUserDto);
+
+            log.info("User {} updated", idUser);
+            return ResponseEntity.ok(toDto(updatedUser));
+
+        } catch (IllegalArgumentException ex) {
+
+            // Business error (e.g. email already taken by another account).
+            log.warn("Update failed: {}", ex.getMessage());
+
+            return ResponseEntity.badRequest().body(Map.of("error", ex.getMessage()));
+        }
+    }
+
+    /**
+     * Deletes a user, along with their roles, refresh tokens and friend links.
+     * <p>
+     * Administration route: the security chain already restricts it to
+     * ROLE_ADMIN. An administrator cannot delete their own account, which would
+     * revoke the session making the call.
+     *
+     * @param idUser the UUID of the user to delete
+     * @param admin  the authenticated administrator
+     * @return an HTTP 204 response, an HTTP 404 response if the user does not
+     *         exist, or an HTTP 400 response on self-deletion
+     */
+    @PostMapping("/delete/{idUser}")
+    public ResponseEntity<?> deleteUser(@PathVariable UUID idUser, @AuthenticationPrincipal User admin) {
+        log.info("Deleting user id: {}", idUser);
+
+        if (admin != null && admin.getIdUser().equals(idUser)) {
+            log.warn("User {} tried to delete their own account", idUser);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "You cannot delete your own account."));
+        }
+
+        Optional<User> userOpt = userService.getUserById(idUser);
+
+        if (userOpt.isEmpty()) {
+            log.warn("User with id {} not found", idUser);
+            return ResponseEntity.notFound().build();
+        }
+
+        deleteUserService.deleteUser(userOpt.get());
+
+        log.info("User {} deleted", idUser);
+        return ResponseEntity.noContent().build();
     }
 }
