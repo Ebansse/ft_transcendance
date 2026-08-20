@@ -1,5 +1,6 @@
 package com.transcendance.backend.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -152,12 +153,15 @@ public class UserController {
         log.info("Updating profile for user id: {}", idUser);
 
         if (bindingResult.hasErrors()) {
-            log.warn("Update failed due to validation error: {}",
-                    bindingResult.getAllErrors().get(0).getDefaultMessage());
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getFieldErrors().forEach(error ->
+                    errors.put(error.getField(), error.getDefaultMessage())
+            );
+            log.warn("Update failed due to validation error: {}", errors);
 
-            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+            return ResponseEntity.badRequest().body(errors);
         }
-        
+
         if (!authenticatedUser.getIdUser().equals(idUser) &&
                 !userRoleService.getRoleName(authenticatedUser).equals("ADMIN")) {
             log.warn("Unauthorized profile update attempt by user id: {}", authenticatedUser.getIdUser());
