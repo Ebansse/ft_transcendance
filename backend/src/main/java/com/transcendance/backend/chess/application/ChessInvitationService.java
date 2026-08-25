@@ -7,9 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Service;
 
-import com.transcendance.backend.chess.api.dto.ChessInvitationDto;
 import com.transcendance.backend.chess.domain.ChessInvitation;
-import com.transcendance.backend.chess.domain.ChessInvitationState;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.FriendListService;
@@ -36,11 +34,11 @@ public class ChessInvitationService {
      *
      * @param user             the user sending the invitation
      * @param opponentUsername the username of the opponent
-     * @return the created ChessInvitationDto
+     * @return the created ChessInvitation
      * @throws IllegalArgumentException if any validation fails (e.g., opponent not
      *                                  found, already friends, etc.)
      */
-    public ChessInvitationDto sendInvitation(User user, String opponentUsername) {
+    public ChessInvitation sendInvitation(User user, String opponentUsername) {
         User opponent = userService.getUserByUserName(opponentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
 
@@ -81,9 +79,7 @@ public class ChessInvitationService {
         log.info("Chess invitation sent from {} to {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
                 invitation.createdAt(), invitation.id());
 
-        ChessInvitationDto invitationDto = new ChessInvitationDto(invitation.id(),
-            user.getIdUser(), user.getUserName(), ChessInvitationState.PENDING);
-        return invitationDto;
+        return invitation;
     }
 
 }
