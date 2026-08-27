@@ -21,10 +21,10 @@ public class ChessInvitationDto {
     private ChessInvitationState state;
 
     /**
-     * Traduit une invitation du domaine en contrat d'API.
+     * Translates a domain invitation into the API contract.
      *
-     * Le pseudo n'est pas porte par le domaine : il est fourni par l'appelant,
-     * qui dispose deja du User ou sait le resoudre.
+     * The username is not carried by the domain: it is supplied by the caller,
+     * which either already holds the User or knows how to resolve it.
      */
     public static ChessInvitationDto of(ChessInvitation invitation, String fromUsername,
             ChessInvitationState state) {

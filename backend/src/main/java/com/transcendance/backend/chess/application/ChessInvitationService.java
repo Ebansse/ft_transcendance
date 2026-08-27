@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Service;
 
 import com.transcendance.backend.chess.domain.ChessInvitation;
@@ -24,7 +23,7 @@ public class ChessInvitationService {
     private final UserService userService;
     private final FriendListService friendListService;
     private final ChessMatchEntityRepository chessMatchEntityRepository;
-    private final SimpUserRegistry simpUserRegistry;
+    private final ChessPlayerChannel playerChannel;
 
     private final static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
             .getLogger(ChessInvitationService.class.getName());
@@ -58,8 +57,7 @@ public class ChessInvitationService {
             throw new IllegalArgumentException("Opponent already has an active match");
         }
 
-        var simpUser = simpUserRegistry.getUser(opponent.getIdUser().toString());
-        if (simpUser == null) {
+        if (!playerChannel.isOnline(opponent.getIdUser())) {
             throw new IllegalArgumentException("Opponent is not online");
         }
 
@@ -78,6 +76,65 @@ public class ChessInvitationService {
 
         log.info("Chess invitation sent from {} to {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
                 invitation.createdAt(), invitation.id());
+
+        playerChannel.invitationSent(opponent.getIdUser(), invitation, user.getUserName());
+
+        return invitation;
+    }
+
+    /**
+     * Accept a chess invitation.
+     *
+     * @param user             the user accepting the invitation
+     * @param opponentUsername the username of the opponent who sent the invitation
+     * @return the accepted ChessInvitation
+     * @throws IllegalArgumentException if any validation fails (e.g., no pending
+     *                                  invitation from this player)
+     */
+    public ChessInvitation acceptInvitation(User user, String opponentUsername) {
+        User opponent = userService.getUserByUserName(opponentUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
+
+        ChessInvitation invitation = pending.values().stream()
+                .filter(inv -> inv.toUserId().equals(user.getIdUser())
+                        && inv.fromUserId().equals(opponent.getIdUser()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
+
+        pending.remove(invitation.id());
+
+        log.info("Chess invitation accepted by {} from {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
+                java.time.Instant.now(), invitation.id());
+
+        playerChannel.invitationAccepted(opponent.getIdUser(), invitation, user.getUserName());
+
+        return invitation;
+    }
+    /**
+     * Decline a chess invitation from one user to another.
+     *
+     * @param user             the user declining the invitation
+     * @param opponentUsername the username of the opponent
+     * @return the declined ChessInvitation
+     * @throws IllegalArgumentException if any validation fails (e.g., opponent not
+     *                                  found, no pending invitation, etc.)
+     */
+    public ChessInvitation declineInvitation(User user, String opponentUsername) {
+        User opponent = userService.getUserByUserName(opponentUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
+
+        ChessInvitation invitation = pending.values().stream()
+                .filter(inv -> inv.toUserId().equals(user.getIdUser())
+                        && inv.fromUserId().equals(opponent.getIdUser()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
+
+        pending.remove(invitation.id());
+
+        log.info("Chess invitation declined by {} from {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
+                java.time.Instant.now(), invitation.id());
+
+        playerChannel.invitationDeclined(opponent.getIdUser(), invitation, user.getUserName());
 
         return invitation;
     }

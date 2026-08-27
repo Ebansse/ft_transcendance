@@ -64,7 +64,7 @@ public class ChessInvitationController {
         }
     }
 
-    /* @PostMapping("/{id}/accept")
+    @PostMapping("/{id}/accept")
     public ResponseEntity<?> acceptInvitation(@AuthenticationPrincipal User user,
             @Valid @RequestBody ChessInviteRequestDto request,
             BindingResult bindingResult) {
@@ -84,10 +84,11 @@ public class ChessInvitationController {
         }
 
         try {
-            ChessInvitationDto invitation = chessInvitationService.acceptInvitation(
+            ChessInvitation invitation = chessInvitationService.acceptInvitation(
                     user, request.getOpponentUsername());
 
-            return ResponseEntity.ok(invitation);
+            return ResponseEntity.ok(ChessInvitationDto.of(invitation,
+                    request.getOpponentUsername(), ChessInvitationState.ACCEPTED));
 
         } catch (IllegalArgumentException e) {
             log.warn("Chess invitation acceptance from {} to {} refused: {}",
@@ -116,15 +117,16 @@ public class ChessInvitationController {
         }
 
         try {
-            ChessInvitationDto invitation = chessInvitationService.declineInvitation(
+            ChessInvitation invitation = chessInvitationService.declineInvitation(
                     user, request.getOpponentUsername());
 
-            return ResponseEntity.ok(invitation);
+            return ResponseEntity.ok(ChessInvitationDto.of(invitation,
+                    request.getOpponentUsername(), ChessInvitationState.DECLINED));
 
         } catch (IllegalArgumentException e) {
             log.warn("Chess invitation decline from {} to {} refused: {}",
                     user.getUserName(), request.getOpponentUsername(), e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
-    } */
+    }
 }
