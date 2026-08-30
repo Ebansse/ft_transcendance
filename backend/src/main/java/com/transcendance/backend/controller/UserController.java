@@ -16,12 +16,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.transcendance.backend.config.AvatarProperties;
 import com.transcendance.backend.dto.UpdateProfileRequestDto;
 import com.transcendance.backend.dto.UpdateUserRequestDto;
 import com.transcendance.backend.dto.UserPublicProfileDto;
 import com.transcendance.backend.model.User;
+import com.transcendance.backend.services.AvatarStorageService;
 import com.transcendance.backend.services.DeleteUserService;
 import com.transcendance.backend.services.UpdateUserService;
 import com.transcendance.backend.services.UserRoleService;
@@ -37,13 +41,18 @@ public class UserController {
 
     private final UserService userService;
     private final UserRoleService userRoleService;
+    private final AvatarStorageService avatarStorageService;
+    private final AvatarProperties avatarProperties;
     private final UpdateUserService updateUserService;
     private final DeleteUserService deleteUserService;
 
     public UserController(UserService userService, UserRoleService userRoleService,
+            AvatarStorageService avatarStorageService, AvatarProperties avatarProperties,
             UpdateUserService updateUserService, DeleteUserService deleteUserService) {
         this.userService = userService;
         this.userRoleService = userRoleService;
+        this.avatarStorageService = avatarStorageService;
+        this.avatarProperties = avatarProperties;
         this.updateUserService = updateUserService;
         this.deleteUserService = deleteUserService;
     }
@@ -128,6 +137,39 @@ public class UserController {
     }
 
     /**
+     * Uploads (and replaces) the authenticated user's avatar.
+     *
+     * @param user the authenticated user
+     * @param file the uploaded image file
+     * @return an HTTP 200 response containing the updated {@link UserPublicProfileDto},
+     *         or an HTTP 400 response if the file is invalid
+     */
+    @PostMapping("/me/avatar")
+    public ResponseEntity<?> uploadAvatar(@AuthenticationPrincipal User user, @RequestParam("file") MultipartFile file) {
+        log.info("Uploading avatar for user id: {}", user.getIdUser());
+
+        String newFilename;
+        try {
+            newFilename = avatarStorageService.store(file);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid avatar file for user id: {}", user.getIdUser(), e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+        String oldAvatarUrl = user.getAvatarUrl();
+
+        String newAvatarUrl = avatarProperties.getPublicPath() + "/" + newFilename;
+
+        userService.updateAvatarUrl(user, newAvatarUrl);
+
+        if (oldAvatarUrl != null && !oldAvatarUrl.isBlank()) {
+            String oldFilename = oldAvatarUrl.substring(oldAvatarUrl.lastIndexOf('/') + 1);
+            avatarStorageService.delete(oldFilename);
+        }
+
+        log.info("Avatar uploaded for user id: {}", user.getIdUser());
+        return ResponseEntity.ok(toDto(user));
+      
      * Self-service update of a user's username and email.
      * <p>
      * A regular user may only target their own account; an admin may target
