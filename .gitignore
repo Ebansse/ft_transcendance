@@ -103,3 +103,8 @@ thumb
 
 .pids/
 cookies*
+
+# ==========================================
+# Fichiers uploadés par les utilisateurs
+# ==========================================
+backend/uploads/

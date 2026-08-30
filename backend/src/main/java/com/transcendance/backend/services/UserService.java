@@ -90,4 +90,11 @@ public class UserService {
         user.setPassword(securityConfig.passwordEncoder().encode(user.getPassword()));
         return userRepository.save(user);
     }
+
+    // Method to update the avatar URL of a user
+    public User updateAvatarUrl(User user, String avatarUrl) {
+        Log.debug("Updating avatar URL for user: {}", user.getIdUser());
+        user.setAvatarUrl(avatarUrl);
+        return userRepository.save(user);
+    }
 }
