@@ -30,7 +30,8 @@ public class SecurityConfig {
                                 "/api/auth/logout")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/hello")
+                                "/api/hello",
+                                 "api/default-avatar.png")
                         .permitAll()
                         // --- WebSocket handshake: authenticated by JwtHandshakeInterceptor ---
                         .requestMatchers("/ws/**").permitAll()
@@ -47,16 +48,18 @@ public class SecurityConfig {
                                 "/api/friend-list/{idUser}/decline",
                                 "/api/friend-list/{idUser}/delete",
                                 "/api/friend-list/{idUser}/block")
+                         .requestMatchers(HttpMethod.PUT,
+                            "/api/users/{idUser}")
                         .hasAnyRole("USER", "ADMIN")
 
                         // --- ADMIN uniquement ---
                         .requestMatchers(HttpMethod.GET,
-                                "/api/users")
-                        .hasRole("ADMIN")
+                            "/api/users"
+                        ).hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST,
-                                "/api/users/{idUser}",
-                                "/api/users/delete/{idUser}")
-                        .hasRole("ADMIN")
+                            "/api/users/{idUser}",
+                            "/api/users/delete/{idUser}"
+                        ).hasRole("ADMIN")
 
                         // --- Tout le reste est refuse ---
                         .anyRequest().denyAll())
