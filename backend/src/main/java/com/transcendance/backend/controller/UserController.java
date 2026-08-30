@@ -169,7 +169,9 @@ public class UserController {
 
         log.info("Avatar uploaded for user id: {}", user.getIdUser());
         return ResponseEntity.ok(toDto(user));
-      
+    }
+
+     /*
      * Self-service update of a user's username and email.
      * <p>
      * A regular user may only target their own account; an admin may target
