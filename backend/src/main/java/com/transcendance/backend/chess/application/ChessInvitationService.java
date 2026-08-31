@@ -1,12 +1,15 @@
 package com.transcendance.backend.chess.application;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.transcendance.backend.chess.domain.ChessInvitation;
+import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.FriendListService;
@@ -23,6 +26,7 @@ public class ChessInvitationService {
     private final UserService userService;
     private final FriendListService friendListService;
     private final ChessMatchEntityRepository chessMatchEntityRepository;
+    private final ChessGameService chessGameService;
     private final ChessPlayerChannel playerChannel;
 
     private final static org.apache.logging.log4j.Logger log = org.apache.logging.log4j.LogManager
@@ -87,28 +91,31 @@ public class ChessInvitationService {
      *
      * @param user             the user accepting the invitation
      * @param opponentUsername the username of the opponent who sent the invitation
-     * @return the accepted ChessInvitation
+     * @return the match that was just created
      * @throws IllegalArgumentException if any validation fails (e.g., no pending
-     *                                  invitation from this player)
+     *                   invitation from this player)
      */
-    public ChessInvitation acceptInvitation(User user, String opponentUsername) {
+    public ChessMatchEntity acceptInvitation(User user, String opponentUsername) {
         User opponent = userService.getUserByUserName(opponentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
 
-        ChessInvitation invitation = pending.values().stream()
-                .filter(inv -> inv.toUserId().equals(user.getIdUser())
-                        && inv.fromUserId().equals(opponent.getIdUser()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
-
-        pending.remove(invitation.id());
+        ChessInvitation invitation = claimInvitation(user, opponent);
 
         log.info("Chess invitation accepted by {} from {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
                 java.time.Instant.now(), invitation.id());
 
-        playerChannel.invitationAccepted(opponent.getIdUser(), invitation, user.getUserName());
+        if (!playerChannel.isOnline(opponent.getIdUser())) {
+            throw new IllegalArgumentException("Opponent is no longer online");
+        }
 
-        return invitation;
+        UUID whiteUserId = opponent.getIdUser();
+        UUID blackUserId = user.getIdUser();
+
+        ChessMatchEntity match = chessGameService.createNewGame(whiteUserId, blackUserId);
+
+        playerChannel.matchStarted(opponent.getIdUser(), match);
+
+        return match;
     }
     /**
      * Decline a chess invitation from one user to another.
@@ -123,13 +130,7 @@ public class ChessInvitationService {
         User opponent = userService.getUserByUserName(opponentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
 
-        ChessInvitation invitation = pending.values().stream()
-                .filter(inv -> inv.toUserId().equals(user.getIdUser())
-                        && inv.fromUserId().equals(opponent.getIdUser()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
-
-        pending.remove(invitation.id());
+        ChessInvitation invitation = claimInvitation(user, opponent);
 
         log.info("Chess invitation declined by {} from {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
                 java.time.Instant.now(), invitation.id());
@@ -139,4 +140,53 @@ public class ChessInvitationService {
         return invitation;
     }
 
+    /**
+     * Takes an invitation out of the pending map, for good.
+     *
+     * @param user     the user acting on the invitation
+     * @param opponent the opponent who sent the invitation
+     * @return the claimed ChessInvitation
+     * @throws IllegalArgumentException if there is no such invitation, if another
+     *                                  call claimed it first, or if it expired
+     */
+    private ChessInvitation claimInvitation(User user, User opponent) {
+        ChessInvitation invitation = pending.values().stream()
+                .filter(inv -> inv.toUserId().equals(user.getIdUser())
+                        && inv.fromUserId().equals(opponent.getIdUser()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
+
+        if (pending.remove(invitation.id()) == null) {
+            throw new IllegalArgumentException("Invitation has already been handled");
+        }
+
+        if (invitation.isExpired()) {
+            throw new IllegalArgumentException("Invitation has expired");
+        }
+
+        return invitation;
+    }
+
+    /**
+     * Periodically cleans up expired invitations from the pending map.
+     * This method is scheduled to run every 60 seconds.
+     */
+    @Scheduled(fixedRate = 60_000)
+    private void cleanupExpiredInvitations() {
+        pending.values().removeIf(invitation -> invitation.isExpired());
+    }
+
+
+    /**
+     * Returns the list of pending invitations for a user.
+     *
+     * @param user the user whose pending invitations are requested
+     * @return a list of ChessInvitation objects that are still valid and pending
+     */
+    public List<ChessInvitation> getPendingInvitations(User user) {
+        return pending.values().stream()
+                .filter(invitation -> invitation.toUserId().equals(user.getIdUser()))
+                .filter(invitation -> !invitation.isExpired())
+                .toList();
+    }
 }

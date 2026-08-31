@@ -9,9 +9,11 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
 import com.transcendance.backend.chess.api.dto.ChessInvitationDto;
+import com.transcendance.backend.chess.api.dto.ChessMatchDto;
 import com.transcendance.backend.chess.application.ChessPlayerChannel;
 import com.transcendance.backend.chess.domain.ChessInvitation;
 import com.transcendance.backend.chess.domain.ChessInvitationState;
+import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,11 +27,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ChessPlayerChannelStomp implements ChessPlayerChannel {
 
-    /**
-     * Suffix appended to /user/{principal} by convertAndSendToUser: the client
-     * itself subscribes to /user/queue/chess.invitations.
-     */
     private static final String INVITATION_DESTINATION = "/queue/chess.invitations";
+
+    private static final String MATCH_DESTINATION = "/queue/chess.matches";
 
     private static final Logger log = LogManager.getLogger(ChessPlayerChannelStomp.class);
 
@@ -43,28 +43,25 @@ public class ChessPlayerChannelStomp implements ChessPlayerChannel {
 
     @Override
     public void invitationSent(UUID toUserId, ChessInvitation invitation, String fromUsername) {
-        push(toUserId, ChessInvitationDto.of(invitation, fromUsername, ChessInvitationState.PENDING));
+        push(toUserId, INVITATION_DESTINATION, ChessInvitationDto.of(invitation, fromUsername, ChessInvitationState.PENDING));
     }
 
     @Override
     public void invitationDeclined(UUID toUserId, ChessInvitation invitation, String fromUsername) {
-        push(toUserId, ChessInvitationDto.of(invitation, fromUsername, ChessInvitationState.DECLINED));
+        push(toUserId, INVITATION_DESTINATION, ChessInvitationDto.of(invitation, fromUsername, ChessInvitationState.DECLINED));
     }
 
     @Override
-    public void invitationAccepted(UUID toUserId, ChessInvitation invitation, String fromUsername) {
-        push(toUserId, ChessInvitationDto.of(invitation, fromUsername, ChessInvitationState.ACCEPTED));
+    public void matchStarted(UUID toUserId, ChessMatchEntity match) {
+        push(toUserId, MATCH_DESTINATION, ChessMatchDto.of(match));
     }
-    /**
-     * Pushing is a side effect: if the broker rejects it we log, but we never
-     * fail the business action that triggered it.
-     */
-    private void push(UUID toUserId, ChessInvitationDto payload) {
+
+    private void push(UUID toUserId, String destination, Object payload) {
         try {
-            messagingTemplate.convertAndSendToUser(toUserId.toString(), INVITATION_DESTINATION, payload);
+            messagingTemplate.convertAndSendToUser(toUserId.toString(), destination, payload);
         } catch (Exception e) {
-            log.error("Chess invitation {} could not be pushed to {}: {}",
-                    payload.getInvitationId(), toUserId, e.getMessage());
+            log.error("Chess payload could not be pushed to {} on {}: {}",
+                    toUserId, destination, e.getMessage());
         }
     }
 }

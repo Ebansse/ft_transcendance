@@ -3,6 +3,7 @@ package com.transcendance.backend.chess.application;
 import java.util.UUID;
 
 import com.transcendance.backend.chess.domain.ChessInvitation;
+import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 
 /**
  * Outbound port from the chess module towards connected players.
@@ -24,9 +25,10 @@ public interface ChessPlayerChannel {
     void invitationSent(UUID toUserId, ChessInvitation invitation, String fromUsername);
 
     /**
-     * Notifies the inviter that his invitation was accepted.
+     * Tells a player that a match has just started, so his client can open the
+     * board. Carries the match itself: the invitation alone has no match id.
      */
-    void invitationAccepted(UUID toUserId, ChessInvitation invitation, String fromUsername);
+    void matchStarted(UUID toUserId, ChessMatchEntity match);
 
     /**
      * Notifies the inviter that his invitation was declined.

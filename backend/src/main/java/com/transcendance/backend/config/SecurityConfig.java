@@ -51,7 +51,13 @@ public class SecurityConfig {
                                                                 "/api/friend-list/{idUser}/block")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 // --- CHESS ---
-                                                .requestMatchers(HttpMethod.POST, "/api/chess/invitations")
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/chess/invitations",
+                                                                "/api/chess/invitations/accept",
+                                                                "/api/chess/invitations/decline")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/chess/invitations/pending")
                                                 .hasAnyRole("USER", "ADMIN")
 
                                                 // --- ADMIN uniquement ---
