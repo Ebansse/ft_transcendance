@@ -20,7 +20,6 @@ export type LoginForm = {
 const EMPTY_SIGNUP: SignupForm = { userName: '', email: '', password: '', confirmedPassword: '' }
 const EMPTY_LOGIN: LoginForm = { email: '', password: '' }
 
-/** Tout ce qui change d'un onglet à l'autre, rassemblé en un endroit. */
 const WORDING = {
   signup: {
     title: 'Rejoindre la table',
@@ -41,16 +40,10 @@ type AuthModalProps = {
   mode: AuthMode
   onModeChange: (mode: AuthMode) => void
   onClose: () => void
-  /** Envoient au back et rejettent avec une `ApiError` s'il refuse : la modale
-   *  reste alors ouverte, avec la saisie encore là et le message sous le champ. */
   onSignup: (values: SignupForm) => Promise<void>
   onLogin: (values: LoginForm) => Promise<void>
 }
 
-/**
- * Formulaire de connexion / inscription. Il tient ses champs, ses erreurs et son
- * état d'attente ; le provider ne lui donne que de quoi ouvrir et de quoi envoyer.
- */
 export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLogin }: AuthModalProps) {
   const isSignup = mode === 'signup'
   const wording = isSignup ? WORDING.signup : WORDING.login
@@ -63,18 +56,15 @@ export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLog
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  // Ouverture, fermeture ou changement d'onglet : on repart sans erreur affichée.
   useEffect(() => {
     setFieldErrors({})
     setGlobalError(null)
   }, [isOpen, mode])
 
-  /** Traduit le refus du back en messages affichables sous les champs concernés. */
   const report = (err: unknown) => {
     if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
       setFieldErrors(err.fieldErrors)
     } else if (err instanceof ApiError) {
-      // Le back répond "Invalid credentials" en anglais et sans détail.
       setGlobalError(err.status === 401 ? 'Email ou mot de passe incorrect.' : err.message)
     } else {
       setGlobalError('Erreur inconnue.')
@@ -86,7 +76,6 @@ export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLog
     setFieldErrors({})
     setGlobalError(null)
 
-    // Validation front ; le back revalide de son côté.
     if (isSignup && signup.password !== signup.confirmedPassword) {
       setFieldErrors({ confirmedPassword: 'Les mots de passe ne correspondent pas.' })
       return
@@ -95,7 +84,6 @@ export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLog
     setPending(true)
     try {
       await (isSignup ? onSignup(signup) : onLogin(login))
-      // Session ouverte : on ne garde pas les identifiants dans la modale fermée.
       setSignup(EMPTY_SIGNUP)
       setLogin(EMPTY_LOGIN)
     } catch (err) {
