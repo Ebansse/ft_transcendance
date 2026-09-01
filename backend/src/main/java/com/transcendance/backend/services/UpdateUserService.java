@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.transcendance.backend.dto.UpdateProfileRequestDto;
 import com.transcendance.backend.dto.UpdateUserRequestDto;
 import com.transcendance.backend.logger.LogMessages;
 import com.transcendance.backend.model.User;
@@ -73,6 +74,54 @@ public class UpdateUserService {
         userRoleService.setRole(savedUser, role);
 
         log.info("User updated successfully: {}", savedUser.getIdUser());
+        return savedUser;
+    }
+
+    /**
+     * Overwrite a user's username and email with the values received.
+     * <p>
+     * Unlike {@link #updateUser}, this is the self-service variant: no role is
+     * touched, since a user (or an admin acting through this route) is only
+     * allowed to change username/email here.
+     *
+     * @param user             the user to update
+     * @param updateProfileDto the new values
+     * @return the updated user
+     * @throws IllegalArgumentException if a value is malformed or already taken
+     *                                  by another user
+     */
+    @Transactional
+    public User updateProfile(User user, UpdateProfileRequestDto updateProfileDto) {
+        log.info("Starting profile update for user id: {}", user.getIdUser());
+
+        String userName = updateProfileDto.getUserName().trim();
+        String email = updateProfileDto.getEmail().trim();
+
+        if (userService.isInvalidUsername(userName)) {
+            log.error(LogMessages.INVALID_USERNAME, userName);
+            throw new IllegalArgumentException("The username provided is invalid: " + userName);
+        }
+        
+        if (userService.isInvalidEmail(email)) {
+            log.error(LogMessages.INVALID_EMAIL, email);
+            throw new IllegalArgumentException("The email provided is invalid: " + email);
+        }
+        
+        if (isTakenBySomeoneElse(userService.getUserByEmail(email), user)) {
+            log.error(LogMessages.EMAIL_ALREADY_USED, email);
+            throw new IllegalArgumentException("The email is already used: " + email);
+        }
+
+        if (isTakenBySomeoneElse(userService.getUserByUserName(userName), user)) {
+            log.error("The username is already used. {}", userName);
+            throw new IllegalArgumentException("The username is already used: " + userName);
+        }
+
+        user.setUserName(userName);
+        user.setEmail(email);
+
+        User savedUser = userService.saveUser(user);
+        log.info("Profile updated successfully: {}", user.getIdUser());
         return savedUser;
     }
 

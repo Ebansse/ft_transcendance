@@ -102,3 +102,9 @@ thumb
 .env
 
 .pids/
+cookies*
+
+# ==========================================
+# Fichiers uploadés par les utilisateurs
+# ==========================================
+backend/uploads/
