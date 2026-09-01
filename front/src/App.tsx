@@ -1,29 +1,33 @@
-import { useState } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import { AdminPage } from './pages/AdminPage.tsx'
+import { ChatPage } from './pages/ChatPage.tsx'
 import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { handleAction } from './lib/actions.ts'
 
-/** Routeur maison : une action de sidebar par page. Ajouter une page = une ligne. */
+/** Routeur : une action de sidebar = une route. Ajouter une page = une ligne. */
 const PAGES = {
-  'nav:home': HomePage,
-  'nav:friends': FriendsPage,
-  'nav:admin': AdminPage,
-}
-
-type Route = keyof typeof PAGES
+  'nav:home': { path: '/', Component: HomePage },
+  'nav:friends': { path: '/friends', Component: FriendsPage },
+  'nav:admin': { path: '/admin', Component: AdminPage },
+  'nav:chat': { path: '/chat', Component: ChatPage }, // TODO: page de chat
+} as const
 
 function App() {
-  const [route, setRoute] = useState<Route>('nav:home')
+  const navigate = useNavigate()
 
-  const navigate = (action: string) => {
-    // Les onglets qui n'ont pas encore de page se contentent du log.
-    if (action in PAGES) setRoute(action as Route)
+  const onNavigate = (action: string) => {
+    if (action in PAGES) navigate(PAGES[action as keyof typeof PAGES].path)
     else handleAction(action)
   }
 
-  const Page = PAGES[route]
-  return <Page onNavigate={navigate} />
+  return (
+    <Routes>
+      {Object.values(PAGES).map(({ path, Component }) => (
+        <Route key={path} path={path} element={<Component onNavigate={onNavigate} />} />
+      ))}
+    </Routes>
+  )
 }
 
 export default App

@@ -9,16 +9,11 @@ import { Sidebar } from './Sidebar.tsx'
 import s from './AppLayout.module.css'
 
 type AppLayoutProps = {
-  /** Action de nav de la page courante (ex: 'nav:admin'), pour surligner l'onglet. */
   current: string
   onNavigate: (action: string) => void
   children: ReactNode
 }
 
-/**
- * Chrome de l'application : chaque page se contente de fournir son contenu,
- * la navbar et la sidebar restent identiques d'un onglet à l'autre.
- */
 export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -45,7 +40,6 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
           open={menuOpen}
           current={current}
           onNavigate={(action) => {
-            // En mobile la sidebar recouvre le contenu : on la referme après le clic.
             setMenuOpen(false)
             onNavigate(action)
           }}
@@ -61,12 +55,8 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
   )
 }
 
-/** Coin droit de la navbar : pastille de session, ou invitations à se connecter. */
 function SessionActions() {
   const { openModal, isLoggedIn, authChecked } = useAuthModal()
-
-  // Tant que la session n'est pas vérifiée on n'affiche rien : sinon un
-  // utilisateur connecté verrait « Se connecter » clignoter à chaque F5.
   if (!authChecked) return null
   if (isLoggedIn) return <AuthStatus />
 
