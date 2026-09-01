@@ -29,3 +29,4 @@ public class ChatMessageDto {
     @JsonProperty("isRead")
     private boolean isRead;
 }
+30
