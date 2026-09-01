@@ -33,34 +33,49 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/hello",
-                                "/api/default-avatar.png",
-                                "/api/avatars/**")
+                                                                "/api/default-avatar.png",
+                                                                "/api/avatars/**")
                                                 .permitAll()
                                                 // --- WebSocket handshake: authenticated by JwtHandshakeInterceptor ---
                                                 .requestMatchers("/ws/**").permitAll()
 
-                        // --- USER et ADMIN ---
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/users/me",
-                                "/api/users/{idUser}",
-                                "/api/friend-list/me/list")
-                        .hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/friend-list/send-request",
-                                "/api/friend-list/{idUser}/accept",
-                                "/api/friend-list/{idUser}/decline",
-                                "/api/friend-list/{idUser}/delete",
-                                "/api/friend-list/{idUser}/block")
-                        .hasAnyRole("USER", "ADMIN")
+                                                // --- USER et ADMIN ---
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/users/me",
+                                                                "/api/users/{idUser}",
+                                                                "/api/friend-list/me/list")
+                                                .hasAnyRole("USER", "ADMIN")
 
-                        // --- ADMIN uniquement ---
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/users")
-                        .hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST,
-                                "/api/users/{idUser}",
-                                "/api/users/delete/{idUser}")
-                        .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/friend-list/send-request",
+                                                                "/api/friend-list/{idUser}/accept",
+                                                                "/api/friend-list/{idUser}/decline",
+                                                                "/api/friend-list/{idUser}/delete",
+                                                                "/api/friend-list/{idUser}/block",
+                                                                "/api/users/me/avatar")
+                                                .hasAnyRole("USER", "ADMIN")
+
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/users/{idUser}")
+                                                .hasAnyRole("USER", "ADMIN")
+
+                                                // --- CHESS ---
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/chess/invitations",
+                                                                "/api/chess/invitations/accept",
+                                                                "/api/chess/invitations/decline")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/chess/invitations/pending")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                // --- ADMIN uniquement ---
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/users")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/users/{idUser}",
+                                                                "/api/users/delete/{idUser}")
+                                                .hasRole("ADMIN")
 
                                                 // --- Tout le reste est refuse ---
                                                 .anyRequest().denyAll())
