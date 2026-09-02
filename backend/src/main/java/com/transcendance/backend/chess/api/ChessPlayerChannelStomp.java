@@ -64,6 +64,11 @@ public class ChessPlayerChannelStomp implements ChessPlayerChannel {
         push(toUserId, MOVE_DESTINATION, ChessMovePlayedDto.of(match, move));
     }
 
+    @Override
+    public void matchEnded(UUID toUserId, ChessMatchEntity match) {
+        push(toUserId, MATCH_DESTINATION, ChessMatchDto.of(match));
+    }
+
     private void push(UUID toUserId, String destination, Object payload) {
         try {
             messagingTemplate.convertAndSendToUser(toUserId.toString(), destination, payload);

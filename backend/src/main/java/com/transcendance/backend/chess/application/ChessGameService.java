@@ -127,7 +127,6 @@ public class ChessGameService {
             recordStats(match);
         }
         match.setFen(board.getFen());
-        System.out.println(board.toString());
         chessMatchRepository.save(match);
         return match;
     }
@@ -191,7 +190,12 @@ public class ChessGameService {
         return move != null && move.matches("^[a-h][1-8][a-h][1-8][qrbn]?$");
     }
 
-    public void recordStats(ChessMatchEntity match) {
+    /**
+     * Record the statistics of the players after a match has ended.
+     *
+     * @param match the match entity
+     */
+    private void recordStats(ChessMatchEntity match) {
         ChessPlayerEntity whitePlayer = match.getWhitePlayer();
         ChessPlayerEntity blackPlayer = match.getBlackPlayer();
         if (match.getWinnerSide() != null) {
@@ -206,5 +210,36 @@ public class ChessGameService {
             whitePlayer.incrementDraws();
             blackPlayer.incrementDraws();
         }
+    }
+
+    /**
+     * Resign from an ongoing match.
+     *
+     * @param matchId  the ID of the match
+     * @param playerId the ID of the player resigning
+     * @return the updated match entity
+     * @throws ChessException if the match is not found, if the player is not part
+     *                        of the match,
+     *                        or if the match is already over
+     */
+    @Transactional
+    public ChessMatchEntity resignMatch(long matchId, UUID playerId) {
+        ChessMatchEntity match = chessMatchRepository.findById(matchId)
+                .orElseThrow(() -> new ChessException.MatchNotFound(matchId));
+        if (!isPlayerInMatch(match, playerId)) {
+            throw new ChessException.NotAPlayer();
+        }
+        if (match.getStatus() != ChessMatchStatus.IN_PROGRESS) {
+            throw new ChessException.MatchAlreadyOver(match.getStatus());
+        }
+        if (match.getWhitePlayer().getUserId().equals(playerId)) {
+            match.setWinnerSide(ChessSide.BLACK);
+        } else {
+            match.setWinnerSide(ChessSide.WHITE);
+        }
+        match.setStatus(ChessMatchStatus.RESIGNED);
+        recordStats(match);
+        chessMatchRepository.save(match);
+        return match;
     }
 }

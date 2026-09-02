@@ -63,18 +63,58 @@ public class ChessController {
     }
 
     /**
+     * Gives the match away, without waiting for a losing position.
+     *
+     * Also the only way out of a match nobody is going to finish: an abandoned
+     * game stays IN_PROGRESS forever, and existsActiveMatch would then keep both
+     * players from ever starting another one.
+     */
+    @PostMapping("/matches/{matchId}/resign")
+    public ResponseEntity<?> resignMatch(@AuthenticationPrincipal User user, @PathVariable long matchId) {
+        if (user == null) {
+            log.warn("Chess resignation refused on match {}: no authenticated user", matchId);
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+
+        ChessMatchEntity match = chessGameService.resignMatch(matchId, user.getIdUser());
+
+        notifyMatchEnded(match, user.getIdUser());
+
+        return ResponseEntity.ok(ChessMatchDto.of(match));
+    }
+
+    /**
      * Pushed once the move is committed, so the opponent never learns about a
      * move that a rollback would have taken back.
      *
      * Stays silent when the opponent is a bot, which has no session to push to.
      */
     private void notifyOpponent(ChessMatchEntity match, UUID moverId, String move) {
-        UUID opponentId = moverId.equals(match.getWhitePlayerId())
-                ? match.getBlackPlayerId()
-                : match.getWhitePlayerId();
+        UUID opponentId = opponentOf(match, moverId);
 
         if (opponentId != null) {
             playerChannel.movePlayed(opponentId, match, move);
         }
+    }
+
+    /**
+     * Same timing as notifyOpponent, for an ending the opponent cannot deduce
+     * from a move - here, a resignation.
+     */
+    private void notifyMatchEnded(ChessMatchEntity match, UUID actorId) {
+        UUID opponentId = opponentOf(match, actorId);
+
+        if (opponentId != null) {
+            playerChannel.matchEnded(opponentId, match);
+        }
+    }
+
+    /**
+     * @return the other side's user id, or null when it is held by a bot.
+     */
+    private UUID opponentOf(ChessMatchEntity match, UUID playerId) {
+        return playerId.equals(match.getWhitePlayerId())
+                ? match.getBlackPlayerId()
+                : match.getWhitePlayerId();
     }
 }
