@@ -12,6 +12,7 @@ import com.transcendance.backend.chess.domain.ChessException;
 import com.transcendance.backend.chess.domain.ChessMatchStatus;
 import com.transcendance.backend.chess.domain.ChessSide;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
+import com.transcendance.backend.chess.persistence.entity.ChessPlayerEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class ChessGameService {
      * @param blackUserId the user playing black
      * @return the persisted match
      * @throws ChessException if both sides are the same user, or if
-     *                                  either of them is already in a match
+     *                        either of them is already in a match
      */
     @Transactional
     public ChessMatchEntity createNewGame(UUID whiteUserId, UUID blackUserId) {
@@ -76,7 +77,7 @@ public class ChessGameService {
         ChessMatchEntity chessMatch = new ChessMatchEntity(
                 chessBoard,
                 chessPlayerService.getOrCreatePlayer(whiteUserId),
-                null);
+                null); //TODO A changer
         chessMatch.setBlackBotLevel(botLevel);
 
         return chessMatchRepository.save(chessMatch);
@@ -89,8 +90,10 @@ public class ChessGameService {
      * @param playerId the ID of the player making the move
      * @param move     the move in algebraic notation (e.g., "e2e4")
      * @return the updated match entity
-     * @throws ChessException if the match is not found, if the player is not part of the match,
-     *                                  if it's not the player's turn, or if the move is illegal
+     * @throws ChessException if the match is not found, if the player is not part
+     *                        of the match,
+     *                        if it's not the player's turn, or if the move is
+     *                        illegal
      */
     @Transactional
     public ChessMatchEntity playMove(long matchId, UUID playerId, String move) {
@@ -120,7 +123,9 @@ public class ChessGameService {
             throw new ChessException.IllegalMove(move);
         }
         board.doMove(new Move(move, board.getSideToMove()));
-        endGame(board, match);
+        if (endGame(board, match)) {
+            recordStats(match);
+        }
         match.setFen(board.getFen());
         System.out.println(board.toString());
         chessMatchRepository.save(match);
@@ -152,7 +157,8 @@ public class ChessGameService {
     }
 
     /**
-     * Check if the game has ended (checkmate, stalemate, or draw) and update the match status accordingly.
+     * Check if the game has ended (checkmate, stalemate, or draw) and update the
+     * match status accordingly.
      *
      * @param board the current chess board
      * @param match the match entity to update
@@ -183,5 +189,22 @@ public class ChessGameService {
      */
     public boolean isValidMoveFormat(String move) {
         return move != null && move.matches("^[a-h][1-8][a-h][1-8][qrbn]?$");
+    }
+
+    public void recordStats(ChessMatchEntity match) {
+        ChessPlayerEntity whitePlayer = match.getWhitePlayer();
+        ChessPlayerEntity blackPlayer = match.getBlackPlayer();
+        if (match.getWinnerSide() != null) {
+            if (match.getWinnerSide() == ChessSide.WHITE) {
+                whitePlayer.incrementWins();
+                blackPlayer.incrementLosses();
+            } else {
+                blackPlayer.incrementWins();
+                whitePlayer.incrementLosses();
+            }
+        } else {
+            whitePlayer.incrementDraws();
+            blackPlayer.incrementDraws();
+        }
     }
 }
