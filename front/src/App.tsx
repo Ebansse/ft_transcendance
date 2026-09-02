@@ -3,12 +3,14 @@ import { AdminPage } from './pages/AdminPage.tsx'
 import { ChatPage } from './pages/ChatPage.tsx'
 import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { ProfilePage } from './pages/ProfilePage.tsx'
 import { handleAction } from './lib/actions.ts'
 
 /** Routeur : une action de sidebar = une route. Ajouter une page = une ligne. */
 const PAGES = {
   'nav:home': { path: '/', Component: HomePage },
   'nav:friends': { path: '/friends', Component: FriendsPage },
+  'nav:profile': { path: '/profile', Component: ProfilePage },
   'nav:admin': { path: '/admin', Component: AdminPage },
   'nav:chat': { path: '/chat', Component: ChatPage }, // TODO: page de chat
 } as const

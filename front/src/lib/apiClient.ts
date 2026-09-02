@@ -96,8 +96,12 @@ async function request<T>(
   options: RequestOptions = {},
   retried = false,
 ): Promise<T> {
+  // Un upload de fichier passe un FormData : le navigateur pose lui-même le
+  // Content-Type (avec le boundary), on ne sérialise pas et on ne force rien.
+  const isForm = body instanceof FormData
+
   const headers = new Headers(options.headers)
-  if (body !== undefined) headers.set('Content-Type', 'application/json')
+  if (body !== undefined && !isForm) headers.set('Content-Type', 'application/json')
 
   let res: Response
   try {
@@ -106,7 +110,7 @@ async function request<T>(
       method,
       headers,
       credentials: 'include', // indispensable pour le cookie de session / JWT
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     })
   } catch {
     throw new ApiError(0, 'Impossible de joindre le serveur.')
@@ -136,6 +140,8 @@ export const api = {
   get: <T>(path: string, options?: RequestOptions) => request<T>(path, 'GET', undefined, options),
   post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>(path, 'POST', body, options),
+  postForm: <T>(path: string, form: FormData, options?: RequestOptions) =>
+    request<T>(path, 'POST', form, options),
   put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>(path, 'PUT', body, options),
   patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>

@@ -23,9 +23,31 @@ export type UpdateUserPayload = {
   role: string
 }
 
+/** Ce qu'un utilisateur peut changer sur son propre compte (hors avatar). Le
+ *  back n'expose pas de changement de mot de passe. */
+export type UpdateProfilePayload = {
+  userName: string
+  email: string
+}
+
 /** Profil de l'utilisateur connecté, identifié par son cookie. */
 export function getMyProfile() {
   return api.get<UserPublicProfileDto>('/users/me')
+}
+
+/** Met à jour son propre pseudo et e-mail. Le back autorise cette route (PUT)
+ *  au propriétaire du compte comme à un ADMIN ; renvoie le profil à jour. */
+export function updateMyProfile(idUser: string, payload: UpdateProfilePayload) {
+  return api.put<UserPublicProfileDto>(`/users/${idUser}`, payload)
+}
+
+/** Remplace son avatar : le back stocke le fichier, supprime l'ancien et renvoie
+ *  le profil à jour. NB : le service des images (`GET`) n'est pas encore câblé
+ *  entre le front et le back — l'upload aboutit mais l'aperçu peut rester cassé. */
+export function uploadMyAvatar(file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  return api.postForm<UserPublicProfileDto>('/users/me/avatar', form)
 }
 
 /** Tous les comptes : le back réserve la route aux ADMIN. */
