@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.transcendance.backend.chess.domain.ChessException;
 import com.transcendance.backend.chess.domain.ChessInvitation;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
@@ -38,31 +39,31 @@ public class ChessInvitationService {
      * @param user             the user sending the invitation
      * @param opponentUsername the username of the opponent
      * @return the created ChessInvitation
-     * @throws IllegalArgumentException if any validation fails (e.g., opponent not
+     * @throws ChessException if any validation fails (e.g., opponent not
      *                                  found, already friends, etc.)
      */
     public ChessInvitation sendInvitation(User user, String opponentUsername) {
         User opponent = userService.getUserByUserName(opponentUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
+                .orElseThrow(() -> new ChessException.OpponentNotFound(opponentUsername));
 
         if (opponent.getIdUser().equals(user.getIdUser())) {
-            throw new IllegalArgumentException("Cannot invite yourself to a game");
+            throw new ChessException.SelfPlay();
         }
 
         if (!friendListService.checkFriendship(user, opponent)) {
-            throw new IllegalArgumentException("You are not friends with this user");
+            throw new ChessException.NotFriends();
         }
 
         if (chessMatchEntityRepository.existsActiveMatch(user.getIdUser())) {
-            throw new IllegalArgumentException("You already have an active match");
+            throw new ChessException.AlreadyInMatch("You already have an active match");
         }
 
         if (chessMatchEntityRepository.existsActiveMatch(opponent.getIdUser())) {
-            throw new IllegalArgumentException("Opponent already has an active match");
+            throw new ChessException.AlreadyInMatch("Opponent already has an active match");
         }
 
         if (!playerChannel.isOnline(opponent.getIdUser())) {
-            throw new IllegalArgumentException("Opponent is not online");
+            throw new ChessException.OpponentOffline();
         }
 
         pending.values().removeIf(invitation -> invitation.isExpired());
@@ -72,7 +73,7 @@ public class ChessInvitationService {
                         && existing.toUserId().equals(opponent.getIdUser()));
 
         if (alreadyPending) {
-            throw new IllegalArgumentException("You already have a pending invitation to this player");
+            throw new ChessException.DuplicateInvitation();
         }
 
         ChessInvitation invitation = ChessInvitation.create(user.getIdUser(), opponent.getIdUser());
@@ -92,12 +93,12 @@ public class ChessInvitationService {
      * @param user             the user accepting the invitation
      * @param opponentUsername the username of the opponent who sent the invitation
      * @return the match that was just created
-     * @throws IllegalArgumentException if any validation fails (e.g., no pending
+     * @throws ChessException if any validation fails (e.g., no pending
      *                   invitation from this player)
      */
     public ChessMatchEntity acceptInvitation(User user, String opponentUsername) {
         User opponent = userService.getUserByUserName(opponentUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
+                .orElseThrow(() -> new ChessException.OpponentNotFound(opponentUsername));
 
         ChessInvitation invitation = claimInvitation(user, opponent);
 
@@ -105,7 +106,7 @@ public class ChessInvitationService {
                 java.time.Instant.now(), invitation.id());
 
         if (!playerChannel.isOnline(opponent.getIdUser())) {
-            throw new IllegalArgumentException("Opponent is no longer online");
+            throw new ChessException.OpponentOffline();
         }
 
         UUID whiteUserId = opponent.getIdUser();
@@ -123,12 +124,12 @@ public class ChessInvitationService {
      * @param user             the user declining the invitation
      * @param opponentUsername the username of the opponent
      * @return the declined ChessInvitation
-     * @throws IllegalArgumentException if any validation fails (e.g., opponent not
+     * @throws ChessException if any validation fails (e.g., opponent not
      *                                  found, no pending invitation, etc.)
      */
     public ChessInvitation declineInvitation(User user, String opponentUsername) {
         User opponent = userService.getUserByUserName(opponentUsername)
-                .orElseThrow(() -> new IllegalArgumentException("Opponent not found"));
+                .orElseThrow(() -> new ChessException.OpponentNotFound(opponentUsername));
 
         ChessInvitation invitation = claimInvitation(user, opponent);
 
@@ -146,7 +147,7 @@ public class ChessInvitationService {
      * @param user     the user acting on the invitation
      * @param opponent the opponent who sent the invitation
      * @return the claimed ChessInvitation
-     * @throws IllegalArgumentException if there is no such invitation, if another
+     * @throws ChessException if there is no such invitation, if another
      *                                  call claimed it first, or if it expired
      */
     private ChessInvitation claimInvitation(User user, User opponent) {
@@ -154,14 +155,14 @@ public class ChessInvitationService {
                 .filter(inv -> inv.toUserId().equals(user.getIdUser())
                         && inv.fromUserId().equals(opponent.getIdUser()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("No pending invitation from this player"));
+                .orElseThrow(() -> new ChessException.InvitationNotFound());
 
         if (pending.remove(invitation.id()) == null) {
-            throw new IllegalArgumentException("Invitation has already been handled");
+            throw new ChessException.InvitationAlreadyHandled();
         }
 
         if (invitation.isExpired()) {
-            throw new IllegalArgumentException("Invitation has expired");
+            throw new ChessException.InvitationExpired();
         }
 
         return invitation;

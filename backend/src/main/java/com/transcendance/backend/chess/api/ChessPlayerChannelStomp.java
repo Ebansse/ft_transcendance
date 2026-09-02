@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import com.transcendance.backend.chess.api.dto.ChessInvitationDto;
 import com.transcendance.backend.chess.api.dto.ChessMatchDto;
+import com.transcendance.backend.chess.api.dto.ChessMovePlayedDto;
 import com.transcendance.backend.chess.application.ChessPlayerChannel;
 import com.transcendance.backend.chess.domain.ChessInvitation;
 import com.transcendance.backend.chess.domain.ChessInvitationState;
@@ -30,6 +31,8 @@ public class ChessPlayerChannelStomp implements ChessPlayerChannel {
     private static final String INVITATION_DESTINATION = "/queue/chess.invitations";
 
     private static final String MATCH_DESTINATION = "/queue/chess.matches";
+
+    private static final String MOVE_DESTINATION = "/queue/chess.moves";
 
     private static final Logger log = LogManager.getLogger(ChessPlayerChannelStomp.class);
 
@@ -54,6 +57,11 @@ public class ChessPlayerChannelStomp implements ChessPlayerChannel {
     @Override
     public void matchStarted(UUID toUserId, ChessMatchEntity match) {
         push(toUserId, MATCH_DESTINATION, ChessMatchDto.of(match));
+    }
+
+    @Override
+    public void movePlayed(UUID toUserId, ChessMatchEntity match, String move) {
+        push(toUserId, MOVE_DESTINATION, ChessMovePlayedDto.of(match, move));
     }
 
     private void push(UUID toUserId, String destination, Object payload) {

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.github.bhlangonijr.chesslib.Board;
 import com.github.bhlangonijr.chesslib.Side;
 import com.github.bhlangonijr.chesslib.move.Move;
+import com.transcendance.backend.chess.domain.ChessException;
 import com.transcendance.backend.chess.domain.ChessMatchStatus;
 import com.transcendance.backend.chess.domain.ChessSide;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
@@ -30,20 +31,20 @@ public class ChessGameService {
      * @param whiteUserId the user playing white
      * @param blackUserId the user playing black
      * @return the persisted match
-     * @throws IllegalArgumentException if both sides are the same user, or if
+     * @throws ChessException if both sides are the same user, or if
      *                                  either of them is already in a match
      */
     @Transactional
     public ChessMatchEntity createNewGame(UUID whiteUserId, UUID blackUserId) {
 
         if (whiteUserId.equals(blackUserId)) {
-            throw new IllegalArgumentException("Cannot create a game with yourself");
+            throw new ChessException.SelfPlay();
         }
         if (chessMatchRepository.existsActiveMatch(whiteUserId)) {
-            throw new IllegalArgumentException("White player already has an active match");
+            throw new ChessException.AlreadyInMatch("White player already has an active match");
         }
         if (chessMatchRepository.existsActiveMatch(blackUserId)) {
-            throw new IllegalArgumentException("Black player already has an active match");
+            throw new ChessException.AlreadyInMatch("Black player already has an active match");
         }
 
         Board chessBoard = new Board();
@@ -62,13 +63,13 @@ public class ChessGameService {
      * @param whiteUserId the user playing white
      * @param botLevel    the level of the bot (1-10)
      * @return the persisted match
-     * @throws IllegalArgumentException if the user already has an active match
+     * @throws ChessException if the user already has an active match
      */
     @Transactional
     public ChessMatchEntity createNewGameAgainstBot(UUID whiteUserId, int botLevel) {
 
         if (chessMatchRepository.existsActiveMatch(whiteUserId)) {
-            throw new IllegalArgumentException("You already have an active match");
+            throw new ChessException.AlreadyInMatch("You already have an active match");
         }
 
         Board chessBoard = new Board();
@@ -88,39 +89,40 @@ public class ChessGameService {
      * @param playerId the ID of the player making the move
      * @param move     the move in algebraic notation (e.g., "e2e4")
      * @return the updated match entity
-     * @throws IllegalArgumentException if the match is not found, if the player is not part of the match,
+     * @throws ChessException if the match is not found, if the player is not part of the match,
      *                                  if it's not the player's turn, or if the move is illegal
      */
     @Transactional
     public ChessMatchEntity playMove(long matchId, UUID playerId, String move) {
         ChessMatchEntity match = chessMatchRepository.findById(matchId)
-                .orElseThrow(() -> new IllegalArgumentException("Match not found"));
+                .orElseThrow(() -> new ChessException.MatchNotFound(matchId));
         Board board = match.toBoard();
         if (!isValidMoveFormat(move)) {
-            throw new IllegalArgumentException("Invalid move format");
+            throw new ChessException.MalformedMove(move);
         }
         if (!isPlayerInMatch(match, playerId)) {
-            throw new IllegalArgumentException("Player is not part of this match");
+            throw new ChessException.NotAPlayer();
         }
 
         if (match.getStatus() != ChessMatchStatus.IN_PROGRESS) {
-            throw new IllegalArgumentException("Match is not in progress");
+            throw new ChessException.MatchAlreadyOver(match.getStatus());
         }
         if (match.getWhitePlayer().getUserId().equals(playerId)) {
             if (board.getSideToMove() != Side.WHITE) {
-                throw new IllegalArgumentException("It's not your turn");
+                throw new ChessException.NotYourTurn();
             }
         } else {
             if (board.getSideToMove() != Side.BLACK) {
-                throw new IllegalArgumentException("It's not your turn");
+                throw new ChessException.NotYourTurn();
             }
         }
         if (!canMovePlay(board, move)) {
-            throw new IllegalArgumentException("Illegal move");
+            throw new ChessException.IllegalMove(move);
         }
         board.doMove(new Move(move, board.getSideToMove()));
         endGame(board, match);
         match.setFen(board.getFen());
+        System.out.println(board.toString());
         chessMatchRepository.save(match);
         return match;
     }

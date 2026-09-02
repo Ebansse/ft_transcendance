@@ -31,6 +31,12 @@ public interface ChessPlayerChannel {
     void matchStarted(UUID toUserId, ChessMatchEntity match);
 
     /**
+     * Pushes a move to the player it was played against, together with the
+     * resulting match state, so his board updates without polling.
+     */
+    void movePlayed(UUID toUserId, ChessMatchEntity match, String move);
+
+    /**
      * Notifies the inviter that his invitation was declined.
      */
     void invitationDeclined(UUID toUserId, ChessInvitation invitation, String fromUsername);
