@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +19,7 @@ import com.transcendance.backend.chess.api.dto.ChessMatchDto;
 import com.transcendance.backend.chess.api.dto.ChessMoveRequestDto;
 import com.transcendance.backend.chess.application.ChessGameService;
 import com.transcendance.backend.chess.application.ChessPlayerChannel;
+import com.transcendance.backend.chess.domain.ChessException;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 import com.transcendance.backend.model.User;
 
@@ -81,6 +83,28 @@ public class ChessController {
         notifyMatchEnded(match, user.getIdUser());
 
         return ResponseEntity.ok(ChessMatchDto.of(match));
+    }
+
+    /**
+     * Retrieve the active match for the authenticated user.
+     *
+     * @param user the authenticated user
+     * @return the active ChessMatchEntity for the user
+     */
+    @GetMapping("/matches/me")
+    public ResponseEntity<?> getMyActiveMatch(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            log.warn("Chess match retrieval refused: no authenticated user");
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+
+        try {
+            ChessMatchEntity match = chessGameService.getMatchByUser(user);
+            return ResponseEntity.ok(ChessMatchDto.of(match));
+        } catch (ChessException.MatchNotFoundByUserId e) {
+            log.warn("No active chess match found for user {}: {}", user.getUserName(), e.getMessage());
+            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**

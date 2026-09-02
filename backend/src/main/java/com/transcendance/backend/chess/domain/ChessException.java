@@ -1,5 +1,7 @@
 package com.transcendance.backend.chess.domain;
 
+import java.util.UUID;
+
 /**
  * Everything the chess module can refuse to do, for the whole module: matches,
  * moves and invitations alike.
@@ -29,6 +31,14 @@ public abstract class ChessException extends RuntimeException {
         }
     }
 
+    /**
+     * No match carries this id.
+     */
+    public static class MatchNotFoundByUserId extends ChessException {
+        public MatchNotFoundByUserId(UUID userId) {
+            super("Match for user " + userId + " not found");
+        }
+    }
     /**
      * No user carries this username.
      */

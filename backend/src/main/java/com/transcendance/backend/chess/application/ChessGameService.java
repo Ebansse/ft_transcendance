@@ -14,6 +14,7 @@ import com.transcendance.backend.chess.domain.ChessSide;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 import com.transcendance.backend.chess.persistence.entity.ChessPlayerEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
+import com.transcendance.backend.model.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -241,5 +242,18 @@ public class ChessGameService {
         recordStats(match);
         chessMatchRepository.save(match);
         return match;
+    }
+
+    /**
+     * Retrieve the active match for a given user.
+     *
+     * @param user the user whose active match is to be retrieved
+     * @return the active ChessMatchEntity for the user
+     * @throws ChessException if no active match is found for the user
+     */
+    @Transactional(readOnly = true)
+    public ChessMatchEntity getMatchByUser(User user) {
+        return chessMatchRepository.findByUserId(user.getIdUser())
+                .orElseThrow(() -> new ChessException.MatchNotFoundByUserId(user.getIdUser()));
     }
 }
