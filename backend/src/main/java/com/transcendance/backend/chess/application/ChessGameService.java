@@ -197,19 +197,22 @@ public class ChessGameService {
      * @param match the match entity
      */
     private void recordStats(ChessMatchEntity match) {
-        ChessPlayerEntity whitePlayer = match.getWhitePlayer();
-        ChessPlayerEntity blackPlayer = match.getBlackPlayer();
         if (match.getWinnerSide() != null) {
-            if (match.getWinnerSide() == ChessSide.WHITE) {
-                whitePlayer.incrementWins();
-                blackPlayer.incrementLosses();
-            } else {
-                blackPlayer.incrementWins();
-                whitePlayer.incrementLosses();
+            ChessPlayerEntity winner = match.playerOn(match.getWinnerSide());
+            ChessPlayerEntity loser = match.playerOn(match.getWinnerSide().opposite());
+            if (winner != null) {
+                winner.incrementWins();
+            }
+            if (loser != null) {
+                loser.incrementLosses();
             }
         } else {
-            whitePlayer.incrementDraws();
-            blackPlayer.incrementDraws();
+            for (ChessSide side : ChessSide.values()) {
+                ChessPlayerEntity player = match.playerOn(side);
+                if (player != null) {
+                    player.incrementDraws();
+                }
+            }
         }
     }
 

@@ -114,7 +114,7 @@ public class ChessController {
      * Stays silent when the opponent is a bot, which has no session to push to.
      */
     private void notifyOpponent(ChessMatchEntity match, UUID moverId, String move) {
-        UUID opponentId = opponentOf(match, moverId);
+        UUID opponentId = match.opponentOf(moverId);
 
         if (opponentId != null) {
             playerChannel.movePlayed(opponentId, match, move);
@@ -126,19 +126,10 @@ public class ChessController {
      * from a move - here, a resignation.
      */
     private void notifyMatchEnded(ChessMatchEntity match, UUID actorId) {
-        UUID opponentId = opponentOf(match, actorId);
+        UUID opponentId = match.opponentOf(actorId);
 
         if (opponentId != null) {
             playerChannel.matchEnded(opponentId, match);
         }
-    }
-
-    /**
-     * @return the other side's user id, or null when it is held by a bot.
-     */
-    private UUID opponentOf(ChessMatchEntity match, UUID playerId) {
-        return playerId.equals(match.getWhitePlayerId())
-                ? match.getBlackPlayerId()
-                : match.getWhitePlayerId();
     }
 }

@@ -101,6 +101,16 @@ public class ChessMatchEntity {
         return identifierOf(blackPlayer);
     }
 
+    /**
+     * The user id on the other side of the board.
+     *
+     * @param userId one of the two players
+     * @return the opponent's user id, or null when that side is held by a bot
+     */
+    public UUID opponentOf(UUID userId) {
+        return userId.equals(getWhitePlayerId()) ? getBlackPlayerId() : getWhitePlayerId();
+    }
+
     public ChessPlayerEntity playerOn(ChessSide side) {
         return side == ChessSide.WHITE ? whitePlayer : blackPlayer;
     }
