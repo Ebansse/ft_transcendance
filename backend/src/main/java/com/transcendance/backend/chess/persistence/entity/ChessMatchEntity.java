@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -36,7 +37,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "chess_matches")
+@Table(name = "chess_matches", indexes = {
+        // The forfeit sweep runs on a timer forever; without this it reads the
+        // whole table every time to almost always find nothing.
+        @Index(name = "idx_chess_match_forfeit_deadline", columnList = "forfeit_deadline")
+})
 public class ChessMatchEntity {
 
     @Id

@@ -42,4 +42,14 @@ public interface ChessMatchEntityRepository extends JpaRepository<ChessMatchEnti
         @Query("SELECT m FROM ChessMatchEntity m "
                         + "WHERE m.status = IN_PROGRESS AND m.forfeitDeadline IS NOT NULL AND m.forfeitDeadline <= :now")
         List<ChessMatchEntity> findExpiredForfeits(Instant now);
+
+        /**
+         * Every match with a countdown running, expired or not.
+         *
+         * Read once at startup: the timers that were counting these down died with
+         * the previous process, and nothing else would ever pick them up again.
+         */
+        @Query("SELECT m FROM ChessMatchEntity m "
+                        + "WHERE m.status = IN_PROGRESS AND m.forfeitDeadline IS NOT NULL")
+        List<ChessMatchEntity> findArmedForfeits();
 }
