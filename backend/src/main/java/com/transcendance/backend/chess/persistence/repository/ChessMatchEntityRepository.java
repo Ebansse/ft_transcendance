@@ -1,5 +1,7 @@
 package com.transcendance.backend.chess.persistence.repository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,4 +32,14 @@ public interface ChessMatchEntityRepository extends JpaRepository<ChessMatchEnti
         @Query("SELECT m.chessMatchId FROM ChessMatchEntity m LEFT JOIN m.whitePlayer w LEFT JOIN m.blackPlayer b "
                         + "WHERE (w.userId = :userId OR b.userId = :userId) AND m.status = IN_PROGRESS")
         Optional<Long> findActiveMatchId(UUID userId);
+
+        /**
+         * Matches whose away player has run out of time to come back.
+         *
+         * Touches no player association, so the rows stay readable once detached -
+         * this is called from a scheduled task, which has no session bound to it.
+         */
+        @Query("SELECT m FROM ChessMatchEntity m "
+                        + "WHERE m.status = IN_PROGRESS AND m.forfeitDeadline IS NOT NULL AND m.forfeitDeadline <= :now")
+        List<ChessMatchEntity> findExpiredForfeits(Instant now);
 }

@@ -1,5 +1,6 @@
 package com.transcendance.backend.chess.persistence.entity;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -74,6 +75,25 @@ public class ChessMatchEntity {
     @Column(name = "version")
     private Long version;
 
+    /**
+     * The player who dropped his connection, if any is currently away.
+     *
+     * Stored as a plain column rather than a side, so a scheduled task can read
+     * it off a detached match without touching the lazy player associations.
+     */
+    @Column(name = "away_player_id")
+    private UUID awayPlayerId;
+
+    /**
+     * When the away player loses the match if he has not come back.
+     *
+     * Persisted rather than kept as an in-memory timer: a restart would otherwise
+     * forget the countdown, and the match would stay IN_PROGRESS for good - which
+     * existsActiveMatch would then read as both players being permanently busy.
+     */
+    @Column(name = "forfeit_deadline")
+    private Instant forfeitDeadline;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -107,6 +127,25 @@ public class ChessMatchEntity {
      * @param userId one of the two players
      * @return the opponent's user id, or null when that side is held by a bot
      */
+    /**
+     * Starts the countdown after which this player forfeits.
+     *
+     * Overwrites any pending one: a player who drops, comes back and drops again
+     * gets a fresh delay rather than the remains of the first.
+     */
+    public void armForfeit(UUID awayPlayerId, Instant deadline) {
+        this.awayPlayerId = awayPlayerId;
+        this.forfeitDeadline = deadline;
+    }
+
+    /**
+     * Called once the away player is seen online again.
+     */
+    public void cancelForfeit() {
+        this.awayPlayerId = null;
+        this.forfeitDeadline = null;
+    }
+
     public UUID opponentOf(UUID userId) {
         return userId.equals(getWhitePlayerId()) ? getBlackPlayerId() : getWhitePlayerId();
     }

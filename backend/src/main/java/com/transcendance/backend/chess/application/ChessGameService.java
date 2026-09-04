@@ -1,5 +1,8 @@
 package com.transcendance.backend.chess.application;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -78,7 +81,7 @@ public class ChessGameService {
         ChessMatchEntity chessMatch = new ChessMatchEntity(
                 chessBoard,
                 chessPlayerService.getOrCreatePlayer(whiteUserId),
-                null); //TODO A changer
+                null); // TODO A changer
         chessMatch.setBlackBotLevel(botLevel);
 
         return chessMatchRepository.save(chessMatch);
@@ -214,6 +217,36 @@ public class ChessGameService {
                 }
             }
         }
+    }
+
+    /**
+     * Starts the countdown after which a player who left forfeits his match.
+     *
+     * Writing the deadline to the row rather than holding a timer means a restart
+     * cannot lose it: the sweep picks it up again from the database.
+     *
+     * @param awayPlayerId the user who just dropped his connection
+     * @param grace        how long he has to come back
+     * @return the id of the match now at stake, empty if he had none running
+     */
+    @Transactional
+    public Optional<Long> armForfeit(UUID awayPlayerId, Duration grace) {
+        return chessMatchRepository.findByUserId(awayPlayerId).map(match -> {
+            match.armForfeit(awayPlayerId, Instant.now().plus(grace));
+            return match.getChessMatchId();
+        });
+    }
+
+    /**
+     * Called when the away player turns out to be back before the deadline.
+     */
+    @Transactional
+    public void cancelForfeit(long matchId) {
+        chessMatchRepository.findById(matchId).ifPresent(match -> {
+            if (match != null) {
+                match.cancelForfeit();
+            }
+        });
     }
 
     /**
