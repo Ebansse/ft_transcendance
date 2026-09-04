@@ -52,6 +52,11 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  /** Après une édition de profil : on relit la source de vérité côté back. */
+  const refreshUser = useCallback(async () => {
+    setUser(await getMyProfile())
+  }, [])
+
   /** Ouvre la session : le back pose les cookies, on lit le profil dans la foulée. */
   const login = async (values: LoginForm) => {
     await api.post<string>('/auth/login', values)
@@ -75,8 +80,9 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       openModal,
       closeModal,
       logout,
+      refreshUser,
     }),
-    [isOpen, mode, user, authChecked, openModal, closeModal, logout],
+    [isOpen, mode, user, authChecked, openModal, closeModal, logout, refreshUser],
   )
 
   return (

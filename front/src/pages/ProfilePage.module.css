@@ -1,0 +1,173 @@
+/* Ce qui est propre à la page Profil : les deux formulaires (avatar, identité)
+   et leurs états. L'en-tête et les titres de section viennent de composants
+   partagés. Les champs reprennent l'habillage de `dialog.module.css` sans
+   pouvoir en tirer `composes:` (la page n'importe pas la coquille de modale) :
+   les valeurs restent alignées à la main, comme dans `FriendsPage.module.css`. */
+
+.denied {
+  composes: riseIn from '../style/page.module.css';
+
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 480ms;
+}
+
+/* Chaque bloc respire de la même façon que sur la page Amis. */
+.section {
+  margin-top: 3rem;
+}
+
+.section:first-of-type {
+  margin-top: 1.5rem;
+}
+
+/* --- Avatar --- */
+
+.avatarForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  background: var(--ink-800);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+}
+
+.avatarControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: flex-start;
+
+  /* Contrat Button : bouton compact sous les contrôles. */
+  --btn-padding: 0.5rem 1rem;
+  --btn-font-size: 0.85rem;
+}
+
+/* Le vrai <input type=file> est masqué : le label sert de déclencheur stylé,
+   tout en restant focusable au clavier via l'input qu'il contient. */
+.fileLabel {
+  display: inline-block;
+  max-width: 20rem;
+  padding: 0.5rem 0.85rem;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: var(--bone);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--ink-800);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition: border-color 160ms ease;
+}
+
+.fileLabel:hover {
+  border-color: rgba(245, 241, 234, 0.28);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fileInput:focus-visible + * {
+  outline: 2px solid var(--red-hot);
+  outline-offset: 2px;
+}
+
+/* --- Identité --- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 26rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--card-ink-dim);
+}
+
+.input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--bone);
+  background: var(--ink-800);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.input:hover {
+  border-color: rgba(245, 241, 234, 0.28);
+}
+
+.input:focus {
+  outline: none;
+  background: var(--ink-700);
+  border-color: var(--red-hot);
+}
+
+/* Champ refusé (front ou back). Vit juste après `.input` pour gagner sur sa bordure. */
+.inputError {
+  border-color: var(--red-bright);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.4rem;
+
+  --btn-padding: 0.6rem 1.2rem;
+  --btn-font-size: 0.9rem;
+}
+
+/* --- États partagés --- */
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--mute);
+}
+
+.error {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--red-bright);
+}
+
+.notice {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: var(--live);
+}

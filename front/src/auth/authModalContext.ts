@@ -14,6 +14,9 @@ export type AuthModalValue = {
   openModal: (mode?: AuthMode) => void
   closeModal: () => void
   logout: () => Promise<void>
+  /** Relit `/users/me` et resynchronise la session : la navbar et la sidebar
+   *  suivent un changement de pseudo, d'e-mail ou d'avatar. */
+  refreshUser: () => Promise<void>
 }
 
 /** Fichier sans composant : le hook et le contexte peuvent être exportés ensemble. */
