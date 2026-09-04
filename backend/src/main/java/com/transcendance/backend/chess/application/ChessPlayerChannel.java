@@ -31,6 +31,23 @@ public interface ChessPlayerChannel {
     void matchStarted(UUID toUserId, ChessMatchEntity match);
 
     /**
+     * Pushes a move to the player it was played against, together with the
+     * resulting match state, so his board updates without polling.
+     */
+    void movePlayed(UUID toUserId, ChessMatchEntity match, String move);
+
+    /**
+     * Tells a player that the match is over for a reason he could not see coming
+     * from the board itself: a resignation, a timeout, an opponent who never came
+     * back. A game ending on a move needs no such push - the move carries the
+     * final status already.
+     *
+     * Travels on the same destination as matchStarted: both are match lifecycle
+     * events, and the status tells them apart.
+     */
+    void matchEnded(UUID toUserId, ChessMatchEntity match);
+
+    /**
      * Notifies the inviter that his invitation was declined.
      */
     void invitationDeclined(UUID toUserId, ChessInvitation invitation, String fromUsername);

@@ -36,4 +36,15 @@ public class ChessPlayerEntity {
     public ChessPlayerEntity(UUID userId) {
         this.userId = userId;
     }
+
+    public void incrementWins() {
+        this.wins++;
+    }
+
+    public void incrementLosses() {
+        this.losses++;
+    }
+    public void incrementDraws() {
+        this.draws++;
+    }
 }

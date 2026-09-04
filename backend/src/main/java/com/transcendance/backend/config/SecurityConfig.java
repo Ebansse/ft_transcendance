@@ -63,7 +63,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.POST,
                                                                 "/api/chess/invitations",
                                                                 "/api/chess/invitations/accept",
-                                                                "/api/chess/invitations/decline")
+                                                                "/api/chess/invitations/decline",
+                                                                "/api/chess/matches/{matchId}/moves",
+                                                                "/api/chess/matches/{matchId}/resign")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/chess/invitations/pending")
