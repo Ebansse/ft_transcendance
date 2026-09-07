@@ -122,6 +122,22 @@ public class FriendListController {
         }
     }
 
+    @PostMapping("/{idUser}/unblock")
+    public ResponseEntity<?> unblockUser(@AuthenticationPrincipal User user, @PathVariable UUID idUser) {
+
+        if (idUser == null) {
+            log.warn("Friend request failed: User ID is null");
+            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+        }
+        try{
+            friendListService.unblockFriend(user, idUser);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to unblock user: {}", e.getMessage());
+            return ResponseEntity.status(400).body(Map.of("error", "Failed to unblock user"));
+        }
+    }
+
     @GetMapping("me/list")
     public ResponseEntity<?> getFriendList(@AuthenticationPrincipal User user) {
 

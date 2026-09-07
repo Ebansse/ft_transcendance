@@ -52,6 +52,7 @@ public class SecurityConfig {
                                                                 "/api/friend-list/{idUser}/decline",
                                                                 "/api/friend-list/{idUser}/delete",
                                                                 "/api/friend-list/{idUser}/block",
+                                                                "/api/friend-list/{idUser}/unblock",
                                                                 "/api/users/me/avatar")
                                                 .hasAnyRole("USER", "ADMIN")
 
