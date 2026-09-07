@@ -71,6 +71,11 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/chess/invitations/pending")
                                                 .hasAnyRole("USER", "ADMIN")
+                                                // --- CHAT ---
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/chat/{userId}")
+                                                .hasAnyRole("USER", "ADMIN")
+
                                                 // --- ADMIN uniquement ---
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/users")
