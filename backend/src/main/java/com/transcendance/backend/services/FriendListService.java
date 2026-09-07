@@ -262,12 +262,19 @@ public class FriendListService {
         var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
         if (existing.isPresent()) {
             if (existing.get().getStatus() == FriendshipStatus.ACCEPTED
-                    || existing.get().getStatus() == FriendshipStatus.PENDING) {
+                    || existing.get().getStatus() == FriendshipStatus.PENDING
+                    || existing.get().getStatus() == FriendshipStatus.DECLINED) {
                 existing.get().setStatus(FriendshipStatus.BLOCKED);
                 existing.get().setCreatedAt(LocalDateTime.now());
+                existing.get().setBlockedBy(user.getIdUser());
                 friendListRepository.save(existing.get());
                 log.info("User blocked from {} to {}", user.getUserName(), userTarget.getUserName());
                 return;
+            } else {
+                if (existing.get().getBlockedBy().equals(user.getIdUser())) {
+                    throw new IllegalArgumentException("You have already blocked this user");
+                }
+                throw new IllegalArgumentException("Invalid friend status");
             }
         } else {
             FriendList friendList = new FriendList();
@@ -276,11 +283,55 @@ public class FriendListService {
             friendList.setUserId1(id1);
             friendList.setUserId2(id2);
             friendList.setSenderId(user.getIdUser());
+            friendList.setBlockedBy(user.getIdUser());
             friendListRepository.save(friendList);
             log.info("User blocked from {} to {}", user.getUserName(), userTarget.getUserName());
             return;
         }
 
+    }
+
+    /**
+     * Unblocks a user from the friend list.
+     *
+     * @param user   The user unblocking another user.
+     * @param idUser The ID of the user to unblock.
+     */
+    @Transactional
+    public void unblockFriend(User user, UUID idUser) {
+        if (user == null) {
+            throw new IllegalArgumentException("User must be authenticated");
+        }
+
+        log.info("Unblocking user from {} to {}", user.getUserName(), idUser);
+
+        User userTarget = userRepository.findById(idUser)
+                .orElseThrow(() -> {
+                    log.info("User not found: {}", idUser);
+                    return new IllegalArgumentException("User not found");
+                });
+
+        if (user.equals(userTarget)) {
+            log.info("You cannot unblock yourself");
+            throw new IllegalArgumentException("You cannot unblock yourself");
+        }
+
+        List<UUID> ids = compareUUIDs(user, userTarget);
+        UUID id1 = ids.get(0);
+        UUID id2 = ids.get(1);
+
+        var existing = friendListRepository.findByUserId1AndUserId2(id1, id2);
+        if (existing.isPresent()) {
+            if (existing.get().getStatus() == FriendshipStatus.BLOCKED) {
+                if (existing.get().getBlockedBy() != null && existing.get().getBlockedBy().equals(user.getIdUser())) {
+                    friendListRepository.delete(existing.get());
+                    log.info("Friend unblocked from {} to {}", user.getUserName(), userTarget.getUserName());
+                    return;
+                }
+            }
+        }
+        log.warn("No friend relationship found between {} and {}", user.getUserName(), userTarget.getUserName());
+        throw new IllegalArgumentException("No friend relationship is established");
     }
 
     /**

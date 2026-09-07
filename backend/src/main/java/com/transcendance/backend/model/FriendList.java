@@ -22,15 +22,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-    name = "friend_list",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "friend_list_unique",
-            columnNames = {"user_id1", "user_id2"}
-        )
-    }
-)
+@Table(name = "friend_list", uniqueConstraints = {
+        @UniqueConstraint(name = "friend_list_unique", columnNames = { "user_id1", "user_id2" })
+})
 public class FriendList {
 
     @Id
@@ -52,4 +46,7 @@ public class FriendList {
 
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
+
+    @Column(name = "blocked_by")
+    private UUID blockedBy;
 }
