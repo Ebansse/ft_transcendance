@@ -69,7 +69,8 @@ public class SecurityConfig {
                                                                 "/api/chess/matches/{matchId}/resign")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 .requestMatchers(HttpMethod.GET,
-                                                                "/api/chess/invitations/pending")
+                                                                "/api/chess/invitations/pending",
+                                                                "/api/chess/matches/me")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 // --- CHAT ---
                                                 .requestMatchers(HttpMethod.GET,
