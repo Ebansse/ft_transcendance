@@ -1,6 +1,7 @@
 import { Routes, Route, useNavigate } from 'react-router-dom'
 import { AdminPage } from './pages/AdminPage.tsx'
 import { ChatPage } from './pages/ChatPage.tsx'
+import { ChessPage } from './pages/ChessPage.tsx'
 import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
@@ -13,6 +14,7 @@ const PAGES = {
   'nav:profile': { path: '/profile', Component: ProfilePage },
   'nav:admin': { path: '/admin', Component: AdminPage },
   'nav:chat': { path: '/chat', Component: ChatPage }, // TODO: page de chat
+  'nav:chess': { path: '/chess', Component: ChessPage },
 } as const
 
 function App() {
