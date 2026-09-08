@@ -1,5 +1,8 @@
 import { Chess, type Square } from 'chess.js'
 import { useState } from 'react'
+import { ChessPending, sendChessInvitation } from '../lib/actions.ts'
+import { ApiError } from '../lib/apiClient.ts'
+import { ChessInviteModal } from '../components/ChessInviteModal.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
@@ -73,6 +76,13 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null)
   const [orientation, setOrientation] = useState<BoardOrientation>('white')
 
+  const [inviteOpen, setInviteOpen] = useState(false)
+  /** Pseudo dont l'invitation part en ce moment : verrouille toute la liste. */
+  const [invitePending, setInvitePending] = useState<string | null>(null)
+  const [inviteError, setInviteError] = useState<string | null>(null)
+  /** Dernier adversaire invité, pour l'accusé de réception du panneau. */
+  const [inviteSent, setInviteSent] = useState<string | null>(null)
+
   const { chess, view } = game
 
   /** Sélectionne la case si elle porte une pièce du camp au trait, et calcule
@@ -129,6 +139,29 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setGame(newGame())
     setLastMove(null)
     clearSelection()
+  }
+
+  const openInvite = () => {
+    setInviteError(null)
+    setInviteSent(null)
+    setInviteOpen(true)
+  }
+
+  /** Envoie l'invitation puis referme la modale. Un refus du back la laisse
+   *  ouverte : le message se lit à côté de la liste et on peut réessayer. */
+  const invite = async (userName: string) => {
+    setInvitePending(userName)
+    setInviteError(null)
+
+    try {
+      await sendChessInvitation(userName)
+      setInviteSent(userName)
+      setInviteOpen(false)
+    } catch (err: unknown) {
+      setInviteError(err instanceof ApiError ? err.message : 'Invitation refusée.')
+    } finally {
+      setInvitePending(null)
+    }
   }
 
   const rounds = toRounds(view.history)
@@ -201,8 +234,20 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
           <div className={s.actions}>
             <Button variant="primary" fullWidth onClick={resetGame}>
-              Nouvelle partie
+              Reset la game
             </Button>
+            <Button variant="primary" fullWidth onClick={openInvite}>
+              Inviter un(e) ami(e)
+            </Button>
+
+            <ChessInviteModal
+              open={inviteOpen}
+              pending={invitePending}
+              error={inviteError}
+              onClose={() => setInviteOpen(false)}
+              onInvite={invite}
+            />
+
             <Button
               variant="secondary"
               fullWidth
@@ -210,6 +255,12 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             >
               Retourner l'échiquier
             </Button>
+            {inviteSent !== null && (
+              <p className={s.hint} aria-live="polite">
+                Invitation envoyée à {inviteSent}.
+              </p>
+            )}
+
             <p className={s.hint}>
               Invitations, adversaire et parties sauvegardées arriveront avec le branchement du
               serveur.

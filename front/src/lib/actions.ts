@@ -115,3 +115,13 @@ export function deleteFriend(idUser: string) {
 export function blockUser(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/block`)
 }
+
+/** Invite un adversaire par pseudo : le back retrouve le compte, refuse l'auto-
+ *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). */
+export function sendChessInvitation(opponentUsername: string) {
+  return api.post<void>('/chess/invitations', { opponentUsername })
+}
+
+export function ChessPending() {
+  return api.get<void>(`/chess/invitations/pending`)
+}

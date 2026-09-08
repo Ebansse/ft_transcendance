@@ -127,8 +127,8 @@ public class ChessInvitationController {
             log.warn("Pending chess invitations refused: no authenticated user");
             return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
         }
+    List<ChessInvitationDto> invitations = chessInvitationService.getPendingInvitations(user).stream()
 
-        List<ChessInvitationDto> invitations = chessInvitationService.getPendingInvitations(user).stream()
         .flatMap(invitation -> userService.getUserById(invitation.fromUserId())
                 .map(sender -> ChessInvitationDto.of(invitation, sender.getUserName(),
                         ChessInvitationState.PENDING))
