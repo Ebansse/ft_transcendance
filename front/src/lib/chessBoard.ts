@@ -1,28 +1,20 @@
-/** Manipulation d'une position d'échecs côté front : lecture et écriture du
- *  FEN, déplacement d'une pièce, nommage des cases. Rien ici ne connaît le
- *  réseau, et rien ici ne connaît les *règles* : le back (chesslib) reste seul
- *  juge de la légalité d'un coup, ce module ne fait que dessiner ce qu'on lui
- *  donne et bouger ce qu'on lui demande. */
+/** Pont entre chess.js et l'affichage de l'échiquier.
+ *
+ *  chess.js tient les *règles* (déplacements légaux, roque, prise en passant,
+ *  clouage, mat, pat, nulles) — c'est le même jeu de règles que chesslib côté
+ *  back, et le même FEN de part et d'autre. Ce module ne fait que traduire une
+ *  partie chess.js en ce que la vue sait dessiner (64 cases, glyphes Unicode,
+ *  libellés français) et n'ouvre aucune connexion. */
+
+import type { Chess } from 'chess.js'
 
 /** Position de départ, telle que la renvoie `new Board()` côté back. */
 export const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
-/** Une case vide vaut `null` ; sinon la lettre FEN de la pièce, majuscule pour
- *  les blancs (`'P'` = pion blanc, `'p'` = pion noir). */
-export type ChessPosition = {
-  /** 64 cases dans l'ordre de lecture du FEN : index 0 = a8, index 63 = h1. */
-  squares: (string | null)[]
-  sideToMove: 'w' | 'b'
-  castling: string
-  enPassant: string
-  halfmove: number
-  fullmove: number
-}
-
 const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 
-/** `['a8', 'b8', …, 'h1']` — même ordre que `ChessPosition.squares`. */
+/** `['a8', 'b8', …, 'h1']` — même ordre que les cases renvoyées par `squaresOf`. */
 export const SQUARE_NAMES = RANKS.flatMap((rank) => FILES.map((file) => file + rank))
 
 /** Les deux couleurs partagent les glyphes pleins : les glyphes creux (♙♔)
@@ -67,6 +59,8 @@ export function nameOf(piece: string) {
   return `${NAMES[type] ?? 'pièce'} ${color}`
 }
 
+/** Une case vide vaut `null` ; sinon la lettre FEN de la pièce, majuscule pour
+ *  les blancs (`'P'` = pion blanc, `'p'` = pion noir). */
 export function isWhitePiece(piece: string) {
   return piece === piece.toUpperCase()
 }
@@ -75,94 +69,32 @@ export function indexOfSquare(square: string) {
   return SQUARE_NAMES.indexOf(square)
 }
 
-/** Découpe un FEN en position exploitable. Les champs absents (FEN tronqué)
- *  retombent sur les valeurs d'une partie neuve plutôt que sur `NaN`. */
-export function parseFen(fen: string): ChessPosition {
-  const [placement, side, castling, enPassant, halfmove, fullmove] = fen.trim().split(/\s+/)
-  const squares: (string | null)[] = []
-
-  for (const rank of placement.split('/')) {
-    for (const char of rank) {
-      if (char >= '1' && char <= '8') squares.push(...Array<null>(Number(char)).fill(null))
-      else squares.push(char)
-    }
-  }
-
-  return {
-    squares,
-    sideToMove: side === 'b' ? 'b' : 'w',
-    castling: castling ?? '-',
-    enPassant: enPassant ?? '-',
-    halfmove: Number(halfmove) || 0,
-    fullmove: Number(fullmove) || 1,
-  }
+/** Aplatit `chess.board()` (8 rangées, la 8ᵉ d'abord) en 64 lettres FEN :
+ *  index 0 = a8, index 63 = h1, exactement l'ordre de `SQUARE_NAMES`. */
+export function squaresOf(chess: Chess): (string | null)[] {
+  return chess
+    .board()
+    .flat()
+    .map((cell) => {
+      if (cell === null) return null
+      return cell.color === 'w' ? cell.type.toUpperCase() : cell.type
+    })
 }
 
-/** Réécrit la position en FEN : c'est ce format que le back attend et renvoie,
- *  donc le seul état qu'on aura à échanger une fois les routes branchées. */
-export function toFen(position: ChessPosition) {
-  const ranks: string[] = []
-
-  for (let rank = 0; rank < 8; rank++) {
-    let line = ''
-    let empty = 0
-
-    for (let file = 0; file < 8; file++) {
-      const piece = position.squares[rank * 8 + file]
-      if (piece === null) {
-        empty++
-        continue
-      }
-      if (empty > 0) {
-        line += String(empty)
-        empty = 0
-      }
-      line += piece
-    }
-
-    ranks.push(empty > 0 ? line + String(empty) : line)
+/** Motif de fin de partie en français, ou `null` tant qu'elle continue.
+ *  L'ordre compte : `isGameOver()` dit *que* c'est fini, jamais *pourquoi*, et
+ *  un mat est aussi une position sans coup légal. */
+export function outcomeOf(chess: Chess): string | null {
+  if (chess.isCheckmate()) {
+    // Le camp au trait est celui qui subit le mat.
+    const winner = chess.turn() === 'w' ? 'les noirs' : 'les blancs'
+    return `Échec et mat — ${winner} gagnent`
   }
+  if (chess.isStalemate()) return 'Pat — partie nulle'
+  if (chess.isInsufficientMaterial()) return 'Nulle — matériel insuffisant'
+  if (chess.isThreefoldRepetition()) return 'Nulle — triple répétition'
+  if (chess.isDrawByFiftyMoves()) return 'Nulle — règle des 50 coups'
+  if (chess.isDraw()) return 'Partie nulle'
 
-  return [
-    ranks.join('/'),
-    position.sideToMove,
-    position.castling,
-    position.enPassant,
-    position.halfmove,
-    position.fullmove,
-  ].join(' ')
-}
-
-/** Déplace la pièce de `from` vers `to` **sans vérifier quoi que ce soit** :
- *  ni la légalité, ni le tour, ni la prise en passant, ni le roque. La position
- *  renvoyée est neuve (jamais mutée sur place), et la position d'origine est
- *  rendue telle quelle si la case de départ est vide. */
-export function applyMove(position: ChessPosition, from: string, to: string): ChessPosition {
-  const fromIndex = indexOfSquare(from)
-  const toIndex = indexOfSquare(to)
-  const piece = position.squares[fromIndex]
-
-  if (fromIndex < 0 || toIndex < 0 || piece === null) return position
-
-  const squares = [...position.squares]
-  const captured = squares[toIndex]
-  squares[toIndex] = piece
-  squares[fromIndex] = null
-
-  return {
-    ...position,
-    squares,
-    sideToMove: position.sideToMove === 'w' ? 'b' : 'w',
-    // Remise à zéro sur une poussée de pion ou une prise, comme le veut la
-    // règle des 50 coups — la seule que ce module puisse tenir sans connaître
-    // les règles.
-    halfmove: piece.toLowerCase() === 'p' || captured !== null ? 0 : position.halfmove + 1,
-    fullmove: position.sideToMove === 'b' ? position.fullmove + 1 : position.fullmove,
-  }
-}
-
-/** Coup au format UCI attendu par le back (`ChessGameService.isValidMoveFormat`) :
- *  case de départ, case d'arrivée, et la pièce de promotion en option. */
-export function toUci(from: string, to: string, promotion?: string) {
-  return from + to + (promotion ?? '')
+  return null
 }

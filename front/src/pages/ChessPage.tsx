@@ -1,3 +1,4 @@
+import { Chess, type Square } from 'chess.js'
 import { useState } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
@@ -5,102 +6,149 @@ import { Button } from '../components/Button.tsx'
 import { ChessBoard, type BoardOrientation } from '../components/ChessBoard.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import {
-  START_FEN,
-  applyMove,
-  indexOfSquare,
-  isWhitePiece,
-  parseFen,
-  toFen,
-  toUci,
-  type ChessPosition,
-} from '../lib/chessBoard.ts'
+import { outcomeOf, squaresOf } from '../lib/chessBoard.ts'
 import s from './ChessPage.module.css'
 
 type ChessPageProps = {
   onNavigate: (action: string) => void
 }
 
-/** Regroupe les coups deux par deux pour l'affichage : « 1. e2e4 e7e5 ». */
-function toRounds(moves: string[]) {
+/** Tout ce que la vue a besoin de savoir de la partie, figé après chaque coup.
+ *  L'instance chess.js, elle, est mutable : on la garde à côté et on remplace
+ *  l'instantané à chaque changement pour déclencher le rendu. */
+type Snapshot = {
+  squares: (string | null)[]
+  turn: 'w' | 'b'
+  check: boolean
+  fen: string
+  /** `san` pour l'affichage (« Cxf7 »), `lan` = format UCI attendu par le back. */
+  history: { san: string; lan: string }[]
+  outcome: string | null
+}
+
+function newGame() {
+  const chess = new Chess()
+  return { chess, view: snapshot(chess) }
+}
+
+function snapshot(chess: Chess): Snapshot {
+  return {
+    squares: squaresOf(chess),
+    turn: chess.turn(),
+    check: chess.isCheck(),
+    fen: chess.fen(),
+    history: chess.history({ verbose: true }).map(({ san, lan }) => ({ san, lan })),
+    outcome: outcomeOf(chess),
+  }
+}
+
+/** Regroupe les coups deux par deux pour l'affichage : « 1. e4 e5 ». */
+function toRounds(history: { san: string }[]) {
   const rounds: { number: number; white: string; black: string | null }[] = []
 
-  for (let i = 0; i < moves.length; i += 2) {
-    rounds.push({ number: i / 2 + 1, white: moves[i], black: moves[i + 1] ?? null })
+  for (let i = 0; i < history.length; i += 2) {
+    rounds.push({
+      number: i / 2 + 1,
+      white: history[i].san,
+      black: history[i + 1]?.san ?? null,
+    })
   }
 
   return rounds
 }
 
-/** Page Échecs, premier jet : l'échiquier tourne entièrement en local, sans
- *  aucun appel au back. Les règles ne sont donc pas appliquées — n'importe
- *  quelle pièce va n'importe où — et le camp au trait n'est qu'indicatif.
+/** Page Échecs : une partie complète, jouée en local dans le navigateur.
  *
- *  Le jour où l'on branchera `/api/chess/**`, seule la source de la position
- *  change : le FEN viendra de `ChessMatchDto` et les coups partiront en UCI
- *  sur `POST /api/chess/matches/{id}/moves`. Le reste de la page tient. */
+ *  chess.js applique toutes les règles (déplacements légaux, roque, prise en
+ *  passant, clouage, mat, pat, nulles) ; il n'y a ni adversaire, ni recherche
+ *  de partie, ni sauvegarde — aucun appel réseau n'est fait ici. Le jour où
+ *  l'on branchera `/api/chess/**`, la position viendra du FEN serveur et les
+ *  coups partiront en UCI (`lan`) ; le reste de la page tient. */
 export function ChessPage({ onNavigate }: ChessPageProps) {
   const { user } = useAuthModal()
 
-  const [position, setPosition] = useState<ChessPosition>(() => parseFen(START_FEN))
+  const [game, setGame] = useState(newGame)
   const [selected, setSelected] = useState<string | null>(null)
+  const [targets, setTargets] = useState<string[]>([])
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null)
   const [orientation, setOrientation] = useState<BoardOrientation>('white')
-  const [moves, setMoves] = useState<string[]>([])
 
-  const pieceOn = (square: string) => position.squares[indexOfSquare(square)]
+  const { chess, view } = game
+
+  /** Sélectionne la case si elle porte une pièce du camp au trait, et calcule
+   *  ses arrivées légales. Renvoie `false` si la case n'est pas jouable. */
+  const select = (square: string) => {
+    const moves = chess.moves({ square: square as Square, verbose: true })
+    if (moves.length === 0) return false
+
+    setSelected(square)
+    setTargets(moves.map((move) => move.to))
+    return true
+  }
+
+  const clearSelection = () => {
+    setSelected(null)
+    setTargets([])
+  }
 
   const handleSquareClick = (square: string) => {
-    const piece = pieceOn(square)
+    /* Partie terminée : le plateau est inerte, plus rien ne bouge. */
+    if (view.outcome !== null) return
 
     if (selected === null) {
-      if (piece !== null) setSelected(square)
+      select(square)
       return
     }
 
     if (square === selected) {
-      setSelected(null)
+      clearSelection()
       return
     }
 
-    /* Clic sur une pièce de la même couleur : on change de sélection plutôt
-       que de manger son propre camp. */
-    const from = pieceOn(selected)
-    if (piece !== null && from !== null && isWhitePiece(piece) === isWhitePiece(from)) {
-      setSelected(square)
+    /* Pas une arrivée légale : soit c'est une autre pièce à nous et on change
+       de sélection, soit le clic ne veut rien dire et on l'ignore. */
+    if (!targets.includes(square)) {
+      select(square)
       return
     }
 
-    setPosition(applyMove(position, selected, square))
-    setMoves((played) => [...played, toUci(selected, square)])
+    // Promotion : dame d'office. Un sélecteur de pièce viendra plus tard.
+    chess.move({ from: selected as Square, to: square as Square, promotion: 'q' })
+
+    const next = snapshot(chess)
+    setGame({ chess, view: next })
     setLastMove({ from: selected, to: square })
-    setSelected(null)
+    clearSelection()
+
+    /* Émis ici, et non dans un effet : le coup qui termine la partie est joué
+       une seule fois, donc le message ne peut pas être dupliqué. */
+    if (next.outcome !== null) console.log(`[chess] Partie terminée — ${next.outcome}`)
   }
 
   const resetGame = () => {
-    setPosition(parseFen(START_FEN))
-    setSelected(null)
+    setGame(newGame())
     setLastMove(null)
-    setMoves([])
+    clearSelection()
   }
 
-  const rounds = toRounds(moves)
-  const sideToMoveLabel = position.sideToMove === 'w' ? 'Trait aux blancs' : 'Trait aux noirs'
+  const rounds = toRounds(view.history)
+  const turnLabel = view.turn === 'w' ? 'Trait aux blancs' : 'Trait aux noirs'
 
   return (
     <AppLayout current="nav:chess" onNavigate={onNavigate}>
       <PageHeader
         title="Échecs"
-        subtitle="Plateau local : les pièces se déplacent librement, aucune règle n'est encore appliquée."
+        subtitle="Partie locale complète : règles, échec et mat, pat. Aucun adversaire, aucune sauvegarde."
       />
 
       <section className={s.layout} aria-labelledby="chess-board-title">
         <div>
           <SectionTitle id="chess-board-title">Plateau</SectionTitle>
           <ChessBoard
-            position={position}
+            squares={view.squares}
             orientation={orientation}
             selected={selected}
+            targets={targets}
             lastMove={lastMove}
             onSquareClick={handleSquareClick}
           />
@@ -118,11 +166,18 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             </p>
           </div>
 
-          <p className={s.turn}>
-            {sideToMoveLabel} · coup {position.fullmove}
-          </p>
+          {view.outcome === null ? (
+            <p className={s.turn} aria-live="polite">
+              {turnLabel} · coup {Math.floor(view.history.length / 2) + 1}
+              {view.check ? ' · échec !' : ''}
+            </p>
+          ) : (
+            <p className={s.over} role="status">
+              {view.outcome}
+            </p>
+          )}
 
-          <div className={s.moves}>
+          <div>
             <p className={s.blockTitle}>Coups joués</p>
             {rounds.length === 0 ? (
               <p className={s.empty}>Aucun coup pour l'instant.</p>
@@ -139,9 +194,9 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             )}
           </div>
 
-          <div className={s.fen}>
+          <div>
             <p className={s.blockTitle}>FEN</p>
-            <code className={s.fenValue}>{toFen(position)}</code>
+            <code className={s.fenValue}>{view.fen}</code>
           </div>
 
           <div className={s.actions}>
@@ -155,11 +210,9 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             >
               Retourner l'échiquier
             </Button>
-            <Button variant="secondary" fullWidth disabled>
-              Abandonner
-            </Button>
             <p className={s.hint}>
-              Abandon, invitations et parties en ligne arriveront avec le branchement du serveur.
+              Invitations, adversaire et parties sauvegardées arriveront avec le branchement du
+              serveur.
             </p>
           </div>
         </aside>

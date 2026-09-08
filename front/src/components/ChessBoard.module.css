@@ -80,6 +80,31 @@
   animation: square-pick 320ms var(--ease) both;
 }
 
+/* Coups possibles de la pièce sélectionnée. Case vide : une pastille centrée.
+   Case occupée : un anneau sur le pourtour, pour ne pas masquer la pièce à
+   prendre. Les deux partagent le rouge du design system, lisible sur les deux
+   teintes du plateau. */
+.target::after,
+.capture::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.target::after {
+  /* Centrage explicite : 22 % au milieu, donc 39 % de marge de chaque côté. */
+  inset: 39%;
+  background: var(--red-hot);
+  border-radius: 50%;
+  opacity: 0.75;
+}
+
+.capture::after {
+  inset: 0;
+  box-shadow: inset 0 0 0 4px var(--red-hot);
+  opacity: 0.8;
+}
+
 .piece {
   position: relative;
   color: var(--void);

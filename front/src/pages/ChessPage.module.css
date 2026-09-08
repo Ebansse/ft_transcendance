@@ -66,6 +66,19 @@
   color: var(--bone);
 }
 
+/* Fin de partie : même bandeau que le trait, mais plein et centré — on ne le
+   confond pas avec une information de tour. */
+.over {
+  margin: 0;
+  padding: 0.7rem;
+  background: var(--red-hot);
+  border-radius: var(--radius);
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-align: center;
+  color: var(--bone);
+}
+
 .blockTitle {
   margin: 0 0 0.5rem;
   font-family: var(--font-mono);
