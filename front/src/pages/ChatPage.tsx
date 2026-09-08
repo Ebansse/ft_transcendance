@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import type { Client } from '@stomp/stompjs'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
@@ -8,10 +7,14 @@ import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { getFriendList, type FriendListDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
-import { createChatClient, sendChatMessage, type ChatMessageDto } from '../lib/chatClient.ts'
+import {
+  CHAT_ERRORS,
+  CHAT_MESSAGES,
+  sendChatMessage,
+  type ChatMessageDto,
+} from '../lib/chatClient.ts'
+import { useSocket } from '../ws/socketContext.ts'
 import s from './ChatPage.module.css'
-
-type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
@@ -38,6 +41,9 @@ type ChatPageProps = {
 
 export function ChatPage({ onNavigate }: ChatPageProps) {
   const { isLoggedIn, authChecked, user } = useAuthModal()
+  // La connexion STOMP appartient au SocketProvider : elle est déjà ouverte
+  // quand on arrive ici et survit à la sortie de la page.
+  const { status, error: socketError, subscribe, publish } = useSocket()
   const myId = user?.id ?? null
 
   const [friends, setFriends] = useState<FriendListDto[]>([])
@@ -49,11 +55,9 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
   // persistant côté back pour l'instant, donc rien avant l'ouverture de la page.
   const [threads, setThreads] = useState<Record<string, ChatMessageDto[]>>({})
 
-  const [status, setStatus] = useState<ConnectionStatus>('connecting')
   const [chatError, setChatError] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
 
-  const clientRef = useRef<Client | null>(null)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
 
   // Charge la liste d'amis, comme sur FriendsPage — seuls les ACCEPTED
@@ -81,29 +85,31 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
     }
   }, [isLoggedIn])
 
-  // Une seule connexion STOMP pour toute la page : elle reçoit les messages de
-  // tous les amis, pas seulement de la conversation ouverte.
+  // On ne fait que s'abonner : les queues reçoivent les messages de tous les
+  // amis, pas seulement de la conversation ouverte. Le provider rejoue ces
+  // souscriptions après chaque reconnexion.
   useEffect(() => {
-    if (!isLoggedIn || !myId) return
+    if (!myId) return
 
-    const client = createChatClient({
-      onStatusChange: setStatus,
-      onError: setChatError,
-      onMessage: (message) => {
-        const key = conversationKey(message, myId)
-        setThreads((prev) => ({
-          ...prev,
-          [key]: [...(prev[key] ?? []), message],
-        }))
-      },
+    const unsubscribeMessages = subscribe(CHAT_MESSAGES, (body) => {
+      const message = JSON.parse(body) as ChatMessageDto
+      const key = conversationKey(message, myId)
+      setThreads((prev) => ({
+        ...prev,
+        [key]: [...(prev[key] ?? []), message],
+      }))
     })
-    clientRef.current = client
+
+    const unsubscribeErrors = subscribe(CHAT_ERRORS, (body) => {
+      const payload = JSON.parse(body) as { error?: string }
+      setChatError(payload.error ?? 'Message refusé par le serveur.')
+    })
 
     return () => {
-      clientRef.current = null
-      void client.deactivate()
+      unsubscribeMessages()
+      unsubscribeErrors()
     }
-  }, [isLoggedIn, myId])
+  }, [subscribe, myId])
 
   const activeMessages = useMemo(
     () => (selectedId ? (threads[selectedId] ?? []) : []),
@@ -118,23 +124,26 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
     (event: FormEvent) => {
       event.preventDefault()
       const content = draft.trim()
-      const client = clientRef.current
-      if (!content || !selectedId || !client || status !== 'connected') return
+      if (!content || !selectedId) return
 
-      sendChatMessage(client, selectedId, content)
+      if (!sendChatMessage(publish, selectedId, content)) {
+        setChatError('Message non envoyé : connexion au chat indisponible.')
+        return
+      }
+      setChatError(null)
       setDraft('')
     },
-    [draft, selectedId, status],
+    [draft, selectedId, publish],
   )
 
   const selectedFriend = friends.find((friend) => friend.idUser === selectedId) ?? null
 
   const statusLabel =
-    status === 'connecting'
-      ? 'Connexion au chat…'
+    status === 'connected'
+      ? null
       : status === 'disconnected'
         ? 'Connexion perdue, nouvelle tentative…'
-        : null
+        : 'Connexion au chat…'
 
   return (
     <AppLayout current="nav:chat" onNavigate={onNavigate}>
@@ -201,7 +210,9 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {chatError && <p className={s.error}>{chatError}</p>}
+                {(chatError ?? socketError) && (
+                  <p className={s.error}>{chatError ?? socketError}</p>
+                )}
                 {statusLabel && <p className={s.state}>{statusLabel}</p>}
 
                 <form className={s.form} onSubmit={handleSend}>
