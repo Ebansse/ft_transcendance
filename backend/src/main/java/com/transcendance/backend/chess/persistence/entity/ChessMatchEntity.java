@@ -21,8 +21,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
-
 import com.github.bhlangonijr.chesslib.Board;
 import com.transcendance.backend.chess.domain.ChessMatchStatus;
 import com.transcendance.backend.chess.domain.ChessSide;
@@ -101,7 +99,10 @@ public class ChessMatchEntity {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+
+    @Column(name = "ended_at")
+    private Instant endedAt;
 
     public ChessMatchEntity(Board board, ChessPlayerEntity whitePlayer, ChessPlayerEntity blackPlayer) {
         this.fen = board.getFen();
