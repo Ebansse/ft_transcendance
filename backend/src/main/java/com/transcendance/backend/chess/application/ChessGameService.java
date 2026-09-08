@@ -129,6 +129,7 @@ public class ChessGameService {
         board.doMove(new Move(move, board.getSideToMove()));
         if (endGame(board, match)) {
             recordStats(match);
+            match.setEndedAt(Instant.now());
         }
         match.setFen(board.getFen());
         chessMatchRepository.save(match);
@@ -276,6 +277,7 @@ public class ChessGameService {
         }
         match.setStatus(ChessMatchStatus.RESIGNED);
         recordStats(match);
+        match.setEndedAt(Instant.now());
         chessMatchRepository.save(match);
         return match;
     }
