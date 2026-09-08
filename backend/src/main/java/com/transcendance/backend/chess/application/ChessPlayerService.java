@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.transcendance.backend.chess.persistence.entity.ChessPlayerEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessPlayerEntityRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -20,6 +21,7 @@ public class ChessPlayerService {
      * @param userId the UUID of the user
      * @return the existing or newly created ChessPlayerEntity
      */
+    @Transactional
     public ChessPlayerEntity getOrCreatePlayer(UUID userId) {
         return chessPlayerRepository.findById(userId)
                 .orElseGet(() -> chessPlayerRepository.save(new ChessPlayerEntity(userId)));
