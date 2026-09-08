@@ -1,0 +1,80 @@
+/* La pile de notifications et le rectangle qui la compose. */
+
+/* Colonne ancrée en haut à droite, par-dessus la page. */
+.stack {
+  position: fixed;
+
+  /* Sous la navbar plutôt que par-dessus : elle fait ~3.4rem de haut. */
+  top: 4.5rem;
+  right: 1.25rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  /* Au-dessus de tout ce que la page pose : navbar (20), sidebar mobile (10),
+     menu contextuel (50). Les modales, elles, sont dans la couche <dialog> du
+     navigateur et passent devant de toute façon. */
+  z-index: 100;
+}
+
+/* Le rectangle qui glisse depuis le bord droit. */
+.toast {
+  width: min(320px, calc(100vw - 2.5rem));
+  padding: 0.85rem 0.95rem 0.9rem;
+  color: var(--bone);
+  background: var(--ink-900);
+  border: 1px solid var(--line-strong);
+
+  /* Même accent que les messages d'erreur des modales : un filet rouge à gauche. */
+  border-left: 2px solid var(--red-hot);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 1);
+
+  /* Longhands et jamais le raccourci : voir l'avertissement en tête de
+     style/page.module.css. `prefers-reduced-motion` est déjà neutralisé
+     globalement par style/body.css. */
+  animation-name: slide-in-right;
+  animation-duration: 420ms;
+  animation-timing-function: var(--ease);
+  animation-fill-mode: both;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+
+  /* Contrat Button : la croix est petite. */
+  --btn-padding: 0.15rem 0.4rem;
+  --btn-font-size: 0.78rem;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+.body {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 300;
+  line-height: 1.45;
+  color: var(--card-ink-dim);
+}
+
+/* Le rectangle part hors de l'écran, marge du conteneur comprise, pour qu'aucun
+   bout ne dépasse avant le départ de l'animation. */
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(calc(100% + 1.25rem));
+  }
+}

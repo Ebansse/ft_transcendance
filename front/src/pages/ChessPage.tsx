@@ -1,6 +1,6 @@
 import { Chess, type Square } from 'chess.js'
 import { useState } from 'react'
-import { ChessPending, sendChessInvitation } from '../lib/actions.ts'
+import { sendChessInvitation } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import { ChessInviteModal } from '../components/ChessInviteModal.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
