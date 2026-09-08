@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,6 +53,19 @@ public class ChatHistoryController {
         } catch (IllegalArgumentException e) {
             log.warn("Chat history refused: {}", e.getMessage());
             return ResponseEntity.status(403).body(Map.of("error", "Cannot read this conversation"));
+        }
+    }
+
+    @PutMapping("/{userId}/read")
+    public ResponseEntity<?> markAsRead(
+            @AuthenticationPrincipal User me,
+            @PathVariable UUID userId) {
+
+        try {
+            return ResponseEntity.ok(Map.of("updated", chatService.markAsRead(me, userId)));
+        } catch (IllegalArgumentException e) {
+            log.warn("Mark as read refused: {}", e.getMessage());
+            return ResponseEntity.status(403).body(Map.of("error", "Cannot access this conversation"));
         }
     }
 }

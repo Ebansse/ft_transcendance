@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,5 +25,15 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             @Param("userB") UUID userB,
             @Param("before") Long before,
             Pageable pageable);
+
+
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            UPDATE ChatMessage m SET m.isRead = true
+            WHERE m.receiver.idUser = :me
+              AND m.sender.idUser = :other
+              AND m.isRead = false
+            """)
+    int markConversationAsRead(@Param("me") UUID me, @Param("other") UUID other);
 
 }

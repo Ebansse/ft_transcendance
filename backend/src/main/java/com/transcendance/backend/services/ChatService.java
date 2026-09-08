@@ -103,4 +103,31 @@ public class ChatService {
                 return new ChatHistoryDto(messages, nextCursor, slice.hasNext());
         }
 
+        /**
+         * Marks every message received from another user as read.
+         *
+         * Idempotent: a second call simply reports 0, since the update only
+         * touches messages still flagged unread.
+         *
+         * @param me      the current user, the recipient of the messages
+         * @param otherId the ID of the user whose messages are being read
+         * @return how many messages just went from unread to read
+         * @throws IllegalArgumentException if the other user is unknown, or if the
+         *                                  two users are not friends
+         */
+        @Transactional
+        public int markAsRead(User me, UUID otherId) {
+
+                User other = userService.getUserById(otherId)
+                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+                if (!friendListService.checkFriendship(me, other)) {
+                        throw new IllegalArgumentException("Users are not friends");
+                }
+
+                int updated = chatMessageRepository.markConversationAsRead(me.getIdUser(), otherId);
+                log.info("{} read {} message(s) from {}", me.getUserName(), updated, other.getUserName());
+                return updated;
+        }
+
 }

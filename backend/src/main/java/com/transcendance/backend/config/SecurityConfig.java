@@ -76,6 +76,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/chat/{userId}")
                                                 .hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/chat/{userId}/read")
+                                                .hasAnyRole("USER", "ADMIN")
 
                                                 // --- ADMIN uniquement ---
                                                 .requestMatchers(HttpMethod.GET,
