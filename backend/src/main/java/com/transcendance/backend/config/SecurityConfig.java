@@ -34,7 +34,9 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/hello",
                                                                 "/api/default-avatar.png",
-                                                                "/api/avatars/**")
+                                                                "/api/avatars/**",
+                                                                "/api/auth/42/login",
+                                                                "/api/auth/42/callback")
                                                 .permitAll()
                                                 // --- WebSocket handshake: authenticated by JwtHandshakeInterceptor ---
                                                 .requestMatchers("/ws/**").permitAll()

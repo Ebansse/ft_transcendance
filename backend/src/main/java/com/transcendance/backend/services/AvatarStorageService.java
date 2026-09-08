@@ -31,7 +31,6 @@ public class AvatarStorageService {
         this.avatarProperties = avatarProperties;
     }
 
-
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("The file is empty");
