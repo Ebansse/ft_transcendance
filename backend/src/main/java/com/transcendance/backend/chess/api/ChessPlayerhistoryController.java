@@ -3,6 +3,7 @@ package com.transcendance.backend.chess.api;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -52,6 +54,31 @@ public class ChessPlayerhistoryController {
 
         List<ChesshistoryDto> history = chessGameService.getFinishedMatches(user.getIdUser()).stream()
                 .map(match -> ChesshistoryDto.of(match, user.getIdUser(),
+                        nameOf(names, match.getWhitePlayerId()),
+                        nameOf(names, match.getBlackPlayerId())))
+                .toList();
+
+        return ResponseEntity.ok(history);
+    }
+
+    @GetMapping("/historique/{userId}")
+    public ResponseEntity<?> getChessHistory(@AuthenticationPrincipal User user, @PathVariable UUID userId) {
+        if (user == null) {
+            log.warn("Chess history refused: no authenticated user");
+            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        }
+
+        Optional<User> target = userService.getUserById(userId);
+        if (target.isEmpty()) {
+            log.warn("Chess history refused for {}: unknown user {}", user.getUserName(), userId);
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        Map<UUID, String> names = new HashMap<>();
+        names.put(target.get().getIdUser(), target.get().getUserName());
+
+        List<ChesshistoryDto> history = chessGameService.getFinishedMatches(target.get().getIdUser()).stream()
+                .map(match -> ChesshistoryDto.of(match, target.get().getIdUser(),
                         nameOf(names, match.getWhitePlayerId()),
                         nameOf(names, match.getBlackPlayerId())))
                 .toList();

@@ -73,7 +73,8 @@ public class SecurityConfig {
                                                                 "/api/chess/matches/me",
                                                                 "/api/chess/stats/me",
                                                                 "/api/chess/stats/{userId}",
-                                                                "/api/chess/historique/me")
+                                                                "/api/chess/historique/me",
+                                                                "/api/chess/historique/{userId}")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 // --- CHAT ---
                                                 .requestMatchers(HttpMethod.GET,
