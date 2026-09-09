@@ -13,6 +13,11 @@
   --red-bright: #f04a50;
   --red-deep: #6d0c11;
 
+  /* Seule couleur non rouge du jeu de jetons : réservée à ce qui confirme
+     (accepter une invitation, une demande d'ami, un statut « en ligne »). */
+  --green: #1f9d55;
+  --green-bright: #2fbb6a;
+
   /* Ivoire du texte, gris foncé de la carte et son texte inversé */
   --bone: #f5f1ea;
   --mute: #8e8e99;

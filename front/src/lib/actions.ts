@@ -1,4 +1,5 @@
 import { api } from './apiClient.ts'
+import type { ChessInvitationDto, ChessMatchDto } from './chessClient.ts'
 
 /** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
 export function handleAction(action: string) {
@@ -33,6 +34,11 @@ export type UpdateProfilePayload = {
 /** Profil de l'utilisateur connecté, identifié par son cookie. */
 export function getMyProfile() {
   return api.get<UserPublicProfileDto>('/users/me')
+}
+
+/** Profil public d'un autre compte : le back n'expose que ces champs-là. */
+export function getUserProfile(idUser: string) {
+  return api.get<UserPublicProfileDto>(`/users/${idUser}`)
 }
 
 /** Met à jour son propre pseudo et e-mail. Le back autorise cette route (PUT)
@@ -122,6 +128,37 @@ export function sendChessInvitation(opponentUsername: string) {
   return api.post<void>('/chess/invitations', { opponentUsername })
 }
 
-export function ChessPending() {
-  return api.get<void>(`/chess/invitations/pending`)
+/** Invitations reçues et encore valides, dans le format exact des messages
+ *  poussés sur la socket : le client n'a qu'une seule forme à lire. */
+export function getPendingChessInvitations() {
+  return api.get<ChessInvitationDto[]>('/chess/invitations/pending')
+}
+
+/** Accepte l'invitation de `opponentUsername` : le back crée la partie, la
+ *  renvoie, et pousse le même match à l'adversaire sur `chess.matches`. */
+export function acceptChessInvitation(opponentUsername: string) {
+  return api.post<ChessMatchDto>('/chess/invitations/accept', { opponentUsername })
+}
+
+/** Refuse l'invitation : le back la retire et pousse un `DECLINED` à l'inviteur. */
+export function declineChessInvitation(opponentUsername: string) {
+  return api.post<void>('/chess/invitations/decline', { opponentUsername })
+}
+
+/** Partie en cours du compte connecté. Le back répond **404** quand il n'y en a
+ *  pas : c'est un cas normal, pas une panne. */
+export function getMyChessMatch() {
+  return api.get<ChessMatchDto>('/chess/matches/me')
+}
+
+/** Joue un coup en UCI (`e2e4`, `e7e8q` pour une promotion) — exactement le
+ *  `lan` de chess.js. Renvoie la partie après le coup. */
+export function playChessMove(matchId: number, move: string) {
+  return api.post<ChessMatchDto>(`/chess/matches/${matchId}/moves`, { move })
+}
+
+/** Abandonne : seule sortie d'une partie en cours, et la seule façon de
+ *  libérer les deux joueurs pour une nouvelle invitation. */
+export function resignChessMatch(matchId: number) {
+  return api.post<ChessMatchDto>(`/chess/matches/${matchId}/resign`)
 }

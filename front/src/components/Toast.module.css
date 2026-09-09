@@ -70,6 +70,42 @@
   color: var(--card-ink-dim);
 }
 
+/* Accepter / Refuser, côte à côte et de largeur égale. */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+
+  /* Contrat Button : des actions de notification, plus petites qu'un bouton
+     de page. */
+  --btn-padding: 0.4rem 0.7rem;
+  --btn-font-size: 0.82rem;
+}
+
+.actions > span {
+  flex: 1;
+}
+
+/* Button n'a pas de variante verte : on repeint la variante secondaire par ses
+   variables, comme le footer le fait pour son soulignement. */
+.accept {
+  --btn-secondary-color: var(--green-bright);
+  --btn-secondary-border: var(--green);
+  --btn-secondary-bg: rgba(47, 187, 106, 0.1);
+  --btn-secondary-color-hover: var(--bone);
+  --btn-secondary-border-hover: var(--green-bright);
+  --btn-secondary-bg-hover: rgba(47, 187, 106, 0.18);
+}
+
+.decline {
+  --btn-secondary-color: var(--red-bright);
+  --btn-secondary-border: var(--red);
+  --btn-secondary-bg: rgba(228, 42, 49, 0.08);
+  --btn-secondary-color-hover: var(--bone);
+  --btn-secondary-border-hover: var(--red-bright);
+  --btn-secondary-bg-hover: rgba(228, 42, 49, 0.16);
+}
+
 /* Le rectangle part hors de l'écran, marge du conteneur comprise, pour qu'aucun
    bout ne dépasse avant le départ de l'animation. */
 @keyframes slide-in-right {

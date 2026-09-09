@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
 import { handleAction } from './lib/actions.ts'
 import { useChessInvitations } from './ws/useChessInvitations.ts'
+import { useChessMatchStart } from './ws/useChessMatchStart.ts'
 
 /** Routeur : une action de sidebar = une route. Ajouter une page = une ligne. */
 const PAGES = {
@@ -22,6 +23,10 @@ const PAGES = {
 function App() {
   const navigate = useNavigate()
   const { invitations, dismiss } = useChessInvitations()
+
+  /* L'inviteur n'a rien cliqué : c'est la socket qui l'emmène sur le plateau
+     quand son invitation est acceptée. */
+  useChessMatchStart()
 
   const onNavigate = (action: string) => {
     if (action in PAGES) navigate(PAGES[action as keyof typeof PAGES].path)
