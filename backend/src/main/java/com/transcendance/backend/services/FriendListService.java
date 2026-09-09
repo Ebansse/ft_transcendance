@@ -27,12 +27,14 @@ public class FriendListService {
     private UserRepository userRepository;
     private UserService userService;
     private FriendListRepository friendListRepository;
+    private PresenceService presenceService;
 
     public FriendListService(UserRepository userRepository, UserService userService,
-            FriendListRepository friendListRepository) {
+            FriendListRepository friendListRepository, PresenceService presenceService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.friendListRepository = friendListRepository;
+        this.presenceService = presenceService;
     }
 
     /**
@@ -357,8 +359,16 @@ public class FriendListService {
             if (targetUser.isEmpty()) {
                 continue;
             }
+
+            // Presence is told to accepted friends only, exactly like the
+            // real-time broadcast: this list also carries pending requests and
+            // blocked users, and neither is owed the other's whereabouts.
+            boolean accepted = friendList.getStatus() == FriendshipStatus.ACCEPTED;
+
             friendListDtos.add(new FriendListDto(targetId, targetUser.get().getUserName(),
-                    friendList.getCreatedAt(), friendList.getStatus(), friendList.getSenderId()));
+                    friendList.getCreatedAt(), friendList.getStatus(), friendList.getSenderId(),
+                    accepted && presenceService.isOnline(targetId),
+                    accepted ? targetUser.get().getOnline() : null));
         }
         return friendListDtos;
     }
