@@ -2,6 +2,7 @@ package com.transcendance.backend.chess.application;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -293,5 +294,19 @@ public class ChessGameService {
     public ChessMatchEntity getMatchByUser(User user) {
         return chessMatchRepository.findByUserId(user.getIdUser())
                 .orElseThrow(() -> new ChessException.MatchNotFoundByUserId(user.getIdUser()));
+    }
+
+    /**
+     * Retrieve the matches a user has already finished, most recent first.
+     *
+     * A match still in progress is left out: it has no outcome to report yet, and
+     * it is already served by getMatchByUser.
+     *
+     * @param userId the user whose history is to be retrieved
+     * @return the finished matches, empty when the user has never played
+     */
+    @Transactional(readOnly = true)
+    public List<ChessMatchEntity> getFinishedMatches(UUID userId) {
+        return chessMatchRepository.findFinishedMatches(userId);
     }
 }
