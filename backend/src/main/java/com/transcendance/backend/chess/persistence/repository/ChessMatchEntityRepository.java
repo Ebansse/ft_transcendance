@@ -52,4 +52,18 @@ public interface ChessMatchEntityRepository extends JpaRepository<ChessMatchEnti
         @Query("SELECT m FROM ChessMatchEntity m "
                         + "WHERE m.status = IN_PROGRESS AND m.forfeitDeadline IS NOT NULL")
         List<ChessMatchEntity> findArmedForfeits();
+
+        /**
+         * The matches this user has finished, most recent first.
+         *
+         * Both players are fetched with the match: the caller turns each row into
+         * a name, and a lazy read per match would mean a query per match.
+         *
+         * The joins stay LEFT so a match against the bot, which holds no player on
+         * one side, is still part of the history.
+         */
+        @Query("SELECT m FROM ChessMatchEntity m LEFT JOIN FETCH m.whitePlayer w LEFT JOIN FETCH m.blackPlayer b "
+                        + "WHERE (w.userId = :userId OR b.userId = :userId) AND m.status <> IN_PROGRESS "
+                        + "ORDER BY m.endedAt DESC")
+        List<ChessMatchEntity> findFinishedMatches(UUID userId);
 }
