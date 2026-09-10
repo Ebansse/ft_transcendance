@@ -28,6 +28,7 @@ public class ChessGameService {
 
     private final ChessMatchEntityRepository chessMatchRepository;
     private final ChessPlayerService chessPlayerService;
+    private final ChessBotService chessBotService;
 
     /**
      * Create a match between two human players.
@@ -66,26 +67,34 @@ public class ChessGameService {
      * Create a match against the bot, the human playing white.
      * The bot will play as black.
      *
-     * @param whiteUserId the user playing white
+     * @param userId      the user id
+     * @param playerSide  the side the user is playing (WHITE or BLACK)
      * @param botLevel    the level of the bot (1-10)
      * @return the persisted match
      * @throws ChessException if the user already has an active match
      */
     @Transactional
-    public ChessMatchEntity createNewGameAgainstBot(UUID whiteUserId, int botLevel) {
+    public ChessMatchEntity createNewGameAgainstBot(UUID userId, ChessSide playerSide, int botLevel) {
 
-        if (chessMatchRepository.existsActiveMatch(whiteUserId)) {
+        if (chessMatchRepository.existsActiveMatch(userId)) {
             throw new ChessException.AlreadyInMatch("You already have an active match");
         }
 
+        ChessPlayerEntity human = chessPlayerService.getOrCreatePlayer(userId);
+        ChessMatchEntity match;
         Board chessBoard = new Board();
-        ChessMatchEntity chessMatch = new ChessMatchEntity(
-                chessBoard,
-                chessPlayerService.getOrCreatePlayer(whiteUserId),
-                null); // TODO A changer
-        chessMatch.setBlackBotLevel(botLevel);
-
-        return chessMatchRepository.save(chessMatch);
+        if (playerSide == ChessSide.WHITE) {
+            match = new ChessMatchEntity(chessBoard, human, null);
+            match.setBlackBotLevel(botLevel);
+        } else {
+            match = new ChessMatchEntity(chessBoard, null, human);
+            match.setWhiteBotLevel(botLevel);
+        }
+        if (botToPlay(match, chessBoard)) {
+            Move moveBot = chessBotService.chooseBotMove(chessBoard, botLevel);
+            applyMove(match, chessBoard, moveBot.toString());
+        }
+        return chessMatchRepository.save(match);
     }
 
     /**
@@ -115,7 +124,7 @@ public class ChessGameService {
         if (match.getStatus() != ChessMatchStatus.IN_PROGRESS) {
             throw new ChessException.MatchAlreadyOver(match.getStatus());
         }
-        if (match.getWhitePlayer().getUserId().equals(playerId)) {
+        if (playerId.equals(match.getWhitePlayerId())) {
             if (board.getSideToMove() != Side.WHITE) {
                 throw new ChessException.NotYourTurn();
             }
@@ -124,6 +133,24 @@ public class ChessGameService {
                 throw new ChessException.NotYourTurn();
             }
         }
+        applyMove(match, board, move);
+        if (botToPlay(match, board)) {
+            Move moveBot = chessBotService.chooseBotMove(board,
+                    match.getBlackBotLevel() != null ? match.getBlackBotLevel() : match.getWhiteBotLevel());
+            applyMove(match, board, moveBot.toString());
+        }
+        chessMatchRepository.save(match);
+        return match;
+    }
+
+    /**
+     * Apply a move to the game.
+     *
+     * @param match the match entity
+     * @param board the current chess board
+     * @param move  the move in algebraic notation
+     */
+    private void applyMove(ChessMatchEntity match, Board board, String move) {
         if (!canMovePlay(board, move)) {
             throw new ChessException.IllegalMove(move);
         }
@@ -133,8 +160,22 @@ public class ChessGameService {
             match.setEndedAt(Instant.now());
         }
         match.setFen(board.getFen());
-        chessMatchRepository.save(match);
-        return match;
+    }
+
+    /**
+     * Check if a bot should play a move.
+     *
+     * @param match the match entity
+     * @param board the current chess board
+     * @return true if a bot should play, false otherwise
+     */
+    private boolean botToPlay(ChessMatchEntity match, Board board) {
+        if ((match.getBlackBotLevel() != null || match.getWhiteBotLevel() != null)
+                && match.getStatus() == ChessMatchStatus.IN_PROGRESS) {
+            return board.getSideToMove() == Side.WHITE ? match.getWhiteBotLevel() != null
+                    : match.getBlackBotLevel() != null;
+        }
+        return false;
     }
 
     /**
@@ -145,8 +186,7 @@ public class ChessGameService {
      * @return true if the player is part of the match, false otherwise
      */
     private boolean isPlayerInMatch(ChessMatchEntity match, UUID playerId) {
-        return match.getWhitePlayer().getUserId().equals(playerId) ||
-                (match.getBlackPlayer() != null && match.getBlackPlayer().getUserId().equals(playerId));
+        return playerId.equals(match.getWhitePlayerId()) || playerId.equals(match.getBlackPlayerId());
     }
 
     /**
@@ -271,7 +311,7 @@ public class ChessGameService {
         if (match.getStatus() != ChessMatchStatus.IN_PROGRESS) {
             throw new ChessException.MatchAlreadyOver(match.getStatus());
         }
-        if (match.getWhitePlayer().getUserId().equals(playerId)) {
+        if (playerId.equals(match.getWhitePlayerId())) {
             match.setWinnerSide(ChessSide.BLACK);
         } else {
             match.setWinnerSide(ChessSide.WHITE);
