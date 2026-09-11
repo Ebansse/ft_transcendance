@@ -67,9 +67,9 @@ public class ChessGameService {
      * Create a match against the bot, the human playing white.
      * The bot will play as black.
      *
-     * @param userId      the user id
-     * @param playerSide  the side the user is playing (WHITE or BLACK)
-     * @param botLevel    the level of the bot (1-10)
+     * @param userId     the user id
+     * @param playerSide the side the user is playing (WHITE or BLACK)
+     * @param botLevel   the level of the bot (1-10)
      * @return the persisted match
      * @throws ChessException if the user already has an active match
      */
@@ -135,8 +135,7 @@ public class ChessGameService {
         }
         applyMove(match, board, move);
         if (botToPlay(match, board)) {
-            Move moveBot = chessBotService.chooseBotMove(board,
-                    match.getBlackBotLevel() != null ? match.getBlackBotLevel() : match.getWhiteBotLevel());
+            Move moveBot = chessBotService.chooseBotMove(board, botLevelFor(match, board));
             applyMove(match, board, moveBot.toString());
         }
         chessMatchRepository.save(match);
@@ -348,5 +347,18 @@ public class ChessGameService {
     @Transactional(readOnly = true)
     public List<ChessMatchEntity> getFinishedMatches(UUID userId) {
         return chessMatchRepository.findFinishedMatches(userId);
+    }
+
+    /**
+     * Returns the level of the bot for the given match and board.
+     *
+     * @param match the match
+     * @param board the board
+     * @return the bot level
+     */
+    private int botLevelFor(ChessMatchEntity match, Board board) {
+        return board.getSideToMove() == Side.WHITE
+                ? match.getWhiteBotLevel()
+                : match.getBlackBotLevel();
     }
 }
