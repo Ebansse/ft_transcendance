@@ -97,4 +97,8 @@ public class UserService {
         user.setAvatarUrl(avatarUrl);
         return userRepository.save(user);
     }
+
+    public String encodePassword(String raw) {
+        return securityConfig.passwordEncoder().encode(raw);
+    }
 }
