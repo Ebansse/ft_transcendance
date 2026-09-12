@@ -21,7 +21,7 @@ public class LoginService {
         this.userService = userService;
         this.refreshTokenService = refreshTokenService;
     }
-    
+
     /**
      * Authenticates a user based on the provided email and password.
      * @param email the user's email
@@ -41,7 +41,12 @@ public class LoginService {
             log.warn("Invalid password for email: {}", email);
             throw new IllegalArgumentException("Invalid email or password");
         }
-        
+
+        if (user.getDeletedAt() != null) {
+            log.warn("Can't access a deleted account");
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+
         // Generate the access and refresh tokens
         LoginResponseTokenDto loginResponse = new LoginResponseTokenDto(
             jwtService.generateAccessToken(user), 
