@@ -221,6 +221,10 @@ public class ChessGameService {
             match.setStatus(ChessMatchStatus.STALEMATE);
             return true;
         }
+        if(board.isRepetition()) {
+            match.setStatus(ChessMatchStatus.DRAW);
+            return true;
+        }
         if (board.isDraw()) {
             match.setStatus(ChessMatchStatus.DRAW);
             return true;
