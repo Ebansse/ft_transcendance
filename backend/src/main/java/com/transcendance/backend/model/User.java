@@ -59,6 +59,9 @@ public class User {
     @Column(name = "online", nullable = false)
     private Instant online = Instant.now();
 
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     public User(String userName, String email, String password) {
         this.userName = userName;
         this.email = email;

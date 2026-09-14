@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
@@ -314,5 +316,46 @@ public class UserController {
 
         log.info("User {} deleted", idUser);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Lets the authenticated caller delete their own account.
+     * <p>
+     * Reuses the same soft-delete as the admin route above, then clears
+     * the session cookies on the way out — they're worthless afterward
+     * anyway, since deleteUserService already revoked every refresh token
+     * for this user.
+     *
+     * @param user the authenticated caller
+     * @return an HTTP 200 response with the access/refresh cookies expired
+     */
+    @PostMapping("/me/delete")
+    public ResponseEntity<?> deleteMyAccount(@AuthenticationPrincipal User user) {
+        log.info("User {} deleting their own account", user.getIdUser());
+
+        deleteUserService.deleteUser(user);
+
+        ResponseCookie expiredAccessCookie = ResponseCookie.from("access_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("strict")
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        ResponseCookie expiredRefreshCookie = ResponseCookie.from("refresh_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .sameSite("strict")
+                .path("/api/auth")
+                .maxAge(0)
+                .build();
+
+        log.info("User {} deleted their own account", user.getIdUser());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
+                .body("User deleted their own account");
     }
 }

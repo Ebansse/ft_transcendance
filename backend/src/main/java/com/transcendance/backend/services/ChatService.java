@@ -54,6 +54,11 @@ public class ChatService {
                                 .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
                 User receiver = userService.getUserById(message.getReceiverId())
                                 .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+
+                if (sender.getDeletedAt() != null || receiver.getDeletedAt() != null) {
+                        throw new IllegalArgumentException("User is no longer available");
+                }
+
                 if (!friendListService.checkFriendship(sender, receiver)) {
                         log.warn("Users {} and {} are not friends. Message not sent.", sender.getUserName(),
                                         receiver.getUserName());

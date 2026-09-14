@@ -66,7 +66,8 @@ public class SecurityConfig {
                                                                 "/api/friend-list/{idUser}/delete",
                                                                 "/api/friend-list/{idUser}/block",
                                                                 "/api/friend-list/{idUser}/unblock",
-                                                                "/api/users/me/avatar")
+                                                                "/api/users/me/avatar",
+                                                                "/api/users/me/delete")
                                                 .hasAnyRole("USER", "ADMIN")
 
                                                 .requestMatchers(HttpMethod.PUT,

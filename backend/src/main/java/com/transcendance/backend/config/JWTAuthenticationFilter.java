@@ -54,9 +54,12 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter{
 
                     // Fetch the user from the database and set the authentication
                     userRepository.findById(UUID.fromString(userId)).ifPresent(user -> {
-                        var authentication = new UsernamePasswordAuthenticationToken(
-                            user,null,userRoleService.getRoleUser(user));
+
+                        if (user.getDeletedAt() == null) {
+                            var authentication = new UsernamePasswordAuthenticationToken(
+                                user, null, userRoleService.getRoleUser(user));
                             SecurityContextHolder.getContext().setAuthentication(authentication);
+                        }
                 });
                 }
             }catch (Exception e) {
