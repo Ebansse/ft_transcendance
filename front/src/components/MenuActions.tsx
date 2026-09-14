@@ -9,22 +9,14 @@ export type ActionItem = {
 }
 
 type MenuActionsProps = {
-  /** Nom lu par les lecteurs d'écran, le bouton n'affichant que « … ». */
   ariaLabel: string
   items: ActionItem[]
 }
 
-/** Largeur mini du menu (doit suivre le `min-width` du CSS) et marge de bord :
- *  ensemble, elles empêchent le menu de sortir par la gauche de la fenêtre. */
 const MENU_MIN_WIDTH = 176
 const EDGE_GAP = 8
 
-/** Bouton « … » ouvrant un menu d'actions.
- *
- *  Le menu part dans un portail sur `document.body` : rendu à sa place dans le
- *  tableau, il subissait le `overflow` du scroller (qui le rogne) et son
- *  animation `riseIn` (un ancêtre transformé devient le bloc conteneur d'un
- *  `position: fixed`, qui n'est alors plus positionné par rapport à la fenêtre). */
+// Bouton « … » ouvrant un menu d'actions.
 export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState({ top: 0, left: 0 })
@@ -36,8 +28,6 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
   const toggle = () => {
     const rect = triggerRef.current?.getBoundingClientRect()
     if (rect) {
-      // Coordonnées fenêtre : le menu est aligné sur le bord droit du bouton
-      // (il se déploie vers la gauche, cf. translateX(-100%) dans le CSS).
       setAnchor({
         top: rect.bottom + 6,
         left: Math.max(rect.right, MENU_MIN_WIDTH + EDGE_GAP),
@@ -63,8 +53,6 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
 
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
-    // Le menu est ancré à des coordonnées fenêtre : tout défilement le décroche
-    // (`true` = phase de capture, pour attraper aussi le scroll du tableau).
     window.addEventListener('scroll', close, true)
     window.addEventListener('resize', close)
 
