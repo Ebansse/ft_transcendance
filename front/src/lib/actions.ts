@@ -15,6 +15,31 @@ export type UserPublicProfileDto = {
   online: string | null
   avatarUrl: string | null
   role: string | null
+  /** Renseigné uniquement par `/users/me` : `null` sur le profil d'un autre. */
+  twoFactorEnabled: boolean | null
+}
+
+/** Réponse du setup A2F : le QR code (PNG en data URI) et le secret en clair,
+ *  pour qui ne peut pas scanner. */
+export type TwoFactorSetupDto = {
+  qrCodeDataUri: string
+  secret: string
+}
+
+/** Génère un nouveau secret TOTP. L'A2F reste inactive tant que `enableTwoFactor`
+ *  n'a pas reçu un premier code valide. */
+export function setupTwoFactor() {
+  return api.post<TwoFactorSetupDto>('/auth/2fa/setup')
+}
+
+/** Active l'A2F avec un code à 6 chiffres de l'application. */
+export function enableTwoFactor(code: string) {
+  return api.post<void>('/auth/2fa/enable', { code })
+}
+
+/** Désactive l'A2F : le back exige un code valide et efface le secret. */
+export function disableTwoFactor(code: string) {
+  return api.post<void>('/auth/2fa/disable', { code })
 }
 
 /** Les trois champs qu'un ADMIN peut réécrire sur un compte. */

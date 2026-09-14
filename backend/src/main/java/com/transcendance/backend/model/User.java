@@ -62,6 +62,12 @@ public class User {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    @Column(name = "two_factor_secret")
+    private String totpSecret;
+
+    @Column(name = "two_factor_enabled", nullable = false, columnDefinition = "boolean default false")
+    private boolean twoFactorEnabled = false;
+
     public User(String userName, String email, String password) {
         this.userName = userName;
         this.email = email;

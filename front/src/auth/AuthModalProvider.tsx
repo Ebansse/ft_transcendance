@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
 import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
+import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
 import { getMyProfile } from '../lib/actions.ts'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
-import { api } from '../lib/apiClient.ts'
+import { api, ApiError } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
 import type { AuthMode } from './authModalContext.ts'
+
+/** /auth/login répond "Login successful" (texte), ou ce JSON si le compte attend un code A2F. */
+type LoginResponse = string | { twoFactorRequired: true }
 
 /**
  * Détient la session et parle au back. La modale garde ses propres champs et ses
@@ -18,6 +22,10 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserPublicProfileDto | null>(null)
   // Tant que la session n'est pas vérifiée, l'UI n'affiche ni « connecté » ni « invité ».
   const [authChecked, setAuthChecked] = useState(false)
+  // Identifiants gardés le temps de saisir le code A2F, puis renvoyés avec lui.
+  const [twoFactorLogin, setTwoFactorLogin] = useState<LoginForm | null>(null)
+  const [twoFactorPending, setTwoFactorPending] = useState(false)
+  const [twoFactorError, setTwoFactorError] = useState<string | null>(null)
 
   // Restauration de session : le cookie httpOnly survit au rechargement de la page.
   useEffect(() => {
@@ -57,11 +65,38 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setUser(await getMyProfile())
   }, [])
 
-  /** Ouvre la session : le back pose les cookies, on lit le profil dans la foulée. */
+  /** Ouvre la session : le back pose les cookies, on lit le profil dans la foulée.
+   *  Si le compte a l'A2F, pas de cookie : on passe à la modale du code. */
   const login = async (values: LoginForm) => {
-    await api.post<string>('/auth/login', values)
-    setUser(await getMyProfile())
+    const res = await api.post<LoginResponse>('/auth/login', values)
     setIsOpen(false)
+    if (typeof res === 'object' && res.twoFactorRequired) {
+      setTwoFactorLogin(values)
+      return
+    }
+    setUser(await getMyProfile())
+  }
+
+  const closeTwoFactor = () => {
+    setTwoFactorLogin(null)
+    setTwoFactorError(null)
+  }
+
+  /** Second envoi : mêmes identifiants + code. */
+  const submitTwoFactor = async (code: string) => {
+    if (!twoFactorLogin) return
+    setTwoFactorPending(true)
+    setTwoFactorError(null)
+    try {
+      await api.post<string>('/auth/login', { ...twoFactorLogin, code })
+      setUser(await getMyProfile())
+      closeTwoFactor()
+    } catch (err) {
+      const message = err instanceof ApiError ? (err.fieldErrors.code ?? err.message) : null
+      setTwoFactorError(message ?? 'Vérification impossible.')
+    } finally {
+      setTwoFactorPending(false)
+    }
   }
 
   /** /register renvoie un 201 sans cookie : on enchaîne pour ouvrir la session. */
@@ -95,6 +130,15 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
         onClose={closeModal}
         onSignup={signup}
         onLogin={login}
+      />
+      {/* La clé vide le champ du code à chaque nouvelle connexion. */}
+      <TwoFactorModal
+        key={twoFactorLogin ? 'open' : 'closed'}
+        mode={twoFactorLogin ? 'login' : null}
+        pending={twoFactorPending}
+        error={twoFactorError}
+        onSubmit={submitTwoFactor}
+        onClose={closeTwoFactor}
       />
     </AuthModalContext.Provider>
   )
