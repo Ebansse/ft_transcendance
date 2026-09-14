@@ -163,7 +163,9 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const [invitePending, setInvitePending] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
   /** Dernier adversaire invité, pour l'accusé de réception du panneau. */
-  const [inviteSent, setInviteSent] = useState<string | null>(null)
+  const [inviteSent, setInviteSent] = useState<{ userName: string; side: ChessSide } | null>(
+    null,
+  )
 
   const [botOpen, setBotOpen] = useState(false)
   const [botPending, setBotPending] = useState(false)
@@ -350,13 +352,14 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
   /** Envoie l'invitation puis referme la modale. Un refus du back la laisse
    *  ouverte : le message se lit à côté de la liste et on peut réessayer. */
-  const invite = async (userName: string) => {
+  const invite = async (userName: string, side: ChessSide | null) => {
     setInvitePending(userName)
     setInviteError(null)
 
     try {
-      await sendChessInvitation(userName)
-      setInviteSent(userName)
+      // Le back renvoie le camp retenu : c'est lui qui tranche en cas d'aléatoire.
+      const invitation = await sendChessInvitation(userName, side)
+      setInviteSent({ userName, side: invitation.fromSide })
       setInviteOpen(false)
     } catch (err: unknown) {
       setInviteError(err instanceof ApiError ? err.message : 'Invitation refusée.')
@@ -497,7 +500,8 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
             {inviteSent !== null && (
               <p className={s.hint} aria-live="polite">
-                Invitation envoyée à {inviteSent}.
+                Invitation envoyée à {inviteSent.userName} — vous jouerez les{' '}
+                {inviteSent.side === 'WHITE' ? 'blancs' : 'noirs'}.
               </p>
             )}
 

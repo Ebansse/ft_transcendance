@@ -123,9 +123,11 @@ export function blockUser(idUser: string) {
 }
 
 /** Invite un adversaire par pseudo : le back retrouve le compte, refuse l'auto-
- *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). */
-export function sendChessInvitation(opponentUsername: string) {
-  return api.post<void>('/chess/invitations', { opponentUsername })
+ *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). `side` est
+ *  le camp de l'inviteur, `null` pour un tirage au sort côté back : l'invité
+ *  prendra l'autre à l'acceptation. Le camp retenu revient dans `fromSide`. */
+export function sendChessInvitation(opponentUsername: string, side: ChessSide | null) {
+  return api.post<ChessInvitationDto>('/chess/invitations', { opponentUsername, side })
 }
 
 /** Invitations reçues et encore valides, dans le format exact des messages

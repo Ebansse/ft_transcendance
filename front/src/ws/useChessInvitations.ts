@@ -90,7 +90,9 @@ function toToast(
   return {
     id: invitation.invitationId,
     title: 'Invitation aux échecs',
-    body: `${invitation.fromUsername} t’invite à une partie d’échecs.`,
+    body: `${invitation.fromUsername} t’invite à une partie d’échecs : tu joueras les ${
+      invitation.fromSide === 'BLACK' ? 'blancs' : 'noirs'
+    }.`,
     actions: [
       {
         label: 'Accepter',
