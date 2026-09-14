@@ -1,7 +1,3 @@
-/* Ce qui est propre à la page Amis : le formulaire d'ajout, les états de
-   chargement et la barre d'actions d'une ligne. L'en-tête, les titres de
-   section et les tableaux viennent de composants partagés. */
-
 .denied {
   composes: riseIn from '../style/page.module.css';
 
@@ -29,7 +25,6 @@
   color: var(--mute);
 }
 
-/* Chaque bloc (reçues / amis / envoyées / bloqués) respire de la même façon. */
 .section {
   margin-top: 3rem;
 }
@@ -55,9 +50,6 @@
   align-items: center;
 }
 
-/* Même habillage que les champs de modale, mais le formulaire vit dans la page :
-   il ne peut pas tirer `composes:` depuis dialog.module.css sans en importer la
-   coquille. Les valeurs restent alignées sur celles de `dialog.module.css`. */
 .input {
   flex: 1 1 14rem;
   padding: 0.6rem 0.75rem;
@@ -94,13 +86,11 @@
   color: var(--mute);
 }
 
-/* Boutons d'une cellule Actions : compacts, et jamais coupés par le scroller. */
 .rowActions {
   display: flex;
   flex-wrap: nowrap;
   gap: 0.4rem;
 
-  /* Contrat Button : à l'échelle d'une ligne de tableau. */
   --btn-padding: 0.35rem 0.7rem;
   --btn-font-size: 0.8rem;
 }
