@@ -22,6 +22,9 @@ import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.CreationTimestamp;
 
 import com.github.bhlangonijr.chesslib.Board;
+import com.github.bhlangonijr.chesslib.move.Move;
+import com.github.bhlangonijr.chesslib.move.MoveConversionException;
+import com.github.bhlangonijr.chesslib.move.MoveList;
 import com.transcendance.backend.chess.domain.ChessMatchStatus;
 import com.transcendance.backend.chess.domain.ChessSide;
 
@@ -73,6 +76,11 @@ public class ChessMatchEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "winner_side")
     private ChessSide winnerSide;
+
+    private static final String MOVE_SEPARATOR = ",";
+
+    @Column(name = "moves", columnDefinition = "text")
+    private String moves = "";
 
     @Version
     @Column(name = "version")
@@ -164,6 +172,41 @@ public class ChessMatchEntity {
         Board board = new Board();
         board.loadFromFen(this.fen);
         return board;
+    }
+
+    public void addMove(String move) {
+        moves = (moves == null || moves.isEmpty()) ? move : moves + MOVE_SEPARATOR + move;
+    }
+
+    public Board toBoardWithHistory() {
+        Board board = new Board();
+
+        for (String move : uciMoves()) {
+            board.doMove(new Move(move, board.getSideToMove()));
+        }
+
+        return board;
+    }
+
+    public String toSanHistory() {
+        MoveList played = new MoveList();
+        Board board = new Board();
+
+        for (String move : uciMoves()) {
+            Move parsed = new Move(move, board.getSideToMove());
+            played.add(parsed);
+            board.doMove(parsed);
+        }
+
+        try {
+            return played.toSan();
+        } catch (MoveConversionException e) {
+            throw new IllegalStateException("Unplayable move history: " + moves, e);
+        }
+    }
+
+    private String[] uciMoves() {
+        return (moves == null || moves.isBlank()) ? new String[0] : moves.split(MOVE_SEPARATOR);
     }
 
     private static UUID identifierOf(ChessPlayerEntity player) {

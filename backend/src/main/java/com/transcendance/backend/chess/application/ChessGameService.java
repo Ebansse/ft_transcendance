@@ -91,7 +91,8 @@ public class ChessGameService {
             match.setWhiteBotLevel(botLevel);
         }
         if (botToPlay(match, chessBoard)) {
-            Move moveBot = chessBotService.chooseBotMove(chessBoard, botLevel);
+            Move moveBot = chessBotService.chooseBotMove(chessBoard, botLevel,
+                    match.toSanHistory());
             applyMove(match, chessBoard, moveBot.toString());
         }
         return chessMatchRepository.save(match);
@@ -113,7 +114,7 @@ public class ChessGameService {
     public ChessMatchEntity playMove(long matchId, UUID playerId, String move) {
         ChessMatchEntity match = chessMatchRepository.findById(matchId)
                 .orElseThrow(() -> new ChessException.MatchNotFound(matchId));
-        Board board = match.toBoard();
+        Board board = match.toBoardWithHistory();
         if (!isValidMoveFormat(move)) {
             throw new ChessException.MalformedMove(move);
         }
@@ -135,7 +136,8 @@ public class ChessGameService {
         }
         applyMove(match, board, move);
         if (botToPlay(match, board)) {
-            Move moveBot = chessBotService.chooseBotMove(board, botLevelFor(match, board));
+            Move moveBot = chessBotService.chooseBotMove(board, botLevelFor(match, board),
+                    match.toSanHistory());
             applyMove(match, board, moveBot.toString());
         }
         chessMatchRepository.save(match);
@@ -159,6 +161,7 @@ public class ChessGameService {
             match.setEndedAt(Instant.now());
         }
         match.setFen(board.getFen());
+        match.addMove(move);
     }
 
     /**

@@ -1,13 +1,18 @@
 /* L'échiquier : une grille 8×8 carrée, dont la taille des pièces suit celle
-   des cases. Les deux teintes du plateau sont tirées de l'ivoire et du noir de
-   table du design system, assez écartées pour rester lisibles en pleine page
-   comme en 375 px. */
+   des cases. Les deux teintes sont un bleu clair et un bleu moyen, et non les
+   noirs du design system : une pièce noire posée sur une case sombre ne se
+   distingue plus, quel que soit le liseré qu'on lui ajoute. Le plateau est donc
+   la seule surface claire de l'interface, et les deux teintes restent assez
+   écartées pour se lire en pleine page comme en 375 px. */
 
 .board {
   composes: riseIn from '../style/page.module.css';
 
-  --square-light: #d4cec2;
-  --square-dark: #2b2b33;
+  /* Le bleu plutôt que le vert : `--green` et `--live` portent déjà un sens
+     dans le design system (accepter, être en ligne), qu'un plateau vert
+     viendrait brouiller. */
+  --square-light: #dce6ee;
+  --square-dark: #7fa1bd;
   /* Tout part de là : une case assez grande pour une pièce, jamais déformée.
      Le plateau fait huit fois cette taille, colonnes *et* rangées, donc les 64
      cases sont strictement identiques quelle que soit la position. */
@@ -55,8 +60,8 @@
   filter: brightness(1.12);
 }
 
-/* Le filet de focus par défaut se perdrait sur l'ivoire : on le rentre dans
-   la case pour qu'il ne soit pas rogné par l'`overflow` du plateau. */
+/* On rentre le filet de focus dans la case pour qu'il ne soit pas rogné par
+   l'`overflow` du plateau. */
 .square:focus-visible {
   outline: 2px solid var(--red-bright);
   outline-offset: -3px;
@@ -108,10 +113,10 @@
 .piece {
   position: relative;
   color: var(--void);
-  /* Liseré clair : sans lui, une pièce noire se fond dans la case sombre. */
-  text-shadow:
-    0 0 1px rgba(245, 241, 234, 0.55),
-    0 2px 3px rgba(0, 0, 0, 0.45);
+  /* Une simple ombre portée. Le liseré clair d'avant servait à décoller la
+     pièce noire d'une case sombre ; sur les deux teintes actuelles il ne ferait
+     plus que manger le contour du glyphe. */
+  text-shadow: 0 2px 3px rgba(10, 10, 11, 0.35);
   pointer-events: none;
 }
 
