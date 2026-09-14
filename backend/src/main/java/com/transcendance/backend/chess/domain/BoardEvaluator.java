@@ -15,8 +15,10 @@ public final class BoardEvaluator {
             PieceType.KNIGHT,
             PieceType.BISHOP,
             PieceType.ROOK,
-            PieceType.QUEEN
+            PieceType.QUEEN,
+            PieceType.KING
     };
+
     /**
      * Evaluates the position from the point of view of the side to move.
      *
@@ -25,26 +27,29 @@ public final class BoardEvaluator {
      */
     public static int evaluate(Board board) {
         Side side = board.getSideToMove();
-
-        return materialOf(board, side) - materialOf(board, side.flip());
+        boolean endgame = isEndgame(board);
+        return scoreOf(board, side, endgame) - scoreOf(board, side.flip(), endgame);
     }
 
     /**
-     * Counts the material of a side.
+     * Determines if the position is in the endgame.
      *
-     * @param board the position to read
-     * @param side  the side whose material is counted
-     * @return the total value in centipawns, always positive
+     * @param board the position to check
+     * @return true if the position is in the endgame, false otherwise
      */
-    private static int materialOf(Board board, Side side) {
-        int total = 0;
-
-        for (PieceType type : SCORED_TYPES) {
-            long squares = board.getBitboard(Piece.make(side, type));
-            total += Long.bitCount(squares) * valueOf(type);
+    private static boolean isEndgame(Board board) {
+        int material = 0;
+        for (Side side : Side.values()) {
+            material += Long.bitCount(board.getBitboard(Piece.make(side, PieceType.KNIGHT)))
+                    * valueOf(PieceType.KNIGHT);
+            material += Long.bitCount(board.getBitboard(Piece.make(side, PieceType.BISHOP)))
+                    * valueOf(PieceType.BISHOP);
+            material += Long.bitCount(board.getBitboard(Piece.make(side, PieceType.ROOK)))
+                    * valueOf(PieceType.ROOK);
+            material += Long.bitCount(board.getBitboard(Piece.make(side, PieceType.QUEEN)))
+                    * valueOf(PieceType.QUEEN);
         }
-
-        return total;
+        return material <= 2600;
     }
 
     /**
@@ -63,4 +68,30 @@ public final class BoardEvaluator {
             default -> 0;
         };
     }
+
+    /**
+     * Evaluates the position from the point of view of a specific side.
+     *
+     * @param board   the position to judge
+     * @param side    the side whose perspective is used
+     * @param endgame whether the position is in the endgame
+     * @return the score in centipawns, positive when the specified side is ahead
+     */
+    private static int scoreOf(Board board, Side side, boolean endgame) {
+        int total = 0;
+
+        for (PieceType type : SCORED_TYPES) {
+            Piece piece = Piece.make(side, type);
+            long bb = board.getBitboard(piece);
+
+            while (bb != 0) {
+                int square = Long.numberOfTrailingZeros(bb);
+                total += valueOf(type) + PieceSquareTables.bonusOf(piece, square, endgame);
+                bb &= bb - 1;
+            }
+        }
+
+        return total;
+    }
+
 }
