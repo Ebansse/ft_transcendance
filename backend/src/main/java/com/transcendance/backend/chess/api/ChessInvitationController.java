@@ -57,7 +57,7 @@ public class ChessInvitationController {
         }
 
         ChessInvitation invitation = chessInvitationService.sendInvitation(
-                user, request.getOpponentUsername());
+                user, request.getOpponentUsername(), request.getSide());
 
         return ResponseEntity.ok(
                 ChessInvitationDto.of(invitation, user.getUserName(), ChessInvitationState.PENDING));

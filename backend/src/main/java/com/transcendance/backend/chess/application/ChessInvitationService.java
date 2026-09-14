@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.transcendance.backend.chess.domain.ChessException;
 import com.transcendance.backend.chess.domain.ChessInvitation;
+import com.transcendance.backend.chess.domain.ChessSide;
 import com.transcendance.backend.chess.persistence.entity.ChessMatchEntity;
 import com.transcendance.backend.chess.persistence.repository.ChessMatchEntityRepository;
 import com.transcendance.backend.model.User;
@@ -38,11 +40,13 @@ public class ChessInvitationService {
      *
      * @param user             the user sending the invitation
      * @param opponentUsername the username of the opponent
+     * @param side             the colour the sender wants to play, drawn at
+     *                         random if null
      * @return the created ChessInvitation
      * @throws ChessException if any validation fails (e.g., opponent not
      *                                  found, already friends, etc.)
      */
-    public ChessInvitation sendInvitation(User user, String opponentUsername) {
+    public ChessInvitation sendInvitation(User user, String opponentUsername, ChessSide side) {
         User opponent = userService.getUserByUserName(opponentUsername)
                 .orElseThrow(() -> new ChessException.OpponentNotFound(opponentUsername));
 
@@ -76,7 +80,8 @@ public class ChessInvitationService {
             throw new ChessException.DuplicateInvitation();
         }
 
-        ChessInvitation invitation = ChessInvitation.create(user.getIdUser(), opponent.getIdUser());
+        ChessInvitation invitation = ChessInvitation.create(user.getIdUser(), opponent.getIdUser(),
+                side != null ? side : randomSide());
         pending.put(invitation.id(), invitation);
 
         log.info("Chess invitation sent from {} to {} at {} Id: {}", user.getUserName(), opponent.getUserName(),
@@ -109,8 +114,10 @@ public class ChessInvitationService {
             throw new ChessException.OpponentOffline();
         }
 
-        UUID whiteUserId = opponent.getIdUser();
-        UUID blackUserId = user.getIdUser();
+        // The sender picked his colour when inviting; the acceptor takes the other.
+        boolean senderIsWhite = invitation.fromSide() == ChessSide.WHITE;
+        UUID whiteUserId = senderIsWhite ? opponent.getIdUser() : user.getIdUser();
+        UUID blackUserId = senderIsWhite ? user.getIdUser() : opponent.getIdUser();
 
         ChessMatchEntity match = chessGameService.createNewGame(whiteUserId, blackUserId);
 
@@ -166,6 +173,14 @@ public class ChessInvitationService {
         }
 
         return invitation;
+    }
+
+    /**
+     * Draws a colour for a sender who left the choice to chance. Done when the
+     * invitation is created, so both players know their colour before accepting.
+     */
+    private ChessSide randomSide() {
+        return ThreadLocalRandom.current().nextBoolean() ? ChessSide.WHITE : ChessSide.BLACK;
     }
 
     /**

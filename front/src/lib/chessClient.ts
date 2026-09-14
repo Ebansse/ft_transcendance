@@ -4,6 +4,8 @@ export type ChessInvitationDto = {
   fromUserId: string
   fromUsername: string
   state: ChessInvitationState
+  /** Camp choisi par l'inviteur ; l'invité joue l'autre. */
+  fromSide: ChessSide
 }
 
 /** L'invitation n'existe qu'en mémoire côté back (une `ConcurrentHashMap`), et
