@@ -1,149 +1,69 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
+import { useChat } from '../chat/chatContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
-import { Button } from '../components/Button.tsx'
+import { ChatConversation } from '../components/ChatConversation.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import { getFriendList, type FriendListDto } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
-import {
-  CHAT_ERRORS,
-  CHAT_MESSAGES,
-  sendChatMessage,
-  type ChatMessageDto,
-} from '../lib/chatClient.ts'
-import { useSocket } from '../ws/socketContext.ts'
 import s from './ChatPage.module.css'
 
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
-
-/** `sentAt` est un `LocalDateTime` Java sans fuseau : affiché tel quel, dans
- *  le fuseau du navigateur. */
-function formatTime(value: string) {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-    ? ''
-    : date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-}
-
-/** La clé d'une conversation est toujours l'id de *l'autre* personne, qu'on
- *  soit l'émetteur ou le destinataire du message. */
-function conversationKey(message: ChatMessageDto, myId: string) {
-  return message.senderId === myId ? message.receiverId : message.senderId
-}
+const RECENT_LIMIT = 5
 
 type ChatPageProps = {
   onNavigate: (action: string) => void
 }
 
 export function ChatPage({ onNavigate }: ChatPageProps) {
-  const { isLoggedIn, authChecked, user } = useAuthModal()
-  // La connexion STOMP appartient au SocketProvider : elle est déjà ouverte
-  // quand on arrive ici et survit à la sortie de la page.
-  const { status, error: socketError, subscribe, publish } = useSocket()
-  const myId = user?.id ?? null
+  const { isLoggedIn, authChecked } = useAuthModal()
+  const { friends, loading, error, threads, unread, recentIds, nameOf, openQuickChat } = useChat()
+  const { idUser } = useParams()
+  const navigate = useNavigate()
 
-  const [friends, setFriends] = useState<FriendListDto[]>([])
-  const [friendsLoading, setFriendsLoading] = useState(false)
-  const [friendsError, setFriendsError] = useState<string | null>(null)
-
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  // Un fil par ami, gardé en mémoire le temps de la session : pas d'historique
-  // persistant côté back pour l'instant, donc rien avant l'ouverture de la page.
-  const [threads, setThreads] = useState<Record<string, ChatMessageDto[]>>({})
-
-  const [chatError, setChatError] = useState<string | null>(null)
-  const [draft, setDraft] = useState('')
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
-
-  // Charge la liste d'amis, comme sur FriendsPage — seuls les ACCEPTED
-  // peuvent recevoir un message (voir ChatService.sendMessage côté back).
-  useEffect(() => {
-    if (!isLoggedIn) return
-
-    let alive = true
-    setFriendsLoading(true)
-    setFriendsError(null)
-
-    getFriendList()
-      .then((list) => {
-        if (alive) setFriends(list.filter((row) => row.status === 'ACCEPTED'))
-      })
-      .catch((err: unknown) => {
-        if (alive) setFriendsError(messageOf(err, 'Chargement de la liste d’amis impossible.'))
-      })
-      .finally(() => {
-        if (alive) setFriendsLoading(false)
-      })
-
-    return () => {
-      alive = false
-    }
-  }, [isLoggedIn])
-
-  // On ne fait que s'abonner : les queues reçoivent les messages de tous les
-  // amis, pas seulement de la conversation ouverte. Le provider rejoue ces
-  // souscriptions après chaque reconnexion.
-  useEffect(() => {
-    if (!myId) return
-
-    const unsubscribeMessages = subscribe(CHAT_MESSAGES, (body) => {
-      const message = JSON.parse(body) as ChatMessageDto
-      const key = conversationKey(message, myId)
-      setThreads((prev) => ({
-        ...prev,
-        [key]: [...(prev[key] ?? []), message],
-      }))
-    })
-
-    const unsubscribeErrors = subscribe(CHAT_ERRORS, (body) => {
-      const payload = JSON.parse(body) as { error?: string }
-      setChatError(payload.error ?? 'Message refusé par le serveur.')
-    })
-
-    return () => {
-      unsubscribeMessages()
-      unsubscribeErrors()
-    }
-  }, [subscribe, myId])
-
-  const activeMessages = useMemo(
-    () => (selectedId ? (threads[selectedId] ?? []) : []),
-    [threads, selectedId],
-  )
+  const [selectedId, setSelectedId] = useState<string | null>(idUser ?? null)
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ block: 'end' })
-  }, [activeMessages.length])
+    if (idUser) setSelectedId(idUser)
+  }, [idUser])
 
-  const handleSend = useCallback(
-    (event: FormEvent) => {
-      event.preventDefault()
-      const content = draft.trim()
-      if (!content || !selectedId) return
+  const select = (id: string) => {
+    setSelectedId(id)
+    navigate(`/chat/${id}`)
+  }
 
-      if (!sendChatMessage(publish, selectedId, content)) {
-        setChatError('Message non envoyé : connexion au chat indisponible.')
-        return
-      }
-      setChatError(null)
-      setDraft('')
-    },
-    [draft, selectedId, publish],
-  )
-
+  const recent = recentIds.slice(0, RECENT_LIMIT)
   const selectedFriend = friends.find((friend) => friend.idUser === selectedId) ?? null
+  const selectedName = selectedId ? nameOf(selectedId) : null
 
-  const statusLabel =
-    status === 'connected'
-      ? null
-      : status === 'disconnected'
-        ? 'Connexion perdue, nouvelle tentative…'
-        : 'Connexion au chat…'
+  const previewOf = (id: string) => {
+    const messages = threads[id] ?? []
+    return messages.length > 0 ? messages[messages.length - 1].content : ''
+  }
+
+  const renderRow = (id: string, name: string, withPreview: boolean) => (
+    <li key={id} className={s.row}>
+      <button
+        type="button"
+        className={id === selectedId ? `${s.friendButton} ${s.friendButtonActive}` : s.friendButton}
+        onClick={() => select(id)}
+      >
+        <span className={s.rowTop}>
+          <span className={s.rowName}>{name}</span>
+          {(unread[id] ?? 0) > 0 && <span className={s.badge}>{unread[id]}</span>}
+        </span>
+        {withPreview && previewOf(id) && <span className={s.preview}>{previewOf(id)}</span>}
+      </button>
+
+      <button
+        type="button"
+        className={s.popButton}
+        onClick={() => openQuickChat(id)}
+        aria-label={`Ouvrir un quick chat avec ${name}`}
+      >
+        ⧉
+      </button>
+    </li>
+  )
 
   return (
     <AppLayout current="nav:chat" onNavigate={onNavigate}>
@@ -153,91 +73,58 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
         <p className={s.denied}>Connecte-toi pour accéder à la messagerie.</p>
       ) : (
         <div className={s.layout}>
-          <aside className={s.sidebar} aria-labelledby="chat-friends-title">
-            <SectionTitle id="chat-friends-title">Amis ({friends.length})</SectionTitle>
+          <aside className={s.sidebar}>
+            <section aria-labelledby="chat-recent-title">
+              <SectionTitle id="chat-recent-title">Quick chat</SectionTitle>
+              <p className={s.hint}>Tes {RECENT_LIMIT} dernières conversations.</p>
 
-            {friendsLoading && <p className={s.state}>Chargement…</p>}
-            {friendsError && <p className={s.error}>{friendsError}</p>}
+              {recent.length === 0 ? (
+                <p className={s.state}>Aucun échange pour l’instant.</p>
+              ) : (
+                <ul className={s.friendList}>
+                  {recent.map((id) => renderRow(id, nameOf(id), true))}
+                </ul>
+              )}
+            </section>
 
-            {!friendsLoading && !friendsError && friends.length === 0 && (
-              <p className={s.state}>Ajoute des amis pour pouvoir discuter.</p>
-            )}
+            <section aria-labelledby="chat-friends-title">
+              <SectionTitle id="chat-friends-title">Amis ({friends.length})</SectionTitle>
 
-            <ul className={s.friendList}>
-              {friends.map((friend) => (
-                <li key={friend.idUser}>
-                  <button
-                    type="button"
-                    className={
-                      friend.idUser === selectedId
-                        ? `${s.friendButton} ${s.friendButtonActive}`
-                        : s.friendButton
-                    }
-                    onClick={() => setSelectedId(friend.idUser)}
-                  >
-                    {friend.userName}
-                  </button>
-                </li>
-              ))}
-            </ul>
+              {loading && <p className={s.state}>Chargement…</p>}
+              {error && <p className={s.error}>{error}</p>}
+
+              {!loading && !error && friends.length === 0 && (
+                <p className={s.state}>Ajoute des amis pour pouvoir discuter.</p>
+              )}
+
+              <ul className={s.friendList}>
+                {friends.map((friend) => renderRow(friend.idUser, friend.userName, false))}
+              </ul>
+            </section>
           </aside>
 
           <section className={s.conversation} aria-label="Conversation">
-            {!selectedFriend ? (
+            {!selectedId ? (
               <p className={s.state}>Choisis un ami dans la liste pour démarrer la discussion.</p>
             ) : (
               <>
                 <header className={s.conversationHeader}>
-                  <h2 className={s.conversationTitle}>{selectedFriend.userName}</h2>
+                  <h2 className={s.conversationTitle}>{selectedName}</h2>
+                  <button
+                    type="button"
+                    className={s.popButton}
+                    onClick={() => openQuickChat(selectedId)}
+                    aria-label={`Ouvrir un quick chat avec ${selectedName}`}
+                  >
+                    ⧉
+                  </button>
                 </header>
 
-                <div className={s.messages}>
-                  {activeMessages.length === 0 ? (
-                    <p className={s.state}>Aucun message pour l’instant. Dis bonjour !</p>
-                  ) : (
-                    activeMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={
-                          message.senderId === myId ? `${s.bubble} ${s.bubbleMine}` : s.bubble
-                        }
-                      >
-                        <p className={s.bubbleContent}>{message.content}</p>
-                        <span className={s.bubbleTime}>{formatTime(message.sentAt)}</span>
-                      </div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {(chatError ?? socketError) && (
-                  <p className={s.error}>{chatError ?? socketError}</p>
+                {!selectedFriend && (
+                  <p className={s.state}>Cette personne ne fait plus partie de tes amis.</p>
                 )}
-                {statusLabel && <p className={s.state}>{statusLabel}</p>}
 
-                <form className={s.form} onSubmit={handleSend}>
-                  <label className={s.srOnly} htmlFor="chat-input">
-                    Message
-                  </label>
-                  <input
-                    id="chat-input"
-                    className={s.input}
-                    type="text"
-                    value={draft}
-                    maxLength={1000}
-                    autoComplete="off"
-                    placeholder={`Écrire à ${selectedFriend.userName}…`}
-                    onChange={(event) => setDraft(event.target.value)}
-                    disabled={status !== 'connected'}
-                  />
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    disabled={status !== 'connected' || !draft.trim()}
-                  >
-                    Envoyer
-                  </Button>
-                </form>
+                <ChatConversation targetId={selectedId} targetName={selectedName ?? ''} />
               </>
             )}
           </section>

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
+import { useChat } from '../chat/chatContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
 import { MenuActions } from '../components/MenuActions.tsx'
@@ -12,14 +13,12 @@ import {
   blockUser,
   declineFriendRequest,
   deleteFriend,
-  getFriendList,
   sendFriendRequest,
   type FriendListDto,
 } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './FriendsPage.module.css'
 
-/** `createAt` est un `LocalDateTime` Java : une date ISO sans fuseau. */
 function formatDate(value: string | null) {
   if (!value) return '—'
   const date = new Date(value)
@@ -30,11 +29,6 @@ function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
 }
 
-/** Les DECLINED ne s'affichent pas : la ligne survit en base uniquement pour
- *  qu'une nouvelle demande la réactive.
- *
- *  `senderId` ne peut valoir que notre id ou celui d'en face : s'il vaut
- *  `idUser`, c'est l'autre qui a envoyé la demande, donc on l'a reçue. */
 function split(rows: FriendListDto[]) {
   const pending = rows.filter((row) => row.status === 'PENDING')
   return {
@@ -51,12 +45,8 @@ type FriendsPageProps = {
 
 export function FriendsPage({ onNavigate }: FriendsPageProps) {
   const { isLoggedIn, authChecked } = useAuthModal()
+  const { rows, loading, error, refresh, unread, openQuickChat } = useChat()
 
-  const [rows, setRows] = useState<FriendListDto[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  // Id de la ligne dont une action est en vol : seuls ses boutons se figent.
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -65,36 +55,6 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [formNotice, setFormNotice] = useState<string | null>(null)
 
-  const refresh = useCallback(async () => {
-    setRows(await getFriendList())
-  }, [])
-
-  useEffect(() => {
-    if (!isLoggedIn) return
-
-    // Le composant peut être démonté avant la réponse : on ignore alors le résultat.
-    let alive = true
-    setLoading(true)
-    setError(null)
-
-    getFriendList()
-      .then((list) => {
-        if (alive) setRows(list)
-      })
-      .catch((err: unknown) => {
-        if (alive) setError(messageOf(err, 'Chargement de la liste d’amis impossible.'))
-      })
-      .finally(() => {
-        if (alive) setLoading(false)
-      })
-
-    return () => {
-      alive = false
-    }
-  }, [isLoggedIn])
-
-  /** Les routes d'action répondent 200 sans corps : on relit la liste pour
-   *  connaître le nouveau statut plutôt que de le deviner localement. */
   const run = async (
     row: FriendListDto,
     action: (idUser: string) => Promise<void>,
@@ -112,7 +72,6 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
     }
   }
 
-  /** Le back n'expose pas de recherche : on ajoute par pseudo exact. */
   const submitRequest = async (event: FormEvent) => {
     event.preventDefault()
     const target = userName.trim()
@@ -154,21 +113,38 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
       key: 'actions',
       header: 'Actions',
       render: (row) => (
-        <MenuActions
-          ariaLabel={`Actions sur ${row.userName}`}
-          items={[
-            {
-              key: 'delete',
-              label: 'Retirer',
-              onSelect: () => run(row, deleteFriend, 'Suppression impossible.'),
-            },
-            {
-              key: 'block',
-              label: 'Bloquer',
-              onSelect: () => run(row, blockUser, 'Blocage impossible.'),
-            },
-          ]}
-        />
+        <div className={s.rowActions}>
+          <Button
+            variant="primary"
+            onClick={() => onNavigate(`nav:chat:${row.idUser}`)}
+            ariaLabel={`Ouvrir la conversation avec ${row.userName}`}
+          >
+            {(unread[row.idUser] ?? 0) > 0
+              ? `Discuter (${unread[row.idUser]})`
+              : 'Discuter'}
+          </Button>
+          <Button
+            onClick={() => openQuickChat(row.idUser)}
+            ariaLabel={`Ouvrir un quick chat avec ${row.userName}`}
+          >
+            Quick chat
+          </Button>
+          <MenuActions
+            ariaLabel={`Actions sur ${row.userName}`}
+            items={[
+              {
+                key: 'delete',
+                label: 'Retirer',
+                onSelect: () => run(row, deleteFriend, 'Suppression impossible.'),
+              },
+              {
+                key: 'block',
+                label: 'Bloquer',
+                onSelect: () => run(row, blockUser, 'Blocage impossible.'),
+              },
+            ]}
+          />
+        </div>
       ),
     },
   ]
@@ -206,8 +182,6 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
     },
   ]
 
-  /* Annuler passe par la même route que « Refuser » : le back bascule la ligne
-     PENDING en DECLINED sans se soucier de qui a ouvert la demande. */
   const sentColumns: Colonne<FriendListDto>[] = [
     nameColumn,
     dateColumn('Envoyée le'),
@@ -237,7 +211,6 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
         subtitle="Tes amis, tes demandes en attente et les comptes que tu as bloqués."
       />
 
-      {/* Tant que la session n'est pas vérifiée, on n'affiche ni liste ni refus. */}
       {!authChecked ? null : !isLoggedIn ? (
         <p className={s.denied}>Connecte-toi pour voir ta liste d’amis.</p>
       ) : (

@@ -21,6 +21,26 @@
   font-size: 1.4rem;
 }
 
+.field {
+  composes: field from '../style/dialog.module.css';
+
+  margin-bottom: 1rem;
+}
+
+.label {
+  composes: label from '../style/dialog.module.css';
+}
+
+/* Blancs, Noirs et Aléatoire côte à côte, comme les camps de la modale du bot. */
+.sides {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+
+  --btn-padding: 0.65rem 0.5rem;
+  --btn-font-size: 0.9rem;
+}
+
 /* Chargement en cours, ou liste vide : même ton discret dans les deux cas. */
 .status {
   margin: 0;

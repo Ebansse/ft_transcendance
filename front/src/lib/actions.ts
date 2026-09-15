@@ -1,5 +1,5 @@
 import { api } from './apiClient.ts'
-import type { ChessInvitationDto, ChessMatchDto } from './chessClient.ts'
+import type { ChessInvitationDto, ChessMatchDto, ChessSide } from './chessClient.ts'
 
 /** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
 export function handleAction(action: string) {
@@ -148,9 +148,11 @@ export function blockUser(idUser: string) {
 }
 
 /** Invite un adversaire par pseudo : le back retrouve le compte, refuse l'auto-
- *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). */
-export function sendChessInvitation(opponentUsername: string) {
-  return api.post<void>('/chess/invitations', { opponentUsername })
+ *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). `side` est
+ *  le camp de l'inviteur, `null` pour un tirage au sort côté back : l'invité
+ *  prendra l'autre à l'acceptation. Le camp retenu revient dans `fromSide`. */
+export function sendChessInvitation(opponentUsername: string, side: ChessSide | null) {
+  return api.post<ChessInvitationDto>('/chess/invitations', { opponentUsername, side })
 }
 
 /** Invitations reçues et encore valides, dans le format exact des messages
@@ -168,6 +170,15 @@ export function acceptChessInvitation(opponentUsername: string) {
 /** Refuse l'invitation : le back la retire et pousse un `DECLINED` à l'inviteur. */
 export function declineChessInvitation(opponentUsername: string) {
   return api.post<void>('/chess/invitations/decline', { opponentUsername })
+}
+
+/** Ouvre une partie contre le bot, dans le camp demandé. Le back renvoie la
+ *  partie prête à jouer : si le joueur a pris les noirs, le `fen` contient
+ *  **déjà** le coup d'ouverture du bot, il n'y a rien à demander de plus.
+ *
+ *  Refusé en 409 tant qu'une autre partie est en cours, comme une invitation. */
+export function createBotMatch(side: ChessSide, botLvl: number) {
+  return api.post<ChessMatchDto>('/chess/bot/createBotMatch', { side, botLvl })
 }
 
 /** Partie en cours du compte connecté. Le back répond **404** quand il n'y en a

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.transcendance.backend.chess.domain.ChessInvitation;
 import com.transcendance.backend.chess.domain.ChessInvitationState;
+import com.transcendance.backend.chess.domain.ChessSide;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,6 +20,8 @@ public class ChessInvitationDto {
     private UUID fromUserId;
     private String fromUsername;
     private ChessInvitationState state;
+    /** Colour played by the sender; the invited user plays the other one. */
+    private ChessSide fromSide;
 
     /**
      * Translates a domain invitation into the API contract.
@@ -28,6 +31,7 @@ public class ChessInvitationDto {
      */
     public static ChessInvitationDto of(ChessInvitation invitation, String fromUsername,
             ChessInvitationState state) {
-        return new ChessInvitationDto(invitation.id(), invitation.fromUserId(), fromUsername, state);
+        return new ChessInvitationDto(invitation.id(), invitation.fromUserId(), fromUsername, state,
+                invitation.fromSide());
     }
 }

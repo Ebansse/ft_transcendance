@@ -2,6 +2,7 @@ import { Chess, type Square } from 'chess.js'
 import { useEffect, useState } from 'react'
 import { getUserProfile, sendChessInvitation } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
+import { ChessBotModal } from '../components/ChessBotModal.tsx'
 import { ChessInviteModal } from '../components/ChessInviteModal.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
@@ -10,7 +11,7 @@ import { ChessBoard, type BoardOrientation } from '../components/ChessBoard.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { START_FEN, squaresOf } from '../lib/chessBoard.ts'
-import type { ChessMatchDto } from '../lib/chessClient.ts'
+import type { ChessMatchDto, ChessSide } from '../lib/chessClient.ts'
 import { useChessMatch } from '../ws/useChessMatch.ts'
 import s from './ChessPage.module.css'
 
@@ -89,6 +90,26 @@ function replay(chess: Chess, move: string, expectedFen: string) {
   return samePosition(copy.fen(), expectedFen) ? copy : null
 }
 
+/** Retrouve le coup qui mène de la position affichée à celle du serveur, quand
+ *  personne ne nous l'a nommé.
+ *
+ *  C'est le cas du bot : sa réponse arrive dans le corps HTTP du coup qu'on
+ *  vient de jouer, jamais sur la socket, donc sans `move` à rejouer. Sans cette
+ *  recherche la page repartirait du FEN et perdrait la liste des coups à chaque
+ *  tour. Une quarantaine de coups légaux à essayer, joués puis repris sur une
+ *  seule copie : le coût est négligeable devant un rendu. */
+function catchUp(chess: Chess, expectedFen: string) {
+  const copy = cloneGame(chess)
+
+  for (const move of copy.moves()) {
+    copy.move(move)
+    if (samePosition(copy.fen(), expectedFen)) return copy
+    copy.undo()
+  }
+
+  return null
+}
+
 /** Regroupe les coups deux par deux pour l'affichage : « 1. e4 e5 ». */
 function toRounds(history: { san: string }[]) {
   const rounds: { number: number; white: string; black: string | null }[] = []
@@ -142,7 +163,13 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const [invitePending, setInvitePending] = useState<string | null>(null)
   const [inviteError, setInviteError] = useState<string | null>(null)
   /** Dernier adversaire invité, pour l'accusé de réception du panneau. */
-  const [inviteSent, setInviteSent] = useState<string | null>(null)
+  const [inviteSent, setInviteSent] = useState<{ userName: string; side: ChessSide } | null>(
+    null,
+  )
+
+  const [botOpen, setBotOpen] = useState(false)
+  const [botPending, setBotPending] = useState(false)
+  const [botError, setBotError] = useState<string | null>(null)
 
   const { chess, view } = game
 
@@ -173,6 +200,11 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
       const played = serverMove === null ? null : replay(current.chess, serverMove.move, match.fen)
       if (played !== null) return { chess: played, view: snapshot(played) }
 
+      /* Personne n'a nommé le coup, mais un seul coup légal peut mener à cette
+         position : c'est celui du bot. */
+      const found = catchUp(current.chess, match.fen)
+      if (found !== null) return { chess: found, view: snapshot(found) }
+
       const fresh = new Chess(match.fen)
       return { chess: fresh, view: snapshot(fresh) }
     })
@@ -182,7 +214,8 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     }
   }, [match, serverMove])
 
-  /* Le back ne donne que l'UUID des joueurs : le pseudo se demande à part. */
+  /* Le back ne donne que l'UUID des joueurs : le pseudo se demande à part.
+     Un camp tenu par un bot n'a pas d'UUID — il s'annonce par son niveau. */
   useEffect(() => {
     if (match === null || mySide === null) {
       setOpponentName(null)
@@ -190,7 +223,11 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     }
 
     const opponentId = mySide === 'WHITE' ? match.blackPlayerId : match.whitePlayerId
-    if (opponentId === null) return
+    if (opponentId === null) {
+      const level = mySide === 'WHITE' ? match.blackBotLevel : match.whiteBotLevel
+      setOpponentName(level === null ? 'Bot' : `Bot · niveau ${level}`)
+      return
+    }
 
     let alive = true
     getUserProfile(opponentId)
@@ -208,8 +245,24 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
   const running = match !== null && match.status === 'IN_PROGRESS'
   const outcome = match === null ? null : outcomeOfMatch(match)
-  /* Sans adversaire, ou hors de son tour, le plateau ne répond pas. */
-  const playable = running && isMyTurn
+  /* Le trait du plateau affiché, qui a déjà avancé quand on vient de jouer sans
+     que la réponse du serveur soit revenue. */
+  const localSide: ChessSide = view.turn === 'w' ? 'WHITE' : 'BLACK'
+  /* Sans adversaire, hors de son tour, ou en attendant la réponse à son propre
+     coup, le plateau ne répond pas. Cette dernière condition compte surtout
+     contre le bot, où l'aller-retour est si court qu'on jouerait sinon deux
+     coups d'affilée - dont un pour lui. */
+  const playable = running && isMyTurn && localSide === mySide
+
+  /* Le dernier coup de la position affichée, quel qu'en soit l'auteur. Se lit
+     dans l'historique dès qu'il y en a un, ce qui couvre le coup du bot sans
+     avoir à le nommer ; `lastMove` ne sert plus qu'aux parties reprises depuis
+     un FEN, qui arrivent sans historique. */
+  const played = view.history.at(-1)
+  const highlighted =
+    played === undefined
+      ? lastMove
+      : { from: played.lan.slice(0, 2), to: played.lan.slice(2, 4) }
 
   /** Sélectionne la case si elle porte une pièce du camp au trait, et calcule
    *  ses arrivées légales. Renvoie `false` si la case n'est pas jouable. */
@@ -269,6 +322,28 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     clearSelection()
   }
 
+  const openBot = () => {
+    setBotError(null)
+    setBotOpen(true)
+  }
+
+  /** Lance la partie puis referme la modale. Un refus du back la laisse ouverte,
+   *  le message se lisant à côté du bouton qu'on vient d'actionner. */
+  const startBot = async (side: ChessSide, botLvl: number) => {
+    setBotPending(true)
+    setBotError(null)
+
+    try {
+      await online.startBot(side, botLvl)
+      clearSelection()
+      setBotOpen(false)
+    } catch (err: unknown) {
+      setBotError(err instanceof ApiError ? err.message : 'Partie contre le bot impossible.')
+    } finally {
+      setBotPending(false)
+    }
+  }
+
   const openInvite = () => {
     setInviteError(null)
     setInviteSent(null)
@@ -277,13 +352,14 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
   /** Envoie l'invitation puis referme la modale. Un refus du back la laisse
    *  ouverte : le message se lit à côté de la liste et on peut réessayer. */
-  const invite = async (userName: string) => {
+  const invite = async (userName: string, side: ChessSide | null) => {
     setInvitePending(userName)
     setInviteError(null)
 
     try {
-      await sendChessInvitation(userName)
-      setInviteSent(userName)
+      // Le back renvoie le camp retenu : c'est lui qui tranche en cas d'aléatoire.
+      const invitation = await sendChessInvitation(userName, side)
+      setInviteSent({ userName, side: invitation.fromSide })
       setInviteOpen(false)
     } catch (err: unknown) {
       setInviteError(err instanceof ApiError ? err.message : 'Invitation refusée.')
@@ -304,7 +380,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
         title="Échecs"
         subtitle={
           match === null
-            ? 'Invitez un(e) ami(e) pour lancer une partie.'
+            ? 'Invitez un(e) ami(e), ou lancez une partie contre le bot.'
             : 'Partie en ligne : les coups de l’adversaire arrivent en temps réel.'
         }
       />
@@ -317,7 +393,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             orientation={orientation}
             selected={selected}
             targets={targets}
-            lastMove={lastMove}
+            lastMove={highlighted}
             onSquareClick={handleSquareClick}
           />
         </div>
@@ -394,6 +470,18 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
               Inviter un(e) ami(e)
             </Button>
 
+            <Button variant="primary" fullWidth disabled={running} onClick={openBot}>
+              Jouer contre le bot
+            </Button>
+
+            <ChessBotModal
+              open={botOpen}
+              pending={botPending}
+              error={botError}
+              onClose={() => setBotOpen(false)}
+              onStart={(side, botLvl) => void startBot(side, botLvl)}
+            />
+
             <ChessInviteModal
               open={inviteOpen}
               pending={invitePending}
@@ -412,14 +500,15 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
             {inviteSent !== null && (
               <p className={s.hint} aria-live="polite">
-                Invitation envoyée à {inviteSent}.
+                Invitation envoyée à {inviteSent.userName} — vous jouerez les{' '}
+                {inviteSent.side === 'WHITE' ? 'blancs' : 'noirs'}.
               </p>
             )}
 
             {match === null && (
               <p className={s.hint}>
                 Aucune partie en cours — le plateau s'active dès qu'un(e) ami(e) accepte votre
-                invitation.
+                invitation, ou immédiatement contre le bot.
               </p>
             )}
           </div>

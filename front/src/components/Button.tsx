@@ -10,7 +10,6 @@ type ButtonProps = {
   variant?: ButtonVariant
   fullWidth?: boolean
   ariaLabel?: string
-  /** 'submit' pour valider le formulaire parent ; 'button' partout ailleurs. */
   type?: 'button' | 'submit'
 }
 
