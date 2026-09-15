@@ -80,6 +80,9 @@ public class UndercoverMatchEntity {
     @Column(name = "rounds_since_last_vote", nullable = false)
     private int roundsSinceLastVote = 0;
 
+    @Column(name = "vote_attempt")
+    private int voteAttempt = 0;
+
     @Column(name = "game_mode")
     @Enumerated(EnumType.STRING)
     private UndercoverGameMode gameMode = UndercoverGameMode.CLASSIC;

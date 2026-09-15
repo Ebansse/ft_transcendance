@@ -48,6 +48,9 @@ public class UndercoverVoteEntity {
     @JoinColumn(name = "target_id")
     private UndercoverParticipantEntity target;
 
+    @Column(name = "attempt", nullable = false)
+    private int attempt = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

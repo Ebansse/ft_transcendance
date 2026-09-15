@@ -103,9 +103,8 @@ public class UndercoverRules {
         return switch (phase) {
             case DESCRIPTION -> Duration.ofSeconds(descriptionSeconds);
             case VOTE -> Duration.ofSeconds(voteSeconds);
-            // Mr White answers once and the match ends either way, and END is
-            // not waiting for anyone.
-            case MR_WHITE_GUESS, END -> null;
+            case MR_WHITE_GUESS -> Duration.ofSeconds(voteSeconds);
+            case END -> null;
         };
     }
 
@@ -145,7 +144,11 @@ public class UndercoverRules {
                     "No room left for an agent: " + impostorsCount() + " impostors for "
                             + playerCount + " players");
         }
-
+        if (maxVotes != null && maxVotes < impostorsCount()) {
+            throw new UndercoverException.InvalidRules(
+                    "Agents need at least one vote per impostor: " + maxVotes + " votes for " + impostorsCount()
+                            + " impostors");
+        }
         if (undercoverWinOnParity && agentsCount(playerCount) <= impostorsCount()) {
             throw new UndercoverException.InvalidRules(
                     "Agents must outnumber the impostors at the start: "
