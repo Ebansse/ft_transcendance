@@ -11,4 +11,10 @@ public abstract class UndercoverException extends RuntimeException {
             super(message);
         }
     }
+
+    public static class DuplicatePlayer extends UndercoverException {
+        public DuplicatePlayer() {
+            super("A player cannot take more than one seat in a match");
+        }
+    }
 }
