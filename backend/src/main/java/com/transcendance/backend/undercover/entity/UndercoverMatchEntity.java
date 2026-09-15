@@ -1,9 +1,15 @@
 package com.transcendance.backend.undercover.entity;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.transcendance.backend.undercover.domain.UndercoverMatchStatus;
+import org.hibernate.annotations.CreationTimestamp;
 
+import com.transcendance.backend.undercover.domain.UndercoverMatchStatus;
+import com.transcendance.backend.undercover.domain.UndercoverGameMode;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,7 +17,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,18 +37,36 @@ public class UndercoverMatchEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "undercover_match_id")
-    long undercoverMatchId;
+    private Long undercoverMatchId;
 
-    @Column(name = "players")
-    List<UndercoverPlayerEntity> players;
+    @OneToMany(mappedBy = "match", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("seatOrder")
+    private List<UndercoverParticipantEntity> participants = new ArrayList<>();
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    UndercoverMatchStatus status = UndercoverMatchStatus.IN_PROGRESS;
+    private UndercoverMatchStatus status = UndercoverMatchStatus.IN_PROGRESS;
 
     @Column(name = "undercover_word")
-    String undercoverWord;
+    private String undercoverWord;
 
     @Column(name = "agents_word")
-    String agentsWord;
+    private String agentsWord;
+
+    @Column(name = "current_round", nullable = false)
+    private int currentRound = 1;
+
+    @Column(name = "game_mode")
+    @Enumerated(EnumType.STRING)
+    private UndercoverGameMode gameMode = UndercoverGameMode.CLASSIC;
+
+    @Version
+    private Long version;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "ended_at")
+    private Instant endedAt;
 }
