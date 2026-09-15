@@ -1,5 +1,6 @@
 package com.transcendance.backend.undercover.entity.repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,6 +32,16 @@ public interface UndercoverMatchRepository extends JpaRepository<UndercoverMatch
             + "LEFT JOIN FETCH m.participants p LEFT JOIN FETCH p.player "
             + "WHERE m.undercoverMatchId = :matchId")
     Optional<UndercoverMatchEntity> findByIdWithParticipants(Long matchId);
+
+    /**
+     * Matches whose current phase has run out of time.
+     *
+     * Touches no association, so the rows stay readable once detached - this
+     * is meant for a scheduled task, which has no session bound to it.
+     */
+    @Query("SELECT m FROM UndercoverMatchEntity m "
+            + "WHERE m.status = IN_PROGRESS AND m.phaseDeadline IS NOT NULL AND m.phaseDeadline <= :now")
+    List<UndercoverMatchEntity> findExpiredPhases(Instant now);
 
     /**
      * The matches this user has finished, most recent first.
