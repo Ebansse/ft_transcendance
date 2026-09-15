@@ -40,7 +40,8 @@ public class SecurityConfig {
                                                                 "/api/auth/register",
                                                                 "/api/auth/login",
                                                                 "/api/auth/refresh-token",
-                                                                "/api/auth/logout")
+                                                                "/api/auth/logout",
+                                                                "/api/auth/2fa/login")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/hello",

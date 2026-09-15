@@ -35,6 +35,7 @@ public class LoginService {
      * @param code the 6-digit 2FA code, null on the first attempt
      * @return the tokens, or an empty Optional if the account needs a 2FA code
      * @throws IllegalArgumentException if the email, password or code is invalid
+     * @throws TwoFactorLockedException if too many wrong 2FA codes were sent
      */
     @Transactional
     public Optional<LoginResponseTokenDto> authenticate(String email, String password, String code) {
@@ -60,10 +61,7 @@ public class LoginService {
                 log.info("2FA code required for email: {}", email);
                 return Optional.empty();
             }
-            if (!twoFactorService.isValidLoginCode(user, code)) {
-                log.warn("Invalid 2FA code for email: {}", email);
-                throw new IllegalArgumentException("Invalid code");
-            }
+            twoFactorService.verifyCode(user, code);
         }
 
         // Generate the access and refresh tokens

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transcendance.backend.dto.LoginRequestDto;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.LoginService;
+import com.transcendance.backend.services.TwoFactorLockedException;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,6 +94,8 @@ public class LoginController {
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body("Login successful");
         
+        } catch (TwoFactorLockedException e) {
+            return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
         log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
         return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));

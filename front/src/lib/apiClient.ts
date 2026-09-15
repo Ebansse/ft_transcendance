@@ -118,8 +118,10 @@ async function request<T>(
 
   // Si l'access_token est expiré, on le rafraîchit avec le refresh_token (7 jours),
   // puis on rejoue la requête une fois. Les routes /auth/* en sont exclues (login,
-  // refresh…), sauf /auth/2fa/* qui exigent une session comme n'importe quelle page.
-  const isAuthRoute = path.startsWith('/auth/') && !path.startsWith('/auth/2fa/')
+  // refresh…), sauf /auth/2fa/* qui exigent une session comme n'importe quelle page
+  // (hors /auth/2fa/login, qui sert justement à en ouvrir une).
+  const needsSession = path.startsWith('/auth/2fa/') && path !== '/auth/2fa/login'
+  const isAuthRoute = path.startsWith('/auth/') && !needsSession
   if ((res.status === 401 || res.status === 403) && !retried && !isAuthRoute) {
     refreshing ??= request('/auth/refresh-token', 'POST').finally(() => {
       refreshing = null

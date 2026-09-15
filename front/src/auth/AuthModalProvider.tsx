@@ -12,6 +12,9 @@ import type { AuthMode } from './authModalContext.ts'
 /** /auth/login répond "Login successful" (texte), ou ce JSON si le compte attend un code A2F. */
 type LoginResponse = string | { twoFactorRequired: true }
 
+/** Retour d'OAuth 42 sur un compte A2F : le back redirige avec `?twoFactor=required`. */
+const OAUTH_TWO_FACTOR = new URLSearchParams(window.location.search).get('twoFactor') === 'required'
+
 /**
  * Détient la session et parle au back. La modale garde ses propres champs et ses
  * erreurs : elle ne reçoit d'ici que de quoi s'ouvrir et de quoi envoyer.
@@ -22,13 +25,18 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserPublicProfileDto | null>(null)
   // Tant que la session n'est pas vérifiée, l'UI n'affiche ni « connecté » ni « invité ».
   const [authChecked, setAuthChecked] = useState(false)
-  // Identifiants gardés le temps de saisir le code A2F, puis renvoyés avec lui.
-  const [twoFactorLogin, setTwoFactorLogin] = useState<LoginForm | null>(null)
+  // Identifiants gardés le temps de saisir le code A2F, puis renvoyés avec lui ;
+  // 'oauth' quand le back tient déjà l'utilisateur (cookie two_factor_token).
+  const [twoFactorLogin, setTwoFactorLogin] = useState<LoginForm | 'oauth' | null>(
+    OAUTH_TWO_FACTOR ? 'oauth' : null,
+  )
   const [twoFactorPending, setTwoFactorPending] = useState(false)
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null)
 
   // Restauration de session : le cookie httpOnly survit au rechargement de la page.
   useEffect(() => {
+    if (OAUTH_TWO_FACTOR) window.history.replaceState(null, '', window.location.pathname)
+
     let cancelled = false
     getMyProfile()
       .then((me) => {
@@ -82,13 +90,15 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setTwoFactorError(null)
   }
 
-  /** Second envoi : mêmes identifiants + code. */
+  /** Second envoi : mêmes identifiants + code, ou le code seul après OAuth 42. */
   const submitTwoFactor = async (code: string) => {
     if (!twoFactorLogin) return
     setTwoFactorPending(true)
     setTwoFactorError(null)
     try {
-      await api.post<string>('/auth/login', { ...twoFactorLogin, code })
+      await (twoFactorLogin === 'oauth'
+        ? api.post('/auth/2fa/login', { code })
+        : api.post('/auth/login', { ...twoFactorLogin, code }))
       setUser(await getMyProfile())
       closeTwoFactor()
     } catch (err) {
