@@ -24,8 +24,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "undercover_votes", uniqueConstraints = @UniqueConstraint(name = "uk_undercover_vote_once_per_round", columnNames = {
-        "match_id", "round", "voter_id" }))
+@Table(name = "undercover_votes", uniqueConstraints = @UniqueConstraint(name = "uk_undercover_vote_once_per_attempt", columnNames = {
+        "match_id", "round", "attempt", "voter_id" }))
 public class UndercoverVoteEntity {
 
     @Id
@@ -55,10 +55,11 @@ public class UndercoverVoteEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    public UndercoverVoteEntity(UndercoverMatchEntity match, int round,
+    public UndercoverVoteEntity(UndercoverMatchEntity match, int round, int attempt,
             UndercoverParticipantEntity voter, UndercoverParticipantEntity target) {
         this.match = match;
         this.round = round;
+        this.attempt = attempt;
         this.voter = voter;
         this.target = target;
     }
