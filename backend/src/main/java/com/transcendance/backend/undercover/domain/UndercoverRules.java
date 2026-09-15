@@ -22,6 +22,7 @@ public class UndercoverRules {
 
     public static final int DEFAULT_DESCRIPTION_SECONDS = 45;
     public static final int DEFAULT_VOTE_SECONDS = 120;
+    public static final int DEFAULT_MRWHITE_VOTE_SECONDS = 60;
 
     private static final int MIN_PHASE_SECONDS = 15;
 
@@ -43,8 +44,17 @@ public class UndercoverRules {
     @Column(name = "vote_seconds", nullable = false)
     private int voteSeconds;
 
+    @Column(name = "mr_white_vote_seconds", nullable = false)
+    private int mrWhiteVoteSeconds;
+
     @Column(name = "undercover_win_on_parity", nullable = false)
     private boolean undercoverWinOnParity;
+
+    @Column(name = "tie_revotes", nullable = false)
+    private int tieRevotes;
+
+    @Column(name = "random_on_unresolved_tie", nullable = false)
+    private boolean randomOnUnresolvedTie;
 
     /**
      * The settings a preset mode is played with.
@@ -63,6 +73,9 @@ public class UndercoverRules {
                     .descriptionSeconds(DEFAULT_DESCRIPTION_SECONDS)
                     .voteSeconds(DEFAULT_VOTE_SECONDS)
                     .undercoverWinOnParity(false)
+                    .tieRevotes(2)
+                    .randomOnUnresolvedTie(false)
+                    .mrWhiteVoteSeconds(DEFAULT_MRWHITE_VOTE_SECONDS)
                     .build();
             case BATTLEROYAL -> UndercoverRules.builder()
                     .undercoverCount(1)
@@ -72,6 +85,9 @@ public class UndercoverRules {
                     .descriptionSeconds(DEFAULT_DESCRIPTION_SECONDS)
                     .voteSeconds(DEFAULT_VOTE_SECONDS)
                     .undercoverWinOnParity(true)
+                    .tieRevotes(1)
+                    .randomOnUnresolvedTie(true)
+                    .mrWhiteVoteSeconds(DEFAULT_MRWHITE_VOTE_SECONDS)
                     .build();
             case CUSTOM -> throw new UndercoverException.InvalidRules(
                     "Custom matches carry their own rules, there is no preset to fall back on");
@@ -103,7 +119,7 @@ public class UndercoverRules {
         return switch (phase) {
             case DESCRIPTION -> Duration.ofSeconds(descriptionSeconds);
             case VOTE -> Duration.ofSeconds(voteSeconds);
-            case MR_WHITE_GUESS -> Duration.ofSeconds(voteSeconds);
+            case MR_WHITE_GUESS -> Duration.ofSeconds(mrWhiteVoteSeconds);
             case END -> null;
         };
     }
@@ -135,15 +151,23 @@ public class UndercoverRules {
             throw new UndercoverException.InvalidRules(
                     "A match with no vote at all could never be won");
         }
-        if (descriptionSeconds < MIN_PHASE_SECONDS || voteSeconds < MIN_PHASE_SECONDS) {
-            throw new UndercoverException.InvalidRules(
-                    "Phases must last at least " + MIN_PHASE_SECONDS + " seconds");
-        }
+
         if (agentsCount(playerCount) < 1) {
             throw new UndercoverException.InvalidRules(
                     "No room left for an agent: " + impostorsCount() + " impostors for "
                             + playerCount + " players");
         }
+
+        if (tieRevotes < 0) {
+            throw new UndercoverException.InvalidRules("Tie revotes cannot be negative");
+        }
+
+        if (descriptionSeconds < MIN_PHASE_SECONDS || voteSeconds < MIN_PHASE_SECONDS
+                || mrWhiteVoteSeconds < MIN_PHASE_SECONDS) {
+            throw new UndercoverException.InvalidRules(
+                    "Phases must last at least " + MIN_PHASE_SECONDS + " seconds");
+        }
+
         if (maxVotes != null && maxVotes < impostorsCount()) {
             throw new UndercoverException.InvalidRules(
                     "Agents need at least one vote per impostor: " + maxVotes + " votes for " + impostorsCount()
