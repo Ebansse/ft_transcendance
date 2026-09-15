@@ -1,5 +1,3 @@
-/* Squelette commun à toutes les pages : navbar + sidebar + contenu + footer. */
-
 .shell {
   position: relative;
   z-index: 1;
@@ -24,7 +22,6 @@
   padding: 3.5rem 2rem 4rem;
 }
 
-/* Le bouton d'ouverture du menu n'existe qu'en étroit. */
 .menuToggle {
   display: none;
 }

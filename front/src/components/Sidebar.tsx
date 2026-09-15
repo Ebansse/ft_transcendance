@@ -1,5 +1,6 @@
 import { Button } from './Button.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
+import { useChat } from '../chat/chatContext.ts'
 import { handleAction } from '../lib/actions.ts'
 import s from './Sidebar.module.css'
 
@@ -7,7 +8,6 @@ type NavItem = {
   action: string
   label: string
   icon: string
-  badge?: number
 }
 
 type NavGroup = {
@@ -22,17 +22,13 @@ const GROUPS: NavGroup[] = [
   },
   {
     title: 'Jeux',
-    items: [
-      { action: 'nav:chess', label: 'Échecs', icon: '♟️' },
-      { action: 'nav:blackjack', label: 'Blackjack', icon: '🃏' },
-      { action: 'nav:uno', label: 'Uno', icon: '🎴' },
-    ],
+    items: [{ action: 'nav:chess', label: 'Échecs', icon: '♟️' }],
   },
   {
     title: 'Social',
     items: [
-      { action: 'nav:friends', label: 'Amis', icon: '👥', badge: 1 },
-      { action: 'nav:chat', label: 'Chat', icon: '💬', badge: 1 },
+      { action: 'nav:friends', label: 'Amis', icon: '👥' },
+      { action: 'nav:chat', label: 'Chat', icon: '💬' },
     ],
   },
   {
@@ -45,7 +41,6 @@ const GROUPS: NavGroup[] = [
   },
 ]
 
-/** Groupe réservé aux comptes ADMIN, ajouté en bas du menu. */
 const ADMIN_GROUP: NavGroup = {
   title: 'Administration',
   items: [{ action: 'nav:admin', label: 'Admin', icon: '🛡️' }],
@@ -54,13 +49,26 @@ const ADMIN_GROUP: NavGroup = {
 type SidebarProps = {
   open: boolean
   current?: string
-  /** Fourni par le layout : route vers la page. À défaut, on log l'action. */
   onNavigate?: (action: string) => void
 }
 
 export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction }: SidebarProps) {
   const { user } = useAuthModal()
+  const { rows, unread } = useChat()
+
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
+
+  const pendingRequests = rows.filter(
+    (row) => row.status === 'PENDING' && row.senderId === row.idUser,
+  ).length
+
+  const unreadMessages = Object.values(unread).reduce((total, count) => total + count, 0)
+
+  const badgeOf = (action: string) => {
+    if (action === 'nav:friends') return pendingRequests
+    if (action === 'nav:chat') return unreadMessages
+    return 0
+  }
 
   return (
     <aside
@@ -72,24 +80,28 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
         <nav key={group.title} className={s.group} aria-label={group.title}>
           <p className={s.groupTitle}>{group.title}</p>
           <ul className={s.list}>
-            {group.items.map((item) => (
-              <li key={item.action}>
-                <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
-                  <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
-                    <span aria-hidden="true" className={s.icon}>
-                      {item.icon}
-                    </span>
-                    <span className={s.label}>{item.label}</span>
-                    {item.badge ? (
-                      <span className={s.badge}>
-                        {item.badge}
-                        <span className="sr-only"> notifications</span>
+            {group.items.map((item) => {
+              const badge = badgeOf(item.action)
+
+              return (
+                <li key={item.action}>
+                  <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
+                    <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
+                      <span aria-hidden="true" className={s.icon}>
+                        {item.icon}
                       </span>
-                    ) : null}
-                  </Button>
-                </span>
-              </li>
-            ))}
+                      <span className={s.label}>{item.label}</span>
+                      {badge > 0 ? (
+                        <span className={s.badge}>
+                          {badge}
+                          <span className="sr-only"> notifications</span>
+                        </span>
+                      ) : null}
+                    </Button>
+                  </span>
+                </li>
+              )
+            })}
           </ul>
         </nav>
       ))}

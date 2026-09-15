@@ -7,7 +7,10 @@ import { ChatPage } from './pages/ChatPage.tsx'
 import { ChessPage } from './pages/ChessPage.tsx'
 import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
+import { SettingsPage } from './pages/SettingsPage.tsx'
+import { TermsPage } from './pages/TermsPage.tsx'
 import { handleAction } from './lib/actions.ts'
 import { useChessInvitations } from './ws/useChessInvitations.ts'
 import { useChessMatchStart } from './ws/useChessMatchStart.ts'
@@ -19,6 +22,9 @@ const PAGES = {
   'nav:admin': { path: '/admin', Component: AdminPage },
   'nav:chat': { path: '/chat', Component: ChatPage },
   'nav:chess': { path: '/chess', Component: ChessPage },
+  'nav:settings': { path: '/settings', Component: SettingsPage },
+  'nav:privacy': { path: '/privacy', Component: PrivacyPolicyPage },
+  'nav:terms': { path: '/terms', Component: TermsPage },
 } as const
 
 const CHAT_WITH = 'nav:chat:'

@@ -16,6 +16,31 @@ import { useSocket } from '../ws/socketContext.ts'
 import { ChatContext, EMPTY_HISTORY, type ChatValue, type ThreadHistory } from './chatContext.ts'
 
 const MAX_QUICK_CHATS = 3
+const QUICK_CHAT_STORAGE = 'transcendence.quickchat'
+
+function readStoredQuickChats() {
+  try {
+    const raw = sessionStorage.getItem(QUICK_CHAT_STORAGE)
+    if (!raw) return []
+
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return []
+
+    return parsed
+      .filter((id): id is string => typeof id === 'string')
+      .slice(0, MAX_QUICK_CHATS)
+  } catch {
+    return []
+  }
+}
+
+function writeStoredQuickChats(ids: string[]) {
+  try {
+    sessionStorage.setItem(QUICK_CHAT_STORAGE, JSON.stringify(ids))
+  } catch {
+    return
+  }
+}
 
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
@@ -30,7 +55,7 @@ type ChatProviderProps = {
 }
 
 export function ChatProvider({ children }: ChatProviderProps) {
-  const { isLoggedIn, user } = useAuthModal()
+  const { isLoggedIn, authChecked, user } = useAuthModal()
   const { subscribe, publish } = useSocket()
   const myId = user?.id ?? null
 
@@ -42,7 +67,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [history, setHistory] = useState<Record<string, ThreadHistory>>({})
   const [unread, setUnread] = useState<Record<string, number>>({})
   const [chatError, setChatError] = useState<string | null>(null)
-  const [quickChatIds, setQuickChatIds] = useState<string[]>([])
+  const [quickChatIds, setQuickChatIds] = useState<string[]>(readStoredQuickChats)
 
   const threadsRef = useRef(threads)
   const historyRef = useRef(history)
@@ -66,11 +91,17 @@ export function ChatProvider({ children }: ChatProviderProps) {
     myIdRef.current = myId
   }, [myId])
 
+  useEffect(() => {
+    writeStoredQuickChats(quickChatIds)
+  }, [quickChatIds])
+
   const refresh = useCallback(async () => {
     setRows(await getFriendList())
   }, [])
 
   useEffect(() => {
+    if (!authChecked) return
+
     if (!isLoggedIn) {
       setRows([])
       setThreads({})
@@ -99,7 +130,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     return () => {
       alive = false
     }
-  }, [isLoggedIn])
+  }, [isLoggedIn, authChecked])
 
   useEffect(() => {
     if (!myId) return

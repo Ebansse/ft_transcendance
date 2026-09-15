@@ -19,15 +19,11 @@ type ChessPageProps = {
   onNavigate: (action: string) => void
 }
 
-/** Tout ce que la vue a besoin de savoir de la partie, figé après chaque coup.
- *  L'instance chess.js, elle, est mutable : on la garde à côté et on remplace
- *  l'instantané à chaque changement pour déclencher le rendu. */
 type Snapshot = {
   squares: (string | null)[]
   turn: 'w' | 'b'
   check: boolean
   fen: string
-  /** `san` pour l'affichage (« Cxf7 »), `lan` = format UCI attendu par le back. */
   history: { san: string; lan: string }[]
 }
 
@@ -46,19 +42,10 @@ function snapshot(chess: Chess): Snapshot {
   }
 }
 
-/** Deux FEN décrivent-ils la même position ? On ne compare que les trois
- *  premiers champs — pièces, trait, roques.
- *
- *  Les compteurs de coups, et surtout la case de prise en passant, ne sont pas
- *  notés pareil par les deux moteurs : chesslib côté back l'écrit après chaque
- *  poussée de deux cases, chess.js seulement quand la prise est réellement
- *  légale. Les comparer ferait croire à un écart permanent. */
 function samePosition(left: string, right: string) {
   return left.split(' ').slice(0, 3).join(' ') === right.split(' ').slice(0, 3).join(' ')
 }
 
-/** Copie une partie avec son historique. La copie évite de toucher à
- *  l'instance affichée tant qu'on ne sait pas si le coup reçu s'applique. */
 function cloneGame(chess: Chess) {
   const copy = new Chess()
 
@@ -66,14 +53,10 @@ function cloneGame(chess: Chess) {
     copy.loadPgn(chess.pgn())
     return copy
   } catch {
-    /* Partie reprise depuis un FEN, sans historique rejouable. */
     return new Chess(chess.fen())
   }
 }
 
-/** Rejoue le coup reçu du serveur sur une copie, pour garder la liste des
- *  coups. Renvoie `null` si le coup ne s'applique pas ou si la position
- *  obtenue n'est pas celle du serveur : l'appelant repart alors du FEN. */
 function replay(chess: Chess, move: string, expectedFen: string) {
   const copy = cloneGame(chess)
 
@@ -90,14 +73,6 @@ function replay(chess: Chess, move: string, expectedFen: string) {
   return samePosition(copy.fen(), expectedFen) ? copy : null
 }
 
-/** Retrouve le coup qui mène de la position affichée à celle du serveur, quand
- *  personne ne nous l'a nommé.
- *
- *  C'est le cas du bot : sa réponse arrive dans le corps HTTP du coup qu'on
- *  vient de jouer, jamais sur la socket, donc sans `move` à rejouer. Sans cette
- *  recherche la page repartirait du FEN et perdrait la liste des coups à chaque
- *  tour. Une quarantaine de coups légaux à essayer, joués puis repris sur une
- *  seule copie : le coût est négligeable devant un rendu. */
 function catchUp(chess: Chess, expectedFen: string) {
   const copy = cloneGame(chess)
 
@@ -110,7 +85,6 @@ function catchUp(chess: Chess, expectedFen: string) {
   return null
 }
 
-/** Regroupe les coups deux par deux pour l'affichage : « 1. e4 e5 ». */
 function toRounds(history: { san: string }[]) {
   const rounds: { number: number; white: string; black: string | null }[] = []
 
@@ -125,8 +99,6 @@ function toRounds(history: { san: string }[]) {
   return rounds
 }
 
-/** Fin de partie vue par le serveur — la seule qui fasse foi, car un abandon
- *  ne se lit pas sur le plateau. */
 function outcomeOfMatch(match: ChessMatchDto) {
   if (match.status === 'IN_PROGRESS') return null
 

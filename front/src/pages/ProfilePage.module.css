@@ -1,9 +1,3 @@
-/* Ce qui est propre à la page Profil : les deux formulaires (avatar, identité)
-   et leurs états. L'en-tête et les titres de section viennent de composants
-   partagés. Les champs reprennent l'habillage de `dialog.module.css` sans
-   pouvoir en tirer `composes:` (la page n'importe pas la coquille de modale) :
-   les valeurs restent alignées à la main, comme dans `FriendsPage.module.css`. */
-
 .denied {
   composes: riseIn from '../style/page.module.css';
 
@@ -14,7 +8,6 @@
   animation-delay: 480ms;
 }
 
-/* Chaque bloc respire de la même façon que sur la page Amis. */
 .section {
   margin-top: 3rem;
 }
@@ -22,8 +15,6 @@
 .section:first-of-type {
   margin-top: 1.5rem;
 }
-
-/* --- Avatar --- */
 
 .avatarForm {
   display: flex;
@@ -47,13 +38,10 @@
   gap: 0.5rem;
   align-items: flex-start;
 
-  /* Contrat Button : bouton compact sous les contrôles. */
   --btn-padding: 0.5rem 1rem;
   --btn-font-size: 0.85rem;
 }
 
-/* Le vrai <input type=file> est masqué : le label sert de déclencheur stylé,
-   tout en restant focusable au clavier via l'input qu'il contient. */
 .fileLabel {
   display: inline-block;
   max-width: 20rem;
@@ -91,7 +79,6 @@
   outline-offset: 2px;
 }
 
-/* --- Identité --- */
 
 .form {
   display: flex;
@@ -137,7 +124,6 @@
   border-color: var(--red-hot);
 }
 
-/* Champ refusé (front ou back). Vit juste après `.input` pour gagner sur sa bordure. */
 .inputError {
   border-color: var(--red-bright);
 }
@@ -151,7 +137,6 @@
   --btn-font-size: 0.9rem;
 }
 
-/* --- États partagés --- */
 
 .hint {
   margin: 0;

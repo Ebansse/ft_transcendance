@@ -1,14 +1,49 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ChatConversation } from '../components/ChatConversation.tsx'
 import { useChat } from './chatContext.ts'
 import s from './QuickChatDock.module.css'
 
+const MINIMIZED_STORAGE = 'transcendence.quickchat.minimized'
+
+function readStoredMinimized() {
+  try {
+    const raw = sessionStorage.getItem(MINIMIZED_STORAGE)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw) as unknown
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
+
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      ([, flag]) => typeof flag === 'boolean',
+    )
+    return Object.fromEntries(entries) as Record<string, boolean>
+  } catch {
+    return {}
+  }
+}
+
+function writeStoredMinimized(state: Record<string, boolean>) {
+  try {
+    sessionStorage.setItem(MINIMIZED_STORAGE, JSON.stringify(state))
+  } catch {
+    return
+  }
+}
+
 export function QuickChatDock() {
   const { quickChatIds, closeQuickChat, nameOf, unread } = useChat()
-  const [minimized, setMinimized] = useState<Record<string, boolean>>({})
+  const [minimized, setMinimized] = useState<Record<string, boolean>>(readStoredMinimized)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    writeStoredMinimized(minimized)
+  }, [minimized])
+
+  const toggle = (idUser: string) => {
+    setMinimized((prev) => ({ ...prev, [idUser]: prev[idUser] !== true }))
+  }
 
   if (quickChatIds.length === 0) return null
 
@@ -29,7 +64,7 @@ export function QuickChatDock() {
               <button
                 type="button"
                 className={s.title}
-                onClick={() => setMinimized((prev) => ({ ...prev, [idUser]: !isMinimized }))}
+                onClick={() => toggle(idUser)}
                 aria-expanded={!isMinimized}
               >
                 <span className={s.titleText}>{name}</span>
@@ -48,7 +83,7 @@ export function QuickChatDock() {
                 <button
                   type="button"
                   className={s.iconButton}
-                  onClick={() => setMinimized((prev) => ({ ...prev, [idUser]: !isMinimized }))}
+                  onClick={() => toggle(idUser)}
                   aria-label={isMinimized ? `Agrandir ${name}` : `Réduire ${name}`}
                 >
                   {isMinimized ? '▴' : '▾'}
