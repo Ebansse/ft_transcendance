@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { Button } from './Button.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
+import { useChat } from '../chat/chatContext.ts'
 import { handleAction } from '../lib/actions.ts'
 import s from './Sidebar.module.css'
 
@@ -7,7 +9,6 @@ type NavItem = {
   action: string
   label: string
   icon: string
-  badge?: number
 }
 
 type NavGroup = {
@@ -31,8 +32,8 @@ const GROUPS: NavGroup[] = [
   {
     title: 'Social',
     items: [
-      { action: 'nav:friends', label: 'Amis', icon: '👥', badge: 1 },
-      { action: 'nav:chat', label: 'Chat', icon: '💬', badge: 1 },
+      { action: 'nav:friends', label: 'Amis', icon: '👥' },
+      { action: 'nav:chat', label: 'Chat', icon: '💬' },
     ],
   },
   {
@@ -61,6 +62,7 @@ type SidebarProps = {
 export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction }: SidebarProps) {
   const { user } = useAuthModal()
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
+  const badges = useBadges()
 
   return (
     <aside
@@ -80,10 +82,10 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
                       {item.icon}
                     </span>
                     <span className={s.label}>{item.label}</span>
-                    {item.badge ? (
+                    {badges[item.action] ? (
                       <span className={s.badge}>
-                        {item.badge}
-                        <span className="sr-only"> notifications</span>
+                        {badges[item.action]}
+                        <span className="sr-only"> {BADGE_LABELS[item.action]}</span>
                       </span>
                     ) : null}
                   </Button>
@@ -95,4 +97,30 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
       ))}
     </aside>
   )
+}
+
+/** Ce que compte chaque pastille, pour les lecteurs d'écran. */
+const BADGE_LABELS: Record<string, string> = {
+  'nav:friends': 'demandes d’ami en attente',
+  'nav:chat': 'messages non lus',
+}
+
+/** Les deux pastilles du menu, tenues par `ChatProvider` et donc à jour en
+ *  temps réel : `rows` est relancé à chaque notification d'ami (voir
+ *  `useFriendNotifications`) et `unread` est incrémenté à chaque message reçu,
+ *  puis remis à zéro quand la conversation est ouverte.
+ *
+ *  Une demande est *reçue* quand son expéditeur est l'autre bout de la relation :
+ *  `senderId === idUser`. Celles qu'on a envoyées ne comptent pas. */
+function useBadges() {
+  const { rows, unread } = useChat()
+
+  return useMemo(() => {
+    const requests = rows.filter(
+      (row) => row.status === 'PENDING' && row.senderId === row.idUser,
+    ).length
+    const messages = Object.values(unread).reduce((total, count) => total + count, 0)
+
+    return { 'nav:friends': requests, 'nav:chat': messages } as Record<string, number>
+  }, [rows, unread])
 }

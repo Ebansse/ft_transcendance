@@ -18,6 +18,8 @@ import org.springframework.validation.BindingResult;
 import com.transcendance.backend.dto.ChatMessageDto;
 import com.transcendance.backend.dto.ChatMessageRequestDto;
 import com.transcendance.backend.services.ChatService;
+import com.transcendance.backend.services.NotificationService;
+import com.transcendance.backend.services.UserService;
 
 import jakarta.validation.Valid;
 
@@ -35,10 +37,15 @@ public class ChatController {
 
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
+    private final UserService userService;
 
-    public ChatController(ChatService chatService, SimpMessagingTemplate messagingTemplate) {
+    public ChatController(ChatService chatService, SimpMessagingTemplate messagingTemplate,
+            NotificationService notificationService, UserService userService) {
         this.chatService = chatService;
         this.messagingTemplate = messagingTemplate;
+        this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     /**
@@ -68,6 +75,11 @@ public class ChatController {
                 message.getReceiverId().toString(), MESSAGE_DESTINATION, message);
         messagingTemplate.convertAndSendToUser(
                 message.getSenderId().toString(), MESSAGE_DESTINATION, message);
+
+        // sendMessage has already checked the sender exists: the lookup only
+        // fetches his name for the receiver's notification.
+        userService.getUserById(senderId).ifPresent(
+                sender -> notificationService.chatMessageReceived(message, sender.getUserName()));
     }
 
     /**

@@ -107,13 +107,17 @@ export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'BLOCKED'
  *  fuseau.
  *
  *  `senderId` vaut soit notre propre id, soit `idUser` : c'est ce qui sépare une
- *  demande reçue (`senderId === idUser`) d'une demande envoyée. */
+ *  demande reçue (`senderId === idUser`) d'une demande envoyée.
+ *
+ *  `blockerId` n'est renseigné que sur une ligne BLOCKED : seul le compte qui a
+ *  bloqué voit la ligne dans ses bloqués, l'autre ne doit pas la voir. */
 export type FriendListDto = {
   idUser: string
   userName: string
   createAt: string | null
   status: FriendshipStatus
   senderId: string
+  blockerId: string | null
 }
 
 /** Toutes les relations du compte connecté, tous statuts confondus. */
@@ -142,9 +146,15 @@ export function deleteFriend(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/delete`)
 }
 
-/** Bloque un compte : la relation passe en BLOCKED (pas de déblocage côté back). */
+/** Bloque un compte : la relation passe en BLOCKED et `blockerId` vaut notre id. */
 export function blockUser(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/block`)
+}
+
+/** Débloque un compte. Le back refuse si ce n'est pas nous qui avons bloqué, et
+ *  supprime la relation : il faudra renvoyer une demande pour redevenir amis. */
+export function unblockUser(idUser: string) {
+  return api.post<void>(`/friend-list/${idUser}/unblock`)
 }
 
 /** Invite un adversaire par pseudo : le back retrouve le compte, refuse l'auto-
@@ -197,4 +207,37 @@ export function playChessMove(matchId: number, move: string) {
  *  libérer les deux joueurs pour une nouvelle invitation. */
 export function resignChessMatch(matchId: number) {
   return api.post<ChessMatchDto>(`/chess/matches/${matchId}/resign`)
+}
+
+/** Miroir du `ChessPlayerStatDto` : les compteurs du compte connecté. */
+export type ChessPlayerStatDto = {
+  playerName: string
+  winCount: number
+  lossCount: number
+  drawCount: number
+}
+
+/** Issue d'une partie, déjà vue depuis le compte qui demande l'historique. */
+export type ChessResult = 'WIN' | 'LOSS' | 'DRAW'
+
+/** Miroir du `ChesshistoryDto`. `player1` tenait les blancs, `player2` les
+ *  noirs ; le back met « Bot » à la place du moteur. Dates en ISO (`Instant`). */
+export type ChessHistoryDto = {
+  chessMatchId: number
+  fen: string
+  player1: string
+  player2: string
+  result: ChessResult
+  createdAt: string
+  endedAt: string | null
+}
+
+/** Victoires, défaites et nuls du compte connecté (créés à zéro au besoin). */
+export function getMyChessStats() {
+  return api.get<ChessPlayerStatDto>('/chess/stats/me')
+}
+
+/** Parties terminées du compte connecté ; liste vide s'il n'en a fini aucune. */
+export function getMyChessHistory() {
+  return api.get<ChessHistoryDto[]>('/chess/historique/me')
 }
