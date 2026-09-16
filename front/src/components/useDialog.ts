@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MouseEvent, type SyntheticEvent } from 'react'
+import { useEffect, useRef, type MouseEvent } from 'react'
 
 /**
  * Pilote un `<dialog>` natif, qui fournit gratuitement le piège de focus, la
@@ -15,16 +15,8 @@ import { useEffect, useRef, type MouseEvent, type SyntheticEvent } from 'react'
  *                Changer de sélecteur redemande le focus sans refermer, ce qui
  *                suit le contenu quand la modale change d'onglet.
  * @param onClose appelé sur Échap et sur un clic dans le fond
- * @param dismissible à `false`, la modale ne se ferme plus d'elle-même : le clic
- *                dans le fond ne fait rien et `cancel` (Échap) est annulé. Pour
- *                les choix obligatoires, où la seule sortie est de répondre.
  */
-export function useDialog(
-  open: boolean,
-  focusOn: string,
-  onClose: () => void,
-  dismissible = true,
-) {
+export function useDialog(open: boolean, focusOn: string, onClose: () => void) {
   const ref = useRef<HTMLDialogElement>(null)
 
   useEffect(() => {
@@ -38,12 +30,6 @@ export function useDialog(
     if (!dialog.open) dialog.showModal()
     dialog.querySelector<HTMLElement>(focusOn)?.focus()
   }, [open, focusOn])
-
-  if (!dismissible) {
-    // `cancel` est ce que le <dialog> natif émet sur Échap : l'annuler laisse la
-    // modale ouverte, et rien n'écoute le fond.
-    return { ref, onCancel: (event: SyntheticEvent) => event.preventDefault() }
-  }
 
   return {
     ref,

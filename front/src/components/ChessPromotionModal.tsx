@@ -1,4 +1,5 @@
 import { glyphOf, nameOf } from '../lib/chessBoard.ts'
+import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import s from './ChessPromotionModal.module.css'
 
@@ -12,24 +13,41 @@ type ChessPromotionModalProps = {
   open: boolean
   /** Camp du pion promu : décide de la couleur des glyphes proposés. */
   white: boolean
+  /** Renonce à la promotion : le coup n'est pas joué, le pion ne bouge pas. */
+  onClose: () => void
   onSelect: (piece: PromotionPiece) => void
 }
 
 /** Choix de la pièce quand un pion atteint la dernière rangée.
  *
- *  Modale sans issue : ni croix, ni Annuler, ni Échap, ni clic dans le fond. Le
- *  coup est déjà décidé, seule la pièce manque — laisser refermer bloquerait la
- *  partie sur un demi-coup. */
-export function ChessPromotionModal({ open, white, onSelect }: ChessPromotionModalProps) {
-  // Le focus part sur la dame, la promotion de loin la plus courante.
-  const dialog = useDialog(open, 'button', () => {}, false)
+ *  Modale ordinaire, qui se referme comme les autres (croix, Échap, clic dans le
+ *  fond) : refermer annule simplement le coup, le pion reste où il est et on
+ *  peut en jouer un autre. Une modale sans issue serait un piège — Chrome force
+ *  de toute façon la fermeture au deuxième Échap, et la partie resterait alors
+ *  bloquée sur un demi-coup. */
+export function ChessPromotionModal({
+  open,
+  white,
+  onClose,
+  onSelect,
+}: ChessPromotionModalProps) {
+  // Le focus part sur le premier bouton de la modale, la croix de fermeture.
+  const dialog = useDialog(open, 'button', onClose)
 
   return (
     <dialog {...dialog} className={s.dialog} aria-labelledby="chess-promotion-title">
-      <h2 id="chess-promotion-title" className={s.title}>
-        Promotion
-      </h2>
-      <p className={s.note}>Votre pion arrive au bout : choisissez sa pièce.</p>
+      <div className={s.head}>
+        <h2 id="chess-promotion-title" className={s.title}>
+          Promotion
+        </h2>
+        <Button variant="ghost" ariaLabel="Annuler le coup" onClick={onClose}>
+          ✕
+        </Button>
+      </div>
+
+      <p className={s.note}>
+        Votre pion arrive au bout : choisissez sa pièce, ou refermez pour annuler le coup.
+      </p>
 
       <div className={s.choices} role="group" aria-labelledby="chess-promotion-title">
         {CHOICES.map((piece) => {

@@ -328,6 +328,14 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setPromotion(null)
   }
 
+  /** Refermer la modale sans choisir annule le coup : rien n'est parti au
+   *  serveur, le pion n'a pas bougé. On rend la case à la sélection pour
+   *  repartir du même pion sans avoir à le reprendre. */
+  const cancelPromotion = () => {
+    setPromotion(null)
+    if (promotion !== null) select(promotion.from)
+  }
+
   /** Referme une partie terminée. Sans ce `leave`, la resynchronisation
    *  ramènerait aussitôt sa position finale, et le back interdirait toute
    *  nouvelle invitation aux deux joueurs. */
@@ -417,6 +425,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
           <ChessPromotionModal
             open={promotion !== null}
             white={mySide !== 'BLACK'}
+            onClose={cancelPromotion}
             onSelect={promoteTo}
           />
         </div>

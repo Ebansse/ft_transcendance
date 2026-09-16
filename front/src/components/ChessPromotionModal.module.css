@@ -1,6 +1,5 @@
 /* Ce qui est propre au choix de la promotion : une boîte courte, quatre pièces
-   en ligne. Le reste vient de la coquille partagée. Pas de `.head` ici — cette
-   modale n'a pas de croix, on n'en sort qu'en choisissant. */
+   en ligne. Le reste vient de la coquille partagée. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';
@@ -9,10 +8,16 @@
   padding: 1.5rem 1.4rem 1.3rem;
 }
 
+.head {
+  composes: head from '../style/dialog.module.css';
+
+  margin-bottom: 0.4rem;
+}
+
 .title {
   composes: title from '../style/dialog.module.css';
 
-  margin: 0 0 0.4rem;
+  margin: 0;
   font-size: 1.4rem;
 }
 
