@@ -18,17 +18,14 @@ import {
 import { ApiError } from '../lib/apiClient.ts'
 import s from './AdminPage.module.css'
 
-/** Entrées du menu « … » pas encore branchées : elles se contentent de logger. */
 const PLACEHOLDER_ACTIONS = ['test3', 'test4']
 
-/** `online` arrive en ISO (un `Instant` Java) ; null tant que jamais connecté. */
 function formatDate(value: string | null) {
   if (!value) return '—'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
 }
 
-/** Le back fournit un message quand il refuse ; sinon on retombe sur `fallback`. */
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
 }
@@ -39,16 +36,11 @@ type AdminPageProps = {
 
 export function AdminPage({ onNavigate }: AdminPageProps) {
   const { user } = useAuthModal()
-  // Garde cosmétique : le back reste seul juge sur les routes d'administration.
   const isAdmin = user?.role === 'ADMIN'
 
   const [users, setUsers] = useState<UserPublicProfileDto[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Le compte visé par chaque modale ; `null` = modale fermée. `showModal()` rend
-  // la page inerte, donc une seule peut être ouverte : `pending` et `modalError`
-  // décrivent toujours la requête de celle qui est ouverte.
   const [editing, setEditing] = useState<UserPublicProfileDto | null>(null)
   const [deleting, setDeleting] = useState<UserPublicProfileDto | null>(null)
   const [pending, setPending] = useState(false)
@@ -57,7 +49,6 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
   useEffect(() => {
     if (!isAdmin) return
 
-    // Le composant peut être démonté avant la réponse : on ignore alors le résultat.
     let alive = true
     setLoading(true)
     setError(null)
@@ -88,7 +79,6 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     setDeleting(row)
   }
 
-  /** Le back renvoie le profil à jour : on remplace la ligne au lieu de tout recharger. */
   const saveUser = async (idUser: string, values: UpdateUserPayload) => {
     setPending(true)
     setModalError(null)
@@ -97,14 +87,12 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       setUsers((list) => list.map((row) => (row.id === updated.id ? updated : row)))
       setEditing(null)
     } catch (err) {
-      // La modale reste ouverte : la saisie refusée est encore là, corrigeable.
       setModalError(messageOf(err, 'Mise à jour impossible.'))
     } finally {
       setPending(false)
     }
   }
 
-  /** Suppression confirmée : le back répond 204, on retire la ligne localement. */
   const confirmDelete = async () => {
     if (!deleting) return
     const idUser = deleting.id

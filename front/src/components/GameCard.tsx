@@ -6,12 +6,19 @@ type GameCardProps = {
   name: string
   description: string
   icon: string
-  /** Identifiant du jeu, utilisé pour construire l'action (ex: "chess"). */
   slug: string
   playersOnline: number
+  onPlay?: () => void
 }
 
-export function GameCard({ name, description, icon, slug, playersOnline }: GameCardProps) {
+export function GameCard({
+  name,
+  description,
+  icon,
+  slug,
+  playersOnline,
+  onPlay,
+}: GameCardProps) {
   return (
     <article className={s.card}>
       <span className={s.icon} aria-hidden="true">
@@ -23,11 +30,13 @@ export function GameCard({ name, description, icon, slug, playersOnline }: GameC
         {playersOnline} joueurs en ligne
       </p>
       <div className={s.actions}>
-        <Button variant="primary" fullWidth onClick={() => handleAction(`play:${slug}:online`)}>
-          Partie en ligne
-        </Button>
-        <Button variant="secondary" fullWidth onClick={() => handleAction(`play:${slug}:bot`)}>
-          Jouer contre un bot
+        <Button
+          variant="primary"
+          fullWidth
+          ariaLabel={`Jouer à ${name}`}
+          onClick={onPlay ?? (() => handleAction(`play:${slug}`))}
+        >
+          Jouer
         </Button>
       </div>
     </article>

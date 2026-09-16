@@ -1,8 +1,3 @@
-/* Ce qui reste propre à l'accueil : le décor du hero et la grille des jeux.
-   Le squelette vit dans AppLayout.module.css, le gabarit de l'en-tête et du
-   titre de section dans PageHeader / SectionTitle. */
-
-/* Signature : un échiquier 8×8 qui affleure le noir puis s'y dissout. */
 .heroDecor::after {
   content: '';
   position: absolute;
@@ -40,7 +35,6 @@
   }
 }
 
-/* L'échiquier ne survit pas au format étroit : il gênerait le titre. */
 @media (max-width: 768px) {
   .heroDecor::after {
     display: none;

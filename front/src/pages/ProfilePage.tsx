@@ -17,18 +17,12 @@ import type { TwoFactorSetupDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './ProfilePage.module.css'
 
-/* Règles alignées sur le back : `UserService.isInvalidUsername` /
-   `isInvalidEmail` et `AvatarStorageService` (2 Mo, PNG/JPEG). La validation
-   front ne remplace pas celle du back, elle évite juste un aller-retour. */
 const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/
 const EMAIL_RE = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 const AVATAR_TYPES = ['image/png', 'image/jpeg']
 const DEFAULT_AVATAR = '/api/default-avatar.png'
 
-/** `avatarUrl` renvoyé par le back est relatif au préfixe `/api`
- *  (ex: `/avatars/uuid.png`). NB : le service des images n'est pas encore câblé
- *  entre front et back — l'`<img>` peut rester cassé tant que ce n'est pas fait. */
 function avatarSrc(url: string | null) {
   return url ? `/api${url}` : DEFAULT_AVATAR
 }
@@ -50,7 +44,6 @@ type ProfilePageProps = {
 export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, isLoggedIn, authChecked, refreshUser } = useAuthModal()
 
-  // Bloc identité : pseudo + e-mail.
   const [userName, setUserName] = useState('')
   const [email, setEmail] = useState('')
   const [savingId, setSavingId] = useState(false)
@@ -58,7 +51,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [idError, setIdError] = useState<string | null>(null)
   const [idNotice, setIdNotice] = useState<string | null>(null)
 
-  // Bloc avatar : fichier choisi (pas encore envoyé) et son aperçu local.
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -81,7 +73,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }, [user])
 
-  // L'aperçu est une URL blob : on la révoque quand le fichier change ou au démontage.
   useEffect(() => {
     if (!file) {
       setPreview(null)
@@ -159,8 +150,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       await refreshUser()
       setIdNotice('Profil enregistré.')
     } catch (err) {
-      // Le back renvoie soit une map champ → message (@Valid), soit un texte brut
-      // (e-mail ou pseudo déjà pris) : on route l'un vers les champs, l'autre en bloc.
       if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
         setIdErrors(err.fieldErrors)
       } else {
@@ -220,7 +209,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     <AppLayout current="nav:profile" onNavigate={onNavigate}>
       <PageHeader title="Profil" subtitle="Ta photo, ton pseudo et ton adresse e-mail." />
 
-      {/* Tant que la session n'est pas vérifiée, on n'affiche ni formulaire ni refus. */}
+      {/* Tant que session pas vérifiée on affiche rien */}
       {!authChecked ? null : !isLoggedIn || !user ? (
         <p className={s.denied}>Connecte-toi pour accéder à ton profil.</p>
       ) : (

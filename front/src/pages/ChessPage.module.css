@@ -1,7 +1,3 @@
-/* Deux colonnes : le plateau prend la place qu'il peut, le panneau garde une
-   largeur fixe pour que la liste des coups ne danse pas d'un coup à l'autre.
-   Sous 1000 px, le panneau passe sous l'échiquier. */
-
 .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
@@ -66,8 +62,6 @@
   color: var(--bone);
 }
 
-/* Fin de partie : même bandeau que le trait, mais plein et centré — on ne le
-   confond pas avec une information de tour. */
 .over {
   margin: 0;
   padding: 0.7rem;
@@ -95,7 +89,6 @@
   color: var(--mute);
 }
 
-/* Hauteur bornée : une longue partie fait défiler la liste, pas la page. */
 .moveList {
   max-height: 210px;
   margin: 0;
@@ -122,8 +115,6 @@
   color: var(--mute);
 }
 
-/* Le FEN est fait pour être copié : on le laisse revenir à la ligne n'importe
-   où plutôt que d'élargir le panneau. */
 .fenValue {
   display: block;
   padding: 0.5rem 0.6rem;
