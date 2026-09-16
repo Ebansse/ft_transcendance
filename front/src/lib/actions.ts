@@ -1,5 +1,12 @@
 import { api } from './apiClient.ts'
 import type { ChessInvitationDto, ChessMatchDto, ChessSide } from './chessClient.ts'
+import type {
+  UndercoverGameMode,
+  UndercoverMatchView,
+  UndercoverRoom,
+  UndercoverRules,
+  UndercoverStats,
+} from './undercoverClient.ts'
 
 /** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
 export function handleAction(action: string) {
@@ -172,4 +179,76 @@ export function playChessMove(matchId: number, move: string) {
  *  libérer les deux joueurs pour une nouvelle invitation. */
 export function resignChessMatch(matchId: number) {
   return api.post<ChessMatchDto>(`/chess/matches/${matchId}/resign`)
+}
+
+// ---------------------------------------------------------------- Undercover
+
+/** Ouvre une salle dont on est l'hôte. Quitte d'office la salle où l'on était.
+ *  Refusé en 409 tant qu'on est encore assis à une partie. */
+export function createUndercoverRoom() {
+  return api.post<UndercoverRoom>('/undercover/rooms')
+}
+
+/** Rejoint une salle par son code (la casse ne compte pas). 404 si le code
+ *  n'existe pas, 409 si la salle est pleine. */
+export function joinUndercoverRoom(code: string) {
+  return api.post<UndercoverRoom>('/undercover/rooms/join', { code })
+}
+
+/** Quitte la salle. L'hôte passe au membre arrivé juste après ; une salle
+ *  vidée est fermée. */
+export function leaveUndercoverRoom() {
+  return api.post<void>('/undercover/rooms/leave')
+}
+
+/** Réservé à l'hôte. `rules` n'est lu que pour CUSTOM : les autres modes
+ *  apportent leurs propres règles. Elles ne sont vérifiées qu'au lancement,
+ *  quand le nombre de joueurs est connu. */
+export function configureUndercoverRoom(mode: UndercoverGameMode, rules: UndercoverRules | null) {
+  return api.put<UndercoverRoom>('/undercover/rooms/settings', { mode, rules })
+}
+
+/** Réservé à l'hôte. Renvoie sa vue de la partie ; les autres membres la
+ *  reçoivent par la socket. */
+export function startUndercoverMatch() {
+  return api.post<UndercoverMatchView>('/undercover/rooms/start')
+}
+
+/** La salle où l'on est. **404** quand on n'est dans aucune : cas normal. */
+export function getMyUndercoverRoom() {
+  return api.get<UndercoverRoom>('/undercover/rooms/me')
+}
+
+/** La partie où l'on est encore assis. **404** quand il n'y en a pas. */
+export function getMyUndercoverMatch() {
+  return api.get<UndercoverMatchView>('/undercover/matches/me')
+}
+
+export function submitUndercoverClue(matchId: number, word: string) {
+  return api.post<UndercoverMatchView>(`/undercover/matches/${matchId}/clues`, { word })
+}
+
+export function submitUndercoverVote(matchId: number, targetSeat: number) {
+  return api.post<UndercoverMatchView>(`/undercover/matches/${matchId}/votes`, { targetSeat })
+}
+
+/** Réservé au Mr White qui vient d'être éliminé. Majuscules, accents, espaces
+ *  et ponctuation ne comptent pas. */
+export function submitUndercoverGuess(matchId: number, guess: string) {
+  return api.post<UndercoverMatchView>(`/undercover/matches/${matchId}/guess`, { guess })
+}
+
+/** Quitte la table : encore en jeu, on est éliminé et la partie compte comme
+ *  une défaite. On est ensuite libre de rejoindre une autre partie. */
+export function leaveUndercoverMatch(matchId: number) {
+  return api.post<void>(`/undercover/matches/${matchId}/leave`)
+}
+
+/** Diffusé à toute la table par la socket, auteur compris. */
+export function sendUndercoverChat(matchId: number, text: string) {
+  return api.post<void>(`/undercover/matches/${matchId}/chat`, { text })
+}
+
+export function getMyUndercoverStats() {
+  return api.get<UndercoverStats>('/undercover/stats/me')
 }

@@ -20,6 +20,11 @@ public class UndercoverRules {
 
     public static final int MIN_PLAYERS = 3;
 
+    /**
+     * Past this, one round of descriptions takes a quarter of an hour.
+     */
+    public static final int MAX_PLAYERS = 20;
+
     public static final int DEFAULT_DESCRIPTION_SECONDS = 45;
     public static final int DEFAULT_VOTE_SECONDS = 120;
     public static final int DEFAULT_MRWHITE_VOTE_SECONDS = 60;
@@ -136,6 +141,10 @@ public class UndercoverRules {
         if (playerCount < MIN_PLAYERS) {
             throw new UndercoverException.InvalidRules(
                     "A match needs at least " + MIN_PLAYERS + " players, got " + playerCount);
+        }
+        if (playerCount > MAX_PLAYERS) {
+            throw new UndercoverException.InvalidRules(
+                    "A match seats at most " + MAX_PLAYERS + " players, got " + playerCount);
         }
         if (undercoverCount < 1) {
             throw new UndercoverException.InvalidRules("A match needs at least one undercover");

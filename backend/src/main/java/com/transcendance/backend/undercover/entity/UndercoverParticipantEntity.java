@@ -51,4 +51,18 @@ public class UndercoverParticipantEntity {
 
     @Column(name = "eliminated_round")
     private Integer eliminatedRound;
+
+    /**
+     * The player walked away from the table: he no longer sees the match, and
+     * is free to join another one.
+     */
+    @Column(name = "left_match", nullable = false)
+    private boolean leftMatch = false;
+
+    /**
+     * He walked away while still in the game. Counted as a loss whatever his
+     * team ends up doing - leaving is not a way to collect a win.
+     */
+    @Column(name = "forfeited", nullable = false)
+    private boolean forfeited = false;
 }

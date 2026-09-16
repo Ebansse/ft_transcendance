@@ -19,6 +19,11 @@ public class UndercoverWinCondition {
         if (impostors == 0) {
             return UndercoverMatchStatus.AGENTS_WIN;
         }
+        // Without parity, a table every agent has left would otherwise go on
+        // forever with nobody to vote the impostors out.
+        if (agents == 0) {
+            return UndercoverMatchStatus.UNDERCOVER_WIN;
+        }
         if (rules.isUndercoverWinOnParity() && impostors >= agents) {
             return UndercoverMatchStatus.UNDERCOVER_WIN;
         }

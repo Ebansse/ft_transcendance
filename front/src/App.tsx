@@ -6,9 +6,11 @@ import { ChessPage } from './pages/ChessPage.tsx'
 import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
+import { UndercoverPage } from './pages/UndercoverPage.tsx'
 import { handleAction } from './lib/actions.ts'
 import { useChessInvitations } from './ws/useChessInvitations.ts'
 import { useChessMatchStart } from './ws/useChessMatchStart.ts'
+import { useUndercoverMatchStart } from './ws/useUndercoverMatchStart.ts'
 
 /** Routeur : une action de sidebar = une route. Ajouter une page = une ligne. */
 const PAGES = {
@@ -18,6 +20,7 @@ const PAGES = {
   'nav:admin': { path: '/admin', Component: AdminPage },
   'nav:chat': { path: '/chat', Component: ChatPage }, // TODO: page de chat
   'nav:chess': { path: '/chess', Component: ChessPage },
+  'nav:undercover': { path: '/undercover', Component: UndercoverPage },
 } as const
 
 function App() {
@@ -27,6 +30,10 @@ function App() {
   /* L'inviteur n'a rien cliqué : c'est la socket qui l'emmène sur le plateau
      quand son invitation est acceptée. */
   useChessMatchStart()
+
+  /* Même principe pour Undercover : les membres d'une salle rejoignent la table
+     quand l'hôte lance la partie, où qu'ils soient. */
+  useUndercoverMatchStart()
 
   const onNavigate = (action: string) => {
     if (action in PAGES) navigate(PAGES[action as keyof typeof PAGES].path)
