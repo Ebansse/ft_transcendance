@@ -50,7 +50,7 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
         </main>
       </div>
 
-      <Footer />
+      <Footer onNavigate={onNavigate} />
     </div>
   )
 }
