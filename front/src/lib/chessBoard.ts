@@ -81,6 +81,72 @@ export function squaresOf(chess: Chess): (string | null)[] {
     })
 }
 
+/** Matériel d'un camp au coup d'envoi, et valeur d'échange de chaque pièce.
+ *  Le roi n'y figure pas : il ne se prend jamais et ne se compte pas. */
+const INITIAL: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 }
+const VALUES: Record<string, number> = { q: 9, r: 5, b: 3, n: 3, p: 1 }
+
+/** Pièces prises, vues de chaque côté, et l'écart de matériel qui en découle. */
+export type Captures = {
+  /** Pièces noires disparues — les prises des blancs. */
+  byWhite: string[]
+  /** Pièces blanches disparues — les prises des noirs. */
+  byBlack: string[]
+  /** Positif si les blancs mènent, négatif si ce sont les noirs. */
+  advantage: number
+}
+
+/** Compte les pièces d'un camp encore sur l'échiquier, par type. */
+function materialOf(squares: (string | null)[], white: boolean) {
+  const counts: Record<string, number> = { q: 0, r: 0, b: 0, n: 0, p: 0 }
+
+  for (const piece of squares) {
+    if (piece === null || isWhitePiece(piece) !== white) continue
+    const type = piece.toLowerCase()
+    if (type in counts) counts[type] += 1
+  }
+
+  return counts
+}
+
+/** Les pièces d'un camp qui ne sont plus sur l'échiquier, de la plus forte à la
+ *  plus faible. Une promotion fait disparaître un pion sans qu'il ait été pris :
+ *  chaque pièce en surnombre en rend donc un à son camp, sans quoi un pion
+ *  fantôme s'ajouterait aux prises de l'adversaire. */
+function missingOf(counts: Record<string, number>, white: boolean) {
+  let promoted = 0
+  for (const type of ['q', 'r', 'b', 'n']) {
+    promoted += Math.max(0, counts[type] - INITIAL[type])
+  }
+
+  const missing: string[] = []
+  for (const type of ['q', 'r', 'b', 'n', 'p']) {
+    const gone = Math.max(0, INITIAL[type] - counts[type]) - (type === 'p' ? promoted : 0)
+    for (let i = 0; i < gone; i += 1) missing.push(white ? type.toUpperCase() : type)
+  }
+
+  return missing
+}
+
+/** Additionne la valeur des pièces d'un camp encore en jeu. */
+function scoreOf(counts: Record<string, number>) {
+  return Object.entries(counts).reduce((total, [type, count]) => total + VALUES[type] * count, 0)
+}
+
+/** Déduit les prises de la seule position affichée, sans toucher à l'historique :
+ *  une partie reprise depuis un FEN (rechargement de page) arrive sans coups, et
+ *  doit tout de même montrer ce qui a été pris. */
+export function capturesOf(squares: (string | null)[]): Captures {
+  const white = materialOf(squares, true)
+  const black = materialOf(squares, false)
+
+  return {
+    byWhite: missingOf(black, false),
+    byBlack: missingOf(white, true),
+    advantage: scoreOf(white) - scoreOf(black),
+  }
+}
+
 /** Motif de fin de partie en français, ou `null` tant qu'elle continue.
  *  L'ordre compte : `isGameOver()` dit *que* c'est fini, jamais *pourquoi*, et
  *  un mat est aussi une position sans coup légal. */
