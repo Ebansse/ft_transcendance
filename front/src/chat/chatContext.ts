@@ -26,6 +26,7 @@ export type ChatValue = {
   error: string | null
   refresh: () => Promise<void>
   nameOf: (idUser: string) => string
+  avatarOf: (idUser: string) => string | null
   threads: Record<string, ChatMessageDto[]>
   history: Record<string, ThreadHistory>
   historyOf: (idUser: string) => ThreadHistory

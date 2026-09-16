@@ -94,3 +94,16 @@
   --btn-padding: 0.35rem 0.7rem;
   --btn-font-size: 0.8rem;
 }
+
+.user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.userName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
