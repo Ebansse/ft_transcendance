@@ -8,13 +8,13 @@ import { MenuActions } from '../components/MenuActions.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { Tableau, type Colonne } from '../components/Tableau.tsx'
+import { UserAvatar } from '../components/UserAvatar.tsx'
 import {
   acceptFriendRequest,
   blockUser,
   declineFriendRequest,
   deleteFriend,
   sendFriendRequest,
-  unblockUser,
   type FriendListDto,
 } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
@@ -30,13 +30,13 @@ function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
 }
 
-function split(rows: FriendListDto[], myId: string | undefined) {
+function split(rows: FriendListDto[]) {
   const pending = rows.filter((row) => row.status === 'PENDING')
   return {
     friends: rows.filter((row) => row.status === 'ACCEPTED'),
     received: pending.filter((row) => row.senderId === row.idUser),
     sent: pending.filter((row) => row.senderId !== row.idUser),
-    blocked: rows.filter((row) => row.status === 'BLOCKED' && row.blockerId === myId),
+    blocked: rows.filter((row) => row.status === 'BLOCKED'),
   }
 }
 
@@ -45,8 +45,8 @@ type FriendsPageProps = {
 }
 
 export function FriendsPage({ onNavigate }: FriendsPageProps) {
-  const { isLoggedIn, authChecked, user } = useAuthModal()
-  const { rows, loading, error, refresh, unread, openQuickChat } = useChat()
+  const { isLoggedIn, authChecked } = useAuthModal()
+  const { rows, loading, error, refresh, unread, avatarOf, openQuickChat } = useChat()
 
   const [busy, setBusy] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -93,12 +93,17 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
     }
   }
 
-  const { friends, received, sent, blocked } = split(rows, user?.id)
+  const { friends, received, sent, blocked } = split(rows)
 
   const nameColumn: Colonne<FriendListDto> = {
     key: 'userName',
     header: 'Utilisateur',
-    render: (row) => row.userName,
+    render: (row) => (
+      <span className={s.user}>
+        <UserAvatar userName={row.userName} avatarUrl={avatarOf(row.idUser)} size={30} />
+        <span className={s.userName}>{row.userName}</span>
+      </span>
+    ),
   }
 
   const dateColumn = (header: string): Colonne<FriendListDto> => ({
@@ -115,22 +120,22 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
       header: 'Actions',
       render: (row) => (
         <div className={s.rowActions}>
+          <Button
+            variant="primary"
+            onClick={() => onNavigate(`nav:chat:${row.idUser}`)}
+            ariaLabel={`Ouvrir la conversation avec ${row.userName}`}
+          >
+            {(unread[row.idUser] ?? 0) > 0 ? `Chat (${unread[row.idUser]})` : 'Chat'}
+          </Button>
+          <Button
+            onClick={() => openQuickChat(row.idUser)}
+            ariaLabel={`Ouvrir un quick chat avec ${row.userName}`}
+          >
+            Quick chat
+          </Button>
           <MenuActions
             ariaLabel={`Actions sur ${row.userName}`}
             items={[
-              {
-                key: 'chat',
-                label:
-                  (unread[row.idUser] ?? 0) > 0
-                    ? `Discuter (${unread[row.idUser]})`
-                    : 'Discuter',
-                onSelect: () => onNavigate(`nav:chat:${row.idUser}`),
-              },
-              {
-                key: 'quick-chat',
-                label: 'Quick chat',
-                onSelect: () => openQuickChat(row.idUser),
-              },
               {
                 key: 'delete',
                 label: 'Retirer',
@@ -201,25 +206,7 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
     },
   ]
 
-  const blockedColumns: Colonne<FriendListDto>[] = [
-    nameColumn,
-    dateColumn('Bloqué le'),
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (row) => (
-        <div className={s.rowActions}>
-          <Button
-            variant="ghost"
-            disabled={busy === row.idUser}
-            onClick={() => run(row, unblockUser, 'Déblocage impossible.')}
-          >
-            Débloquer
-          </Button>
-        </div>
-      ),
-    },
-  ]
+  const blockedColumns: Colonne<FriendListDto>[] = [nameColumn, dateColumn('Bloqué le')]
 
   return (
     <AppLayout current="nav:friends" onNavigate={onNavigate}>

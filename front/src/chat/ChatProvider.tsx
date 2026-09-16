@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
-import { getFriendList, type FriendListDto } from '../lib/actions.ts'
+import { getFriendList, getUserProfile } from '../lib/actions.ts'
+import type { FriendListDto, UserPublicProfileDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import {
   CHAT_ERRORS,
@@ -26,9 +27,7 @@ function readStoredQuickChats() {
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return []
 
-    return parsed
-      .filter((id): id is string => typeof id === 'string')
-      .slice(0, MAX_QUICK_CHATS)
+    return parsed.filter((id): id is string => typeof id === 'string').slice(0, MAX_QUICK_CHATS)
   } catch {
     return []
   }
@@ -63,6 +62,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [profiles, setProfiles] = useState<Record<string, UserPublicProfileDto>>({})
   const [threads, setThreads] = useState<Record<string, ChatMessageDto[]>>({})
   const [history, setHistory] = useState<Record<string, ThreadHistory>>({})
   const [unread, setUnread] = useState<Record<string, number>>({})
@@ -74,6 +74,8 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const unreadRef = useRef(unread)
   const myIdRef = useRef(myId)
   const markedRef = useRef<Record<string, number>>({})
+  const requestedProfiles = useRef<Set<string>>(new Set())
+  const primedThreads = useRef<Set<string>>(new Set())
 
   useEffect(() => {
     threadsRef.current = threads
@@ -104,11 +106,14 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
     if (!isLoggedIn) {
       setRows([])
+      setProfiles({})
       setThreads({})
       setHistory({})
       setUnread({})
       setQuickChatIds([])
       markedRef.current = {}
+      requestedProfiles.current = new Set()
+      primedThreads.current = new Set()
       return
     }
 
@@ -131,6 +136,37 @@ export function ChatProvider({ children }: ChatProviderProps) {
       alive = false
     }
   }, [isLoggedIn, authChecked])
+
+  useEffect(() => {
+    for (const row of rows) {
+      if (requestedProfiles.current.has(row.idUser)) continue
+      requestedProfiles.current.add(row.idUser)
+
+      getUserProfile(row.idUser)
+        .then((profile) => {
+          setProfiles((prev) => ({ ...prev, [row.idUser]: profile }))
+        })
+        .catch(() => {})
+    }
+  }, [rows])
+
+  useEffect(() => {
+    for (const row of rows) {
+      if (row.status !== 'ACCEPTED') continue
+      if (primedThreads.current.has(row.idUser)) continue
+      primedThreads.current.add(row.idUser)
+
+      getChatHistory(row.idUser, null, 1)
+        .then((page) => {
+          if (page.messages.length === 0) return
+          setThreads((prev) => ({
+            ...prev,
+            [row.idUser]: mergeMessages(prev[row.idUser] ?? [], page.messages),
+          }))
+        })
+        .catch(() => {})
+    }
+  }, [rows])
 
   useEffect(() => {
     if (!myId) return
@@ -219,8 +255,16 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const friends = useMemo(() => rows.filter((row) => row.status === 'ACCEPTED'), [rows])
 
   const nameOf = useCallback(
-    (idUser: string) => rows.find((row) => row.idUser === idUser)?.userName ?? 'Utilisateur',
-    [rows],
+    (idUser: string) =>
+      rows.find((row) => row.idUser === idUser)?.userName ??
+      profiles[idUser]?.userName ??
+      'Utilisateur',
+    [rows, profiles],
+  )
+
+  const avatarOf = useCallback(
+    (idUser: string) => profiles[idUser]?.avatarUrl ?? null,
+    [profiles],
   )
 
   const recentIds = useMemo(() => {
@@ -288,6 +332,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     error,
     refresh,
     nameOf,
+    avatarOf,
     threads,
     history,
     historyOf,

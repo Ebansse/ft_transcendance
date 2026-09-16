@@ -57,7 +57,6 @@
   transition: background-color 160ms ease;
 }
 
-/* Filet rouge qui se déploie sous le curseur, permanent sur la page courante. */
 .item::before {
   content: '';
   position: absolute;
@@ -80,11 +79,9 @@
   background: rgba(245, 241, 234, 0.05);
 }
 
-/* Doit suivre .item pour gagner à spécificité égale. */
 .itemActive {
   background: rgba(200, 22, 29, 0.12);
 
-  /* Contrat Button : l'entrée courante s'affirme. */
   --btn-nav-color: var(--bone);
   --btn-nav-weight: 500;
 }
@@ -122,7 +119,6 @@
   border-radius: 999px;
 }
 
-/* Halo lent : il y a quelque chose à lire. */
 .badge::after {
   content: '';
   position: absolute;
@@ -131,6 +127,70 @@
   background: var(--red);
   animation: badge-ring 3s ease-out infinite;
   pointer-events: none;
+}
+
+.subList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  margin: 0.15rem 0 0.35rem;
+  padding: 0 0 0 1.55rem;
+  border-left: 1px solid var(--line);
+  margin-left: 0.85rem;
+}
+
+.subItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 300;
+  text-align: left;
+  color: var(--mute);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.subItem:hover {
+  color: var(--bone);
+  background: rgba(245, 241, 234, 0.05);
+  border-color: var(--line-strong);
+}
+
+.subItem:focus-visible {
+  outline: 2px solid var(--red-hot);
+  outline-offset: 1px;
+}
+
+.subLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subBadge {
+  flex: none;
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  line-height: 1.1rem;
+  text-align: center;
+  color: #fff;
+  background: var(--red);
+  border-radius: 999px;
 }
 
 @keyframes slide-in {
@@ -158,7 +218,6 @@
     display: none;
   }
 
-  /* Suit .sidebar : même spécificité, donc c'est l'ordre qui tranche. */
   .open {
     display: block;
     position: absolute;
