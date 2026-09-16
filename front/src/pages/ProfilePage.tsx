@@ -6,6 +6,7 @@ import { Button } from '../components/Button.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
+import { UserAvatar } from '../components/UserAvatar.tsx'
 import {
   disableTwoFactor,
   enableTwoFactor,
@@ -21,18 +22,11 @@ const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/
 const EMAIL_RE = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 const AVATAR_TYPES = ['image/png', 'image/jpeg']
-const DEFAULT_AVATAR = '/api/default-avatar.png'
-
-function avatarSrc(url: string | null) {
-  return url ? `/api${url}` : DEFAULT_AVATAR
-}
 
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
 }
 
-/** Comme `messageOf`, mais remonte le message du champ `code` quand le back
- *  refuse le format (`@Valid`) plutôt que le générique « Données invalides ». */
 function codeErrorOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? (err.fieldErrors.code ?? err.message) : fallback
 }
@@ -57,15 +51,12 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarNotice, setAvatarNotice] = useState<string | null>(null)
 
-  // Bloc A2F : modale ouverte (et dans quel sens), QR code reçu du setup.
   const [twoFactorMode, setTwoFactorMode] = useState<'enable' | 'disable' | null>(null)
   const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetupDto | null>(null)
   const [twoFactorPending, setTwoFactorPending] = useState(false)
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null)
   const [twoFactorNotice, setTwoFactorNotice] = useState<string | null>(null)
 
-  // On repart des valeurs de la session à chaque changement de compte, sinon la
-  // page garderait la saisie du compte précédent après une déconnexion.
   useEffect(() => {
     if (user) {
       setUserName(user.userName)
@@ -160,7 +151,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }
 
-  /** Demande un secret au back, puis ouvre la modale avec le QR code. */
   const startEnable = async () => {
     setTwoFactorPending(true)
     setTwoFactorError(null)
@@ -187,7 +177,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     setTwoFactorError(null)
   }
 
-  /** Envoie le code au back ; le profil relu met à jour l'état des boutons. */
   const submitTwoFactor = async (code: string) => {
     const enabling = twoFactorMode === 'enable'
 
@@ -209,7 +198,6 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     <AppLayout current="nav:profile" onNavigate={onNavigate}>
       <PageHeader title="Profil" subtitle="Ta photo, ton pseudo et ton adresse e-mail." />
 
-      {/* Tant que session pas vérifiée on affiche rien */}
       {!authChecked ? null : !isLoggedIn || !user ? (
         <p className={s.denied}>Connecte-toi pour accéder à ton profil.</p>
       ) : (
@@ -217,13 +205,17 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
           <section className={s.section} aria-labelledby="profile-avatar-title">
             <SectionTitle id="profile-avatar-title">Photo de profil</SectionTitle>
             <form className={s.avatarForm} onSubmit={submitAvatar}>
-              <img
-                className={s.avatar}
-                src={preview ?? avatarSrc(user.avatarUrl)}
-                alt="Ton avatar"
-                width={96}
-                height={96}
-              />
+              {preview ? (
+                <img
+                  className={s.avatar}
+                  src={preview}
+                  alt="Aperçu du nouvel avatar"
+                  width={96}
+                  height={96}
+                />
+              ) : (
+                <UserAvatar userName={user.userName} avatarUrl={user.avatarUrl} size={96} />
+              )}
               <div className={s.avatarControls}>
                 <label className={s.fileLabel}>
                   <input
@@ -305,12 +297,10 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                 Désactiver l’A2F
               </Button>
             </div>
-            {/* Modale fermée : les erreurs (échec du setup) s'affichent sous les boutons. */}
             {twoFactorError && !twoFactorMode && <p className={s.error}>{twoFactorError}</p>}
             {twoFactorNotice && <p className={s.notice}>{twoFactorNotice}</p>}
           </section>
 
-          {/* La `key` remonte la modale à chaque ouverture : le champ code repart vide. */}
           <TwoFactorModal
             key={twoFactorMode ?? 'closed'}
             mode={twoFactorMode}
