@@ -5,7 +5,15 @@ import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import { updateMyProfile, uploadMyAvatar } from '../lib/actions.ts'
+import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
+import {
+  disableTwoFactor,
+  enableTwoFactor,
+  setupTwoFactor,
+  updateMyProfile,
+  uploadMyAvatar,
+} from '../lib/actions.ts'
+import type { TwoFactorSetupDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './ProfilePage.module.css'
 
@@ -21,6 +29,12 @@ function avatarSrc(url: string | null) {
 
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
+}
+
+/** Comme `messageOf`, mais remonte le message du champ `code` quand le back
+ *  refuse le format (`@Valid`) plutôt que le générique « Données invalides ». */
+function codeErrorOf(err: unknown, fallback: string) {
+  return err instanceof ApiError ? (err.fieldErrors.code ?? err.message) : fallback
 }
 
 type ProfilePageProps = {
@@ -43,6 +57,15 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarNotice, setAvatarNotice] = useState<string | null>(null)
 
+  // Bloc A2F : modale ouverte (et dans quel sens), QR code reçu du setup.
+  const [twoFactorMode, setTwoFactorMode] = useState<'enable' | 'disable' | null>(null)
+  const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetupDto | null>(null)
+  const [twoFactorPending, setTwoFactorPending] = useState(false)
+  const [twoFactorError, setTwoFactorError] = useState<string | null>(null)
+  const [twoFactorNotice, setTwoFactorNotice] = useState<string | null>(null)
+
+  // On repart des valeurs de la session à chaque changement de compte, sinon la
+  // page garderait la saisie du compte précédent après une déconnexion.
   useEffect(() => {
     if (user) {
       setUserName(user.userName)
@@ -137,6 +160,51 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }
 
+  /** Demande un secret au back, puis ouvre la modale avec le QR code. */
+  const startEnable = async () => {
+    setTwoFactorPending(true)
+    setTwoFactorError(null)
+    setTwoFactorNotice(null)
+    try {
+      setTwoFactorSetup(await setupTwoFactor())
+      setTwoFactorMode('enable')
+    } catch (err) {
+      setTwoFactorError(messageOf(err, 'Impossible de générer le QR code.'))
+    } finally {
+      setTwoFactorPending(false)
+    }
+  }
+
+  const startDisable = () => {
+    setTwoFactorError(null)
+    setTwoFactorNotice(null)
+    setTwoFactorMode('disable')
+  }
+
+  const closeTwoFactor = () => {
+    setTwoFactorMode(null)
+    setTwoFactorSetup(null)
+    setTwoFactorError(null)
+  }
+
+  /** Envoie le code au back ; le profil relu met à jour l'état des boutons. */
+  const submitTwoFactor = async (code: string) => {
+    const enabling = twoFactorMode === 'enable'
+
+    setTwoFactorPending(true)
+    setTwoFactorError(null)
+    try {
+      await (enabling ? enableTwoFactor(code) : disableTwoFactor(code))
+      await refreshUser()
+      closeTwoFactor()
+      setTwoFactorNotice(enabling ? 'A2F activée.' : 'A2F désactivée.')
+    } catch (err) {
+      setTwoFactorError(codeErrorOf(err, 'Vérification impossible.'))
+    } finally {
+      setTwoFactorPending(false)
+    }
+  }
+
   return (
     <AppLayout current="nav:profile" onNavigate={onNavigate}>
       <PageHeader title="Profil" subtitle="Ta photo, ton pseudo et ton adresse e-mail." />
@@ -219,6 +287,39 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
               </div>
             </form>
           </section>
+
+          <section className={s.section} aria-labelledby="profile-2fa-title">
+            <SectionTitle id="profile-2fa-title">Sécurité</SectionTitle>
+            <p className={s.hint}>
+              Authentification à deux facteurs : {user.twoFactorEnabled ? 'activée' : 'désactivée'}.
+            </p>
+            <div className={s.twoFactorActions}>
+              <Button
+                variant="primary"
+                onClick={startEnable}
+                disabled={twoFactorPending || user.twoFactorEnabled === true}
+              >
+                Activer l’A2F
+              </Button>
+              <Button onClick={startDisable} disabled={twoFactorPending || !user.twoFactorEnabled}>
+                Désactiver l’A2F
+              </Button>
+            </div>
+            {/* Modale fermée : les erreurs (échec du setup) s'affichent sous les boutons. */}
+            {twoFactorError && !twoFactorMode && <p className={s.error}>{twoFactorError}</p>}
+            {twoFactorNotice && <p className={s.notice}>{twoFactorNotice}</p>}
+          </section>
+
+          {/* La `key` remonte la modale à chaque ouverture : le champ code repart vide. */}
+          <TwoFactorModal
+            key={twoFactorMode ?? 'closed'}
+            mode={twoFactorMode}
+            setup={twoFactorSetup}
+            pending={twoFactorPending}
+            error={twoFactorError}
+            onSubmit={submitTwoFactor}
+            onClose={closeTwoFactor}
+          />
         </>
       )}
     </AppLayout>

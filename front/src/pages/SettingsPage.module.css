@@ -1,99 +1,68 @@
-.denied {
+.row {
   composes: riseIn from '../style/page.module.css';
 
-  max-width: 46ch;
-  font-size: 1.05rem;
-  font-weight: 300;
-  color: var(--mute);
-  animation-delay: 480ms;
-}
-
-.section {
-  margin-top: 2.5rem;
-}
-
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  max-width: 52rem;
-  padding: 1.1rem 1.25rem;
-  background: var(--ink-800);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-}
-
-.cardDanger {
-  border-color: var(--red-hot);
-}
-
-.text {
-  margin: 0;
-  max-width: 68ch;
-  font-size: 0.92rem;
-  font-weight: 300;
-  line-height: 1.6;
-  color: var(--mute);
-}
-
-.actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
+  gap: 1rem;
   align-items: center;
+  justify-content: space-between;
+  max-width: 34rem;
+  padding: 1rem 1.2rem;
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
 }
 
-.confirm {
+.rowText {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--line-strong);
+  gap: 0.2rem;
 }
 
-.label {
+.rowLabel {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--bone);
+}
+
+.rowHint {
   font-size: 0.8rem;
-  font-weight: 400;
-  color: var(--card-ink-dim);
+  font-weight: 300;
+  color: var(--mute);
 }
 
-.strong {
-  font-weight: 600;
-  color: var(--bone);
-}
-
-.input {
-  max-width: 22rem;
-  padding: 0.6rem 0.75rem;
-  font-family: inherit;
-  font-size: 0.92rem;
-  color: var(--bone);
-  background: var(--ink-800);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  transition:
-    border-color 160ms ease,
-    background-color 160ms ease;
-}
-
-.input:hover {
-  border-color: rgba(245, 241, 234, 0.28);
-}
-
-.input:focus {
-  outline: none;
+.switch {
+  position: relative;
+  flex: none;
+  width: 3rem;
+  height: 1.6rem;
+  padding: 0;
+  cursor: pointer;
   background: var(--ink-700);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.switch[aria-checked='true'] {
+  background: var(--red);
   border-color: var(--red-hot);
 }
 
-.error {
-  margin: 1rem 0 0;
-  font-size: 0.88rem;
-  color: var(--red-bright);
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  background: var(--bone);
+  border-radius: 50%;
+  transform: translate(0, -50%);
+  transition: transform 180ms var(--ease);
 }
 
-.notice {
-  margin: 1rem 0 0;
-  font-size: 0.88rem;
-  color: var(--mute);
+.switch[aria-checked='true'] .thumb {
+  transform: translate(1.35rem, -50%);
 }

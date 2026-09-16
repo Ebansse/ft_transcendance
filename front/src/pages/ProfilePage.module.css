@@ -137,6 +137,19 @@
   --btn-font-size: 0.9rem;
 }
 
+/* --- Sécurité (A2F) --- */
+
+.twoFactorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.8rem;
+
+  --btn-padding: 0.6rem 1.2rem;
+  --btn-font-size: 0.9rem;
+}
+
+/* --- États partagés --- */
 
 .hint {
   margin: 0;

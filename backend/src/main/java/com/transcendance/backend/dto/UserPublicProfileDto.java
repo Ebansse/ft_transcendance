@@ -17,5 +17,7 @@ public class UserPublicProfileDto {
         private Instant         online;
         private String          avatarUrl;
         private String          role;
+        // Only filled on /api/users/me: null on other users' profiles.
+        private Boolean         twoFactorEnabled;
         //private UserStatsDto    stats;
 }

@@ -19,6 +19,7 @@ import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.JWTService;
 import com.transcendance.backend.services.Oauth42Service;
 import com.transcendance.backend.services.RefreshTokenService;
+import com.transcendance.backend.services.TwoFactorService;
 
 @RestController
 @RequestMapping("/api/auth/42")
@@ -30,13 +31,15 @@ public class Oauth42Controller {
     private final Oauth42Properties properties;
     private final JWTService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final TwoFactorService twoFactorService;
 
     public Oauth42Controller(Oauth42Service oauth42Service, Oauth42Properties properties,
-            JWTService jwtService, RefreshTokenService refreshTokenService) {
+            JWTService jwtService, RefreshTokenService refreshTokenService, TwoFactorService twoFactorService) {
         this.oauth42Service = oauth42Service;
         this.properties = properties;
         this.jwtService = jwtService;
         this.refreshTokenService = refreshTokenService;
+        this.twoFactorService = twoFactorService;
     }
 
     /**
@@ -60,6 +63,10 @@ public class Oauth42Controller {
      * in locally and redirects to the frontend with the session cookies
      * set: the refresh cookie is scoped to {@code /api/auth} only, while the
      * access cookie is usable app-wide.
+     * <p>
+     * If the account has 2FA enabled, no session cookie is set: a short-lived
+     * {@code two_factor_token} cookie is set instead and the frontend asks for
+     * the code, sent to {@code POST /api/auth/2fa/login}.
      *
      * @param code the temporary authorization code 42 appended to this callback
      * @return a redirect to the frontend, with the access/refresh cookies set
@@ -75,6 +82,23 @@ public class Oauth42Controller {
             Oauth42UserInfoDto userDto = oauth42Service.fetchUserInfo(access_token_42);
     
             User localUser = oauth42Service.findOrCreateUser(userDto);
+
+            if (localUser.isTwoFactorEnabled()) {
+                ResponseCookie twoFactorCookie = ResponseCookie.from("two_factor_token",
+                        twoFactorService.createPendingLogin(localUser))
+                  .httpOnly(true)
+                  .secure(false)
+                  .sameSite("strict")
+                  .path("/api/auth/2fa")
+                  .maxAge(5 * 60)
+                  .build();
+
+                log.info("42 OAuth login waiting for 2FA code, user id: {}", localUser.getIdUser());
+                return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create(properties.getFrontendRedirectUri() + "?twoFactor=required"))
+                    .header(HttpHeaders.SET_COOKIE, twoFactorCookie.toString())
+                    .build();
+            }
     
             String accessToken42 = jwtService.generateAccessToken(localUser);
             String refreshToken42 = refreshTokenService.generateRefreshToken(localUser);

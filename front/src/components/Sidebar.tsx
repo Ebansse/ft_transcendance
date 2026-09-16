@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Button } from './Button.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { useChat } from '../chat/chatContext.ts'
@@ -57,6 +58,7 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
   const { rows, unread } = useChat()
 
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
+  const badges = useBadges()
 
   const pendingRequests = rows.filter(
     (row) => row.status === 'PENDING' && row.senderId === row.idUser,
@@ -80,15 +82,18 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
         <nav key={group.title} className={s.group} aria-label={group.title}>
           <p className={s.groupTitle}>{group.title}</p>
           <ul className={s.list}>
-            {group.items.map((item) => {
-              const badge = badgeOf(item.action)
-
-              return (
-                <li key={item.action}>
-                  <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
-                    <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
-                      <span aria-hidden="true" className={s.icon}>
-                        {item.icon}
+            {group.items.map((item) => (
+              <li key={item.action}>
+                <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
+                  <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
+                    <span aria-hidden="true" className={s.icon}>
+                      {item.icon}
+                    </span>
+                    <span className={s.label}>{item.label}</span>
+                    {badges[item.action] ? (
+                      <span className={s.badge}>
+                        {badges[item.action]}
+                        <span className="sr-only"> {BADGE_LABELS[item.action]}</span>
                       </span>
                       <span className={s.label}>{item.label}</span>
                       {badge > 0 ? (
@@ -107,4 +112,30 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
       ))}
     </aside>
   )
+}
+
+/** Ce que compte chaque pastille, pour les lecteurs d'écran. */
+const BADGE_LABELS: Record<string, string> = {
+  'nav:friends': 'demandes d’ami en attente',
+  'nav:chat': 'messages non lus',
+}
+
+/** Les deux pastilles du menu, tenues par `ChatProvider` et donc à jour en
+ *  temps réel : `rows` est relancé à chaque notification d'ami (voir
+ *  `useFriendNotifications`) et `unread` est incrémenté à chaque message reçu,
+ *  puis remis à zéro quand la conversation est ouverte.
+ *
+ *  Une demande est *reçue* quand son expéditeur est l'autre bout de la relation :
+ *  `senderId === idUser`. Celles qu'on a envoyées ne comptent pas. */
+function useBadges() {
+  const { rows, unread } = useChat()
+
+  return useMemo(() => {
+    const requests = rows.filter(
+      (row) => row.status === 'PENDING' && row.senderId === row.idUser,
+    ).length
+    const messages = Object.values(unread).reduce((total, count) => total + count, 0)
+
+    return { 'nav:friends': requests, 'nav:chat': messages } as Record<string, number>
+  }, [rows, unread])
 }
