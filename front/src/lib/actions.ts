@@ -1,5 +1,5 @@
 import { api } from './apiClient.ts'
-import type { ChessInvitationDto, ChessMatchDto } from './chessClient.ts'
+import type { ChessInvitationDto, ChessMatchDto, ChessSide } from './chessClient.ts'
 
 /** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
 export function handleAction(action: string) {
@@ -15,6 +15,31 @@ export type UserPublicProfileDto = {
   online: string | null
   avatarUrl: string | null
   role: string | null
+  /** Renseigné uniquement par `/users/me` : `null` sur le profil d'un autre. */
+  twoFactorEnabled: boolean | null
+}
+
+/** Réponse du setup A2F : le QR code (PNG en data URI) et le secret en clair,
+ *  pour qui ne peut pas scanner. */
+export type TwoFactorSetupDto = {
+  qrCodeDataUri: string
+  secret: string
+}
+
+/** Génère un nouveau secret TOTP. L'A2F reste inactive tant que `enableTwoFactor`
+ *  n'a pas reçu un premier code valide. */
+export function setupTwoFactor() {
+  return api.post<TwoFactorSetupDto>('/auth/2fa/setup')
+}
+
+/** Active l'A2F avec un code à 6 chiffres de l'application. */
+export function enableTwoFactor(code: string) {
+  return api.post<void>('/auth/2fa/enable', { code })
+}
+
+/** Désactive l'A2F : le back exige un code valide et efface le secret. */
+export function disableTwoFactor(code: string) {
+  return api.post<void>('/auth/2fa/disable', { code })
 }
 
 /** Les trois champs qu'un ADMIN peut réécrire sur un compte. */
@@ -82,13 +107,17 @@ export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'BLOCKED'
  *  fuseau.
  *
  *  `senderId` vaut soit notre propre id, soit `idUser` : c'est ce qui sépare une
- *  demande reçue (`senderId === idUser`) d'une demande envoyée. */
+ *  demande reçue (`senderId === idUser`) d'une demande envoyée.
+ *
+ *  `blockerId` n'est renseigné que sur une ligne BLOCKED : seul le compte qui a
+ *  bloqué voit la ligne dans ses bloqués, l'autre ne doit pas la voir. */
 export type FriendListDto = {
   idUser: string
   userName: string
   createAt: string | null
   status: FriendshipStatus
   senderId: string
+  blockerId: string | null
 }
 
 /** Toutes les relations du compte connecté, tous statuts confondus. */
@@ -117,15 +146,23 @@ export function deleteFriend(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/delete`)
 }
 
-/** Bloque un compte : la relation passe en BLOCKED (pas de déblocage côté back). */
+/** Bloque un compte : la relation passe en BLOCKED et `blockerId` vaut notre id. */
 export function blockUser(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/block`)
 }
 
+/** Débloque un compte. Le back refuse si ce n'est pas nous qui avons bloqué, et
+ *  supprime la relation : il faudra renvoyer une demande pour redevenir amis. */
+export function unblockUser(idUser: string) {
+  return api.post<void>(`/friend-list/${idUser}/unblock`)
+}
+
 /** Invite un adversaire par pseudo : le back retrouve le compte, refuse l'auto-
- *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). */
-export function sendChessInvitation(opponentUsername: string) {
-  return api.post<void>('/chess/invitations', { opponentUsername })
+ *  invitation et renvoie l'invitation créée (`ChessInvitationDto`). `side` est
+ *  le camp de l'inviteur, `null` pour un tirage au sort côté back : l'invité
+ *  prendra l'autre à l'acceptation. Le camp retenu revient dans `fromSide`. */
+export function sendChessInvitation(opponentUsername: string, side: ChessSide | null) {
+  return api.post<ChessInvitationDto>('/chess/invitations', { opponentUsername, side })
 }
 
 /** Invitations reçues et encore valides, dans le format exact des messages
@@ -145,6 +182,15 @@ export function declineChessInvitation(opponentUsername: string) {
   return api.post<void>('/chess/invitations/decline', { opponentUsername })
 }
 
+/** Ouvre une partie contre le bot, dans le camp demandé. Le back renvoie la
+ *  partie prête à jouer : si le joueur a pris les noirs, le `fen` contient
+ *  **déjà** le coup d'ouverture du bot, il n'y a rien à demander de plus.
+ *
+ *  Refusé en 409 tant qu'une autre partie est en cours, comme une invitation. */
+export function createBotMatch(side: ChessSide, botLvl: number) {
+  return api.post<ChessMatchDto>('/chess/bot/createBotMatch', { side, botLvl })
+}
+
 /** Partie en cours du compte connecté. Le back répond **404** quand il n'y en a
  *  pas : c'est un cas normal, pas une panne. */
 export function getMyChessMatch() {
@@ -161,4 +207,37 @@ export function playChessMove(matchId: number, move: string) {
  *  libérer les deux joueurs pour une nouvelle invitation. */
 export function resignChessMatch(matchId: number) {
   return api.post<ChessMatchDto>(`/chess/matches/${matchId}/resign`)
+}
+
+/** Miroir du `ChessPlayerStatDto` : les compteurs du compte connecté. */
+export type ChessPlayerStatDto = {
+  playerName: string
+  winCount: number
+  lossCount: number
+  drawCount: number
+}
+
+/** Issue d'une partie, déjà vue depuis le compte qui demande l'historique. */
+export type ChessResult = 'WIN' | 'LOSS' | 'DRAW'
+
+/** Miroir du `ChesshistoryDto`. `player1` tenait les blancs, `player2` les
+ *  noirs ; le back met « Bot » à la place du moteur. Dates en ISO (`Instant`). */
+export type ChessHistoryDto = {
+  chessMatchId: number
+  fen: string
+  player1: string
+  player2: string
+  result: ChessResult
+  createdAt: string
+  endedAt: string | null
+}
+
+/** Victoires, défaites et nuls du compte connecté (créés à zéro au besoin). */
+export function getMyChessStats() {
+  return api.get<ChessPlayerStatDto>('/chess/stats/me')
+}
+
+/** Parties terminées du compte connecté ; liste vide s'il n'en a fini aucune. */
+export function getMyChessHistory() {
+  return api.get<ChessHistoryDto[]>('/chess/historique/me')
 }

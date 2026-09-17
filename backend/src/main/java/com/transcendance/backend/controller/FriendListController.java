@@ -19,6 +19,7 @@ import com.transcendance.backend.dto.FriendListDto;
 import com.transcendance.backend.dto.UserNameRequestDto;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.FriendListService;
+import com.transcendance.backend.services.NotificationService;
 
 import jakarta.validation.Valid;
 
@@ -30,9 +31,11 @@ public class FriendListController {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(FriendListController.class);
 
     private final FriendListService friendListService;
+    private final NotificationService notificationService;
 
-    public FriendListController(FriendListService friendListService) {
+    public FriendListController(FriendListService friendListService, NotificationService notificationService) {
         this.friendListService = friendListService;
+        this.notificationService = notificationService;
     }
 
     @PostMapping("/send-request")
@@ -50,7 +53,8 @@ public class FriendListController {
         }
         log.info("Sending friend request from {} to {}", user.getUserName(), Username.getUserName());
         try {
-            friendListService.sendFriendRequest(user, Username.getUserName());
+            User target = friendListService.sendFriendRequest(user, Username.getUserName());
+            notificationService.friendRequestReceived(target.getIdUser(), user);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Friend request failed: {}", e.getMessage());
@@ -67,6 +71,7 @@ public class FriendListController {
         }
         try{
             friendListService.acceptFriendRequest(user, idUser);
+            notificationService.friendRequestAccepted(idUser, user);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to accept friend request: {}", e.getMessage());

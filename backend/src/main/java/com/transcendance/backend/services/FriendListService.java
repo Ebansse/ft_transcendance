@@ -42,9 +42,10 @@ public class FriendListService {
      *
      * @param user     The user sending the request.
      * @param username The username of the user receiving the request.
+     * @return The user receiving the request, so the caller can notify him.
      */
     @Transactional
-    public void sendFriendRequest(User user, String username) {
+    public User sendFriendRequest(User user, String username) {
 
         log.info("Sending friend request from {} to {}", user.getUserName(), username);
 
@@ -78,9 +79,11 @@ public class FriendListService {
                 case DECLINED:
                     existing.get().setStatus(FriendshipStatus.PENDING);
                     existing.get().setCreatedAt(LocalDateTime.now());
+                    // The new request may come from the one who declined the old one.
+                    existing.get().setSenderId(user.getIdUser());
                     friendListRepository.save(existing.get());
                     log.info("Friend request sent from {} to {}", user.getUserName(), username);
-                    return;
+                    return target;
             }
         }
         ;
@@ -94,6 +97,7 @@ public class FriendListService {
         friendListRepository.save(friendList);
 
         log.info("Friend request sent from {} to {}", user.getUserName(), username);
+        return target;
     }
 
     /**
@@ -368,7 +372,8 @@ public class FriendListService {
             friendListDtos.add(new FriendListDto(targetId, targetUser.get().getUserName(),
                     friendList.getCreatedAt(), friendList.getStatus(), friendList.getSenderId(),
                     accepted && presenceService.isOnline(targetId),
-                    accepted ? targetUser.get().getOnline() : null));
+                    accepted ? targetUser.get().getOnline() : null,
+                    friendList.getBlockedBy()));
         }
         return friendListDtos;
     }

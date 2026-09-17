@@ -111,6 +111,7 @@ public class UserController {
         log.info("Fetching public profile for user id: {}", user.getIdUser());
 
         UserPublicProfileDto dto = toDto(user);
+        dto.setTwoFactorEnabled(user.isTwoFactorEnabled());
 
         log.info("Public profile fetched for user: {}", user.getIdUser());
         return ResponseEntity.ok(dto);

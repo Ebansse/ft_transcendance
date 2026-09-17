@@ -1,13 +1,17 @@
+import { useMemo } from 'react'
 import { Button } from './Button.tsx'
+import { UserAvatar } from './UserAvatar.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
+import { useChat } from '../chat/chatContext.ts'
 import { handleAction } from '../lib/actions.ts'
 import s from './Sidebar.module.css'
+
+const RECENT_LIMIT = 5
 
 type NavItem = {
   action: string
   label: string
   icon: string
-  badge?: number
 }
 
 type NavGroup = {
@@ -22,17 +26,13 @@ const GROUPS: NavGroup[] = [
   },
   {
     title: 'Jeux',
-    items: [
-      { action: 'nav:chess', label: 'Échecs', icon: '♟️' },
-      { action: 'nav:blackjack', label: 'Blackjack', icon: '🃏' },
-      { action: 'nav:uno', label: 'Uno', icon: '🎴' },
-    ],
+    items: [{ action: 'nav:chess', label: 'Échecs', icon: '♟️' }],
   },
   {
     title: 'Social',
     items: [
-      { action: 'nav:friends', label: 'Amis', icon: '👥', badge: 1 },
-      { action: 'nav:chat', label: 'Chat', icon: '💬', badge: 1 },
+      { action: 'nav:friends', label: 'Amis', icon: '👥' },
+      { action: 'nav:chat', label: 'Chat', icon: '💬' },
     ],
   },
   {
@@ -45,22 +45,29 @@ const GROUPS: NavGroup[] = [
   },
 ]
 
-/** Groupe réservé aux comptes ADMIN, ajouté en bas du menu. */
 const ADMIN_GROUP: NavGroup = {
   title: 'Administration',
   items: [{ action: 'nav:admin', label: 'Admin', icon: '🛡️' }],
 }
 
+const BADGE_LABELS: Record<string, string> = {
+  'nav:friends': 'demandes d’ami en attente',
+  'nav:chat': 'messages non lus',
+}
+
 type SidebarProps = {
   open: boolean
   current?: string
-  /** Fourni par le layout : route vers la page. À défaut, on log l'action. */
   onNavigate?: (action: string) => void
 }
 
 export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction }: SidebarProps) {
   const { user } = useAuthModal()
+  const { recentIds, unread, nameOf, avatarOf, openQuickChat } = useChat()
+
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
+  const badges = useBadges()
+  const recent = recentIds.slice(0, RECENT_LIMIT)
 
   return (
     <aside
@@ -80,14 +87,38 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
                       {item.icon}
                     </span>
                     <span className={s.label}>{item.label}</span>
-                    {item.badge ? (
+                    {badges[item.action] ? (
                       <span className={s.badge}>
-                        {item.badge}
-                        <span className="sr-only"> notifications</span>
+                        {badges[item.action]}
+                        <span className="sr-only"> {BADGE_LABELS[item.action]}</span>
                       </span>
                     ) : null}
                   </Button>
                 </span>
+
+                {item.action === 'nav:chat' && recent.length > 0 && (
+                  <ul className={s.subList} aria-label="Conversations récentes">
+                    {recent.map((idUser) => {
+                      const name = nameOf(idUser)
+                      const count = unread[idUser] ?? 0
+
+                      return (
+                        <li key={idUser}>
+                          <button
+                            type="button"
+                            className={s.subItem}
+                            onClick={() => openQuickChat(idUser)}
+                            aria-label={`Ouvrir un quick chat avec ${name}`}
+                          >
+                            <UserAvatar userName={name} avatarUrl={avatarOf(idUser)} size={20} />
+                            <span className={s.subLabel}>{name}</span>
+                            {count > 0 && <span className={s.subBadge}>{count}</span>}
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                )}
               </li>
             ))}
           </ul>
@@ -95,4 +126,17 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
       ))}
     </aside>
   )
+}
+
+function useBadges() {
+  const { rows, unread } = useChat()
+
+  return useMemo(() => {
+    const requests = rows.filter(
+      (row) => row.status === 'PENDING' && row.senderId === row.idUser,
+    ).length
+    const messages = Object.values(unread).reduce((total, count) => total + count, 0)
+
+    return { 'nav:friends': requests, 'nav:chat': messages } as Record<string, number>
+  }, [rows, unread])
 }

@@ -3,6 +3,7 @@ import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import { getFriendList, type FriendListDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
+import type { ChessSide } from '../lib/chessClient.ts'
 import s from './ChessInviteModal.module.css'
 
 function messageOf(err: unknown, fallback: string) {
@@ -18,10 +19,11 @@ type ChessInviteModalProps = {
    *  reste ouverte pour que le message soit lisible. */
   error?: string | null
   onClose: () => void
-  onInvite: (userName: string) => void
+  /** `side` à `null` : le back tire la couleur au sort. */
+  onInvite: (userName: string, side: ChessSide | null) => void
 }
 
-/** Choix de l'adversaire pour une partie d'échecs : un bouton par ami.
+/** Choix du camp puis de l'adversaire pour une partie d'échecs : un bouton par ami.
  *
  *  La liste n'est chargée qu'à l'ouverture, et rechargée à chaque réouverture :
  *  une amitié acceptée entre-temps doit apparaître sans recharger la page. */
@@ -35,6 +37,7 @@ export function ChessInviteModal({
   // Le focus part sur le premier bouton de la modale, la croix de fermeture.
   const dialog = useDialog(open, 'button', onClose)
 
+  const [side, setSide] = useState<ChessSide | null>('WHITE')
   const [friends, setFriends] = useState<FriendListDto[]>([])
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -75,6 +78,40 @@ export function ChessInviteModal({
         </Button>
       </div>
 
+      {/* Même sélecteur que la modale du bot : le camp se choisit avant l'ami,
+          l'invité recevra l'autre couleur. */}
+      <div className={s.field}>
+        <span className={s.label} id="chess-invite-side">
+          Votre camp
+        </span>
+        <div className={s.sides} role="group" aria-labelledby="chess-invite-side">
+          <Button
+            variant={side === 'WHITE' ? 'primary' : 'secondary'}
+            fullWidth
+            disabled={pending !== null}
+            onClick={() => setSide('WHITE')}
+          >
+            Blancs
+          </Button>
+          <Button
+            variant={side === 'BLACK' ? 'primary' : 'secondary'}
+            fullWidth
+            disabled={pending !== null}
+            onClick={() => setSide('BLACK')}
+          >
+            Noirs
+          </Button>
+          <Button
+            variant={side === null ? 'primary' : 'secondary'}
+            fullWidth
+            disabled={pending !== null}
+            onClick={() => setSide(null)}
+          >
+            Aléatoire
+          </Button>
+        </div>
+      </div>
+
       {loading && <p className={s.status}>Chargement…</p>}
 
       {!loading && loadError && (
@@ -95,7 +132,7 @@ export function ChessInviteModal({
                 variant="secondary"
                 fullWidth
                 disabled={pending !== null}
-                onClick={() => onInvite(friend.userName)}
+                onClick={() => onInvite(friend.userName, side)}
               >
                 {pending === friend.userName ? 'Envoi…' : friend.userName}
               </Button>

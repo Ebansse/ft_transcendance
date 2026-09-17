@@ -1,0 +1,85 @@
+.denied {
+  composes: riseIn from '../style/page.module.css';
+
+  max-width: 46ch;
+  font-size: 1.05rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 480ms;
+}
+
+.state {
+  composes: riseIn from '../style/page.module.css';
+
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: var(--mute);
+  animation-delay: 640ms;
+}
+
+.error {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--red-bright);
+}
+
+.section {
+  margin-top: 3rem;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  composes: riseIn from '../style/page.module.css';
+
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+}
+
+.tileValue {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--bone);
+}
+
+.tileLabel {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--card-ink-dim);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.win {
+  color: var(--green-bright);
+}
+
+.loss {
+  color: var(--red-bright);
+}
+
+.draw {
+  color: var(--mute);
+}

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
-import { getMyChessMatch, playChessMove, resignChessMatch } from '../lib/actions.ts'
+import {
+  createBotMatch,
+  getMyChessMatch,
+  playChessMove,
+  resignChessMatch,
+} from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import {
   CHESS_MATCHES,
@@ -105,6 +110,20 @@ export function useChessMatch() {
     }
   }, [])
 
+  /** Ouvre une partie contre le bot et l'installe comme partie courante.
+   *
+   *  Ne rattrape pas l'erreur : l'appelant tient la modale ouverte et y affiche
+   *  le refus (déjà une partie en cours), là où l'utilisateur vient de cliquer. */
+  const startBot = useCallback(async (side: ChessSide, botLvl: number) => {
+    setError(null)
+    const created = await createBotMatch(side, botLvl)
+
+    /* Rien n'arrive par la socket dans une partie contre bot : un coup resté
+       d'une partie précédente serait rejoué sur celle-ci. */
+    setServerMove(null)
+    setMatch(created)
+  }, [])
+
   const resign = useCallback(async (matchId: number) => {
     setError(null)
     try {
@@ -128,5 +147,5 @@ export function useChessMatch() {
   const isMyTurn =
     match !== null && mySide !== null && match.status === 'IN_PROGRESS' && match.sideToMove === mySide
 
-  return { match, mySide, isMyTurn, serverMove, loading, error, play, resign, leave }
+  return { match, mySide, isMyTurn, serverMove, loading, error, play, resign, leave, startBot }
 }

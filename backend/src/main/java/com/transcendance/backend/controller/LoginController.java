@@ -2,6 +2,7 @@ package com.transcendance.backend.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.transcendance.backend.dto.LoginRequestDto;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.LoginService;
+import com.transcendance.backend.services.TwoFactorLockedException;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,9 +38,10 @@ public class LoginController {
     /**
      * Handles user login requests.
      *
-     * @param loginRequest the login request containing email and password
+     * @param loginRequest the login request containing email, password and the optional 2FA code
      * @param bindingResult the result of validation checks on the request
-     * @return a ResponseEntity containing the JWT token in a cookie if successful, or an error message if failed
+     * @return a ResponseEntity containing the JWT token in a cookie if successful,
+     *         {"twoFactorRequired": true} if a 2FA code is missing, or an error message if failed
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(HttpServletRequest request, @Valid @RequestBody LoginRequestDto loginRequest,
@@ -60,7 +63,14 @@ public class LoginController {
     }
 
         try {
-            LoginResponseTokenDto loginResponse = loginService.authenticate(loginRequest.getEmail(), loginRequest.getPassword());
+            Optional<LoginResponseTokenDto> tokens = loginService.authenticate(
+                    loginRequest.getEmail(), loginRequest.getPassword(), loginRequest.getCode());
+
+            // 2FA account without code: no cookies yet, the front asks for the code and retries
+            if (tokens.isEmpty()) {
+                return ResponseEntity.ok(Map.of("twoFactorRequired", true));
+            }
+            LoginResponseTokenDto loginResponse = tokens.get();
             log.info("Login successful for email: {}", loginRequest.getEmail());
             
             ResponseCookie accessCookie = ResponseCookie.from("access_token", loginResponse.getAccessToken())
@@ -84,9 +94,11 @@ public class LoginController {
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .body("Login successful");
         
+        } catch (TwoFactorLockedException e) {
+            return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
         log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
-        return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
+        return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
     }
     }
 

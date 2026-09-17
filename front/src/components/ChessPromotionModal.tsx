@@ -1,0 +1,74 @@
+import { glyphOf, nameOf } from '../lib/chessBoard.ts'
+import { Button } from './Button.tsx'
+import { useDialog } from './useDialog.ts'
+import s from './ChessPromotionModal.module.css'
+
+/** Les quatre promotions possibles, de la plus forte à la plus faible. Le roi et
+ *  le pion n'en sont pas : les règles ne les autorisent pas. */
+export type PromotionPiece = 'q' | 'r' | 'b' | 'n'
+
+const CHOICES: PromotionPiece[] = ['q', 'r', 'b', 'n']
+
+type ChessPromotionModalProps = {
+  open: boolean
+  /** Camp du pion promu : décide de la couleur des glyphes proposés. */
+  white: boolean
+  /** Renonce à la promotion : le coup n'est pas joué, le pion ne bouge pas. */
+  onClose: () => void
+  onSelect: (piece: PromotionPiece) => void
+}
+
+/** Choix de la pièce quand un pion atteint la dernière rangée.
+ *
+ *  Modale ordinaire, qui se referme comme les autres (croix, Échap, clic dans le
+ *  fond) : refermer annule simplement le coup, le pion reste où il est et on
+ *  peut en jouer un autre. Une modale sans issue serait un piège — Chrome force
+ *  de toute façon la fermeture au deuxième Échap, et la partie resterait alors
+ *  bloquée sur un demi-coup. */
+export function ChessPromotionModal({
+  open,
+  white,
+  onClose,
+  onSelect,
+}: ChessPromotionModalProps) {
+  // Le focus part sur le premier bouton de la modale, la croix de fermeture.
+  const dialog = useDialog(open, 'button', onClose)
+
+  return (
+    <dialog {...dialog} className={s.dialog} aria-labelledby="chess-promotion-title">
+      <div className={s.head}>
+        <h2 id="chess-promotion-title" className={s.title}>
+          Promotion
+        </h2>
+        <Button variant="ghost" ariaLabel="Annuler le coup" onClick={onClose}>
+          ✕
+        </Button>
+      </div>
+
+      <p className={s.note}>
+        Votre pion arrive au bout : choisissez sa pièce, ou refermez pour annuler le coup.
+      </p>
+
+      <div className={s.choices} role="group" aria-labelledby="chess-promotion-title">
+        {CHOICES.map((piece) => {
+          const label = nameOf(white ? piece.toUpperCase() : piece)
+
+          return (
+            <button
+              key={piece}
+              type="button"
+              className={s.choice}
+              aria-label={label}
+              onClick={() => onSelect(piece)}
+            >
+              <span className={white ? `${s.piece} ${s.white}` : s.piece} aria-hidden="true">
+                {glyphOf(piece)}
+              </span>
+              <span className={s.name}>{label.split(' ')[0]}</span>
+            </button>
+          )
+        })}
+      </div>
+    </dialog>
+  )
+}

@@ -2,6 +2,7 @@ package com.transcendance.backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,4 +21,7 @@ public class LoginRequestDto {
     @Size(min = 6, message = "Password must be at least 6 characters")
     private String password;
 
+    // Only sent on the second attempt, when the account has 2FA enabled.
+    @Pattern(regexp = "^\\d{6}$", message = "Code must be 6 digits")
+    private String code;
 }

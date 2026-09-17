@@ -4,6 +4,8 @@ export type ChessInvitationDto = {
   fromUserId: string
   fromUsername: string
   state: ChessInvitationState
+  /** Camp choisi par l'inviteur ; l'invité joue l'autre. */
+  fromSide: ChessSide
 }
 
 /** L'invitation n'existe qu'en mémoire côté back (une `ConcurrentHashMap`), et
@@ -32,8 +34,10 @@ export type ChessSide = 'WHITE' | 'BLACK'
 export type ChessMatchStatus = 'IN_PROGRESS' | 'CHECKMATE' | 'STALEMATE' | 'DRAW' | 'RESIGNED'
 
 /** Miroir du `ChessMatchDto` du back. `fen` est la seule vérité sur la
- *  position : `sideToMove` en est relu, il n'est pas stocké. Les `*BotLevel`
- *  sont renseignés quand le camp est tenu par un bot (pas encore branché ici). */
+ *  position : `sideToMove` en est relu, il n'est pas stocké.
+ *
+ *  Un camp tenu par un bot a son `*PlayerId` à `null` et son `*BotLevel`
+ *  renseigné — les deux vont toujours ensemble. */
 export type ChessMatchDto = {
   matchId: number
   fen: string
