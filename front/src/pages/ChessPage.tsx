@@ -7,10 +7,15 @@ import { ChessInviteModal } from '../components/ChessInviteModal.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
+import { CapturedPieces } from '../components/CapturedPieces.tsx'
 import { ChessBoard, type BoardOrientation } from '../components/ChessBoard.tsx'
+import {
+  ChessPromotionModal,
+  type PromotionPiece,
+} from '../components/ChessPromotionModal.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import { START_FEN, squaresOf } from '../lib/chessBoard.ts'
+import { START_FEN, capturesOf, squaresOf } from '../lib/chessBoard.ts'
 import type { ChessMatchDto, ChessSide } from '../lib/chessClient.ts'
 import { useChessMatch } from '../ws/useChessMatch.ts'
 import s from './ChessPage.module.css'
@@ -127,6 +132,9 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [targets, setTargets] = useState<string[]>([])
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null)
+  /** Coup de promotion en attente de sa pièce : la modale est ouverte tant
+   *  qu'il est posé, et le coup ne part qu'une fois la pièce choisie. */
+  const [promotion, setPromotion] = useState<{ from: string; to: string } | null>(null)
   const [orientation, setOrientation] = useState<BoardOrientation>('white')
   const [opponentName, setOpponentName] = useState<string | null>(null)
 
@@ -226,6 +234,13 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
      coups d'affilée - dont un pour lui. */
   const playable = running && isMyTurn && localSide === mySide
 
+  /* Cette modale n'a pas d'issue : sans ce filet, une partie qui s'arrête pendant
+     qu'elle est ouverte (abandon adverse, déconnexion) la laisserait en travers
+     de l'écran, à demander une pièce pour un coup qui ne peut plus partir. */
+  useEffect(() => {
+    if (!playable) setPromotion(null)
+  }, [playable])
+
   /* Le dernier coup de la position affichée, quel qu'en soit l'auteur. Se lit
      dans l'historique dès qu'il y en a un, ce qui couvre le coup du bot sans
      avoir à le nommer ; `lastMove` ne sert plus qu'aux parties reprises depuis
@@ -252,6 +267,23 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setTargets([])
   }
 
+  /** Joue le coup localement et l'envoie au serveur. `piece` n'est renseigné que
+   *  pour une promotion, et devient la dernière lettre de l'UCI (`e7e8n`). */
+  const playMove = (from: string, to: string, piece?: PromotionPiece) => {
+    if (match === null) return
+
+    const played = chess.move({ from: from as Square, to: to as Square, promotion: piece })
+
+    setGame({ chess, view: snapshot(chess) })
+    setLastMove({ from, to })
+    clearSelection()
+
+    /* Le coup part au serveur dès qu'il est joué. On l'affiche sans attendre la
+       réponse : chess.js a déjà vérifié qu'il est légal, et un refus du back
+       nous ramènerait de toute façon sur sa position. */
+    void online.play(match.matchId, played.lan)
+  }
+
   const handleSquareClick = (square: string) => {
     /* Aucune partie, partie terminée, ou tour de l'adversaire : plateau inerte. */
     if (!playable || match === null) return
@@ -273,17 +305,35 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
       return
     }
 
-    // Promotion : dame d'office. Un sélecteur de pièce viendra plus tard.
-    const played = chess.move({ from: selected as Square, to: square as Square, promotion: 'q' })
+    /* Un pion qui arrive au bout doit dire en quoi il se transforme : on laisse
+       le coup en suspens et la modale le reprend. La sélection reste posée, donc
+       le plateau continue de montrer d'où part le pion. */
+    const promoting = chess
+      .moves({ square: selected as Square, verbose: true })
+      .some((move) => move.to === square && move.promotion !== undefined)
 
-    setGame({ chess, view: snapshot(chess) })
-    setLastMove({ from: selected, to: square })
-    clearSelection()
+    if (promoting) {
+      setPromotion({ from: selected, to: square })
+      return
+    }
 
-    /* Le coup part au serveur dès qu'il est joué. On l'affiche sans attendre la
-       réponse : chess.js a déjà vérifié qu'il est légal, et un refus du back
-       nous ramènerait de toute façon sur sa position. */
-    void online.play(match.matchId, played.lan)
+    playMove(selected, square)
+  }
+
+  /** La pièce choisie termine le coup laissé en suspens. */
+  const promoteTo = (piece: PromotionPiece) => {
+    if (promotion === null) return
+
+    playMove(promotion.from, promotion.to, piece)
+    setPromotion(null)
+  }
+
+  /** Refermer la modale sans choisir annule le coup : rien n'est parti au
+   *  serveur, le pion n'a pas bougé. On rend la case à la sélection pour
+   *  repartir du même pion sans avoir à le reprendre. */
+  const cancelPromotion = () => {
+    setPromotion(null)
+    if (promotion !== null) select(promotion.from)
   }
 
   /** Referme une partie terminée. Sans ce `leave`, la resynchronisation
@@ -341,6 +391,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   }
 
   const rounds = toRounds(view.history)
+  const captures = capturesOf(view.squares)
   const myName = user?.userName ?? 'Vous'
   const theirName = opponentName ?? '…'
   const whiteName = match === null ? '—' : mySide === 'WHITE' ? myName : theirName
@@ -368,18 +419,33 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             lastMove={highlighted}
             onSquareClick={handleSquareClick}
           />
+
+          {/* Près du plateau, et pas dans le panneau : la modale prolonge le coup
+              qu'on vient de jouer, elle ne fait pas partie des commandes. */}
+          <ChessPromotionModal
+            open={promotion !== null}
+            white={mySide !== 'BLACK'}
+            onClose={cancelPromotion}
+            onSelect={promoteTo}
+          />
         </div>
 
         <aside className={s.panel} aria-label="Informations de la partie">
           <div className={s.players}>
-            <p className={s.player}>
-              <span className={s.side}>Noirs</span>
-              <span className={s.name}>{blackName}</span>
-            </p>
-            <p className={s.player}>
-              <span className={s.side}>Blancs</span>
-              <span className={s.name}>{whiteName}</span>
-            </p>
+            <div className={s.player}>
+              <p className={s.playerLine}>
+                <span className={s.side}>Noirs</span>
+                <span className={s.name}>{blackName}</span>
+              </p>
+              <CapturedPieces pieces={captures.byBlack} advantage={-captures.advantage} />
+            </div>
+            <div className={s.player}>
+              <p className={s.playerLine}>
+                <span className={s.side}>Blancs</span>
+                <span className={s.name}>{whiteName}</span>
+              </p>
+              <CapturedPieces pieces={captures.byWhite} advantage={captures.advantage} />
+            </div>
           </div>
 
           {running && (
@@ -417,11 +483,6 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
                 ))}
               </ol>
             )}
-          </div>
-
-          <div>
-            <p className={s.blockTitle}>FEN</p>
-            <code className={s.fenValue}>{view.fen}</code>
           </div>
 
           <div className={s.actions}>
@@ -477,12 +538,6 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
               </p>
             )}
 
-            {match === null && (
-              <p className={s.hint}>
-                Aucune partie en cours — le plateau s'active dès qu'un(e) ami(e) accepte votre
-                invitation, ou immédiatement contre le bot.
-              </p>
-            )}
           </div>
         </aside>
       </section>

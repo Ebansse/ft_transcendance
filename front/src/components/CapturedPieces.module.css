@@ -1,0 +1,30 @@
+/* Les prises d'un camp, sur une ligne, sous son nom. Les glyphes se chevauchent
+   légèrement : une rangée de huit pions doit tenir dans les 300px du panneau. */
+
+.captures {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  min-height: 1.1rem;
+}
+
+.piece {
+  /* Les noirs prennent le gris du panneau plutôt que le noir du plateau, qui
+     disparaîtrait sur ce fond. */
+  margin-right: -0.22rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--mute);
+}
+
+.white {
+  color: var(--bone);
+}
+
+.advantage {
+  margin-left: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--card-ink-dim);
+}

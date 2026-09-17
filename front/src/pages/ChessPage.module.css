@@ -24,14 +24,21 @@
   gap: 0.55rem;
 }
 
+/* Deux lignes par joueur : son nom, puis ce qu'il a pris. */
 .player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.playerLine {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
   margin: 0;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid var(--line);
 }
 
 .player:last-child {
