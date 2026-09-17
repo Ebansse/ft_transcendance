@@ -35,4 +35,7 @@ public class FriendListDto {
 
     /** When he was last seen. Only meaningful while online is false. */
     private Instant lastSeen;
+
+    /** Who blocked whom: only the blocker sees the row in his blocked list. */
+    private UUID blockerId;
 }

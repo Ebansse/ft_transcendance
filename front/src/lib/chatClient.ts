@@ -1,6 +1,5 @@
-/** Miroir du `ChatMessageDto` du back. `sentAt` est un `LocalDateTime` Java,
- *  donc une date ISO sans fuseau ; `isRead` est explicitement nommé ainsi par
- *  le `@JsonProperty` du DTO côté back. */
+import { api } from './apiClient.ts'
+
 export type ChatMessageDto = {
   id: number
   senderId: string
@@ -10,21 +9,47 @@ export type ChatMessageDto = {
   isRead: boolean
 }
 
-/** Destinations STOMP du chat (voir ChatController côté back). Les queues sont
- *  préfixées `/user` : le broker ne livre qu'à la session de l'utilisateur. */
+export type ChatHistoryDto = {
+  messages: ChatMessageDto[]
+  nextCursor: number | null
+  hasMore: boolean
+}
+
 export const CHAT_MESSAGES = '/user/queue/messages'
 export const CHAT_ERRORS = '/user/queue/errors'
 export const CHAT_SEND = '/app/chat.send'
 
-/** Envoie un message via le tuyau partagé (`publish` vient de `useSocket`). Le
- *  serveur le repousse à `/user/queue/messages` pour l'expéditeur ET le
- *  destinataire (voir ChatController) : on ne l'ajoute donc jamais localement
- *  ici, on attend l'écho pour rester fidèle à ce qui est vraiment persisté
- *  (id réel, sentAt du serveur). Renvoie `false` si la socket n'est pas prête. */
+export const HISTORY_PAGE_SIZE = 50
+
 export function sendChatMessage(
   publish: (destination: string, body: unknown) => boolean,
   receiverId: string,
   content: string,
 ) {
   return publish(CHAT_SEND, { receiverId, content })
+}
+
+export function getChatHistory(
+  userId: string,
+  before: number | null = null,
+  limit: number = HISTORY_PAGE_SIZE,
+) {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (before !== null) params.set('before', String(before))
+  return api.get<ChatHistoryDto>(`/chat/${userId}?${params.toString()}`)
+}
+
+export function markConversationRead(userId: string) {
+  return api.put<{ updated: number }>(`/chat/${userId}/read`)
+}
+
+export function mergeMessages(current: ChatMessageDto[], incoming: ChatMessageDto[]) {
+  const byId = new Map<number, ChatMessageDto>()
+  for (const message of current) byId.set(message.id, message)
+  for (const message of incoming) byId.set(message.id, message)
+
+  return [...byId.values()].sort((a, b) => {
+    const delta = new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+    return delta !== 0 ? delta : a.id - b.id
+  })
 }

@@ -1,6 +1,3 @@
-/* Ce qui reste propre à l'admin : le message de refus et les états de chargement.
-   L'en-tête, le titre de section et le tableau viennent de composants partagés. */
-
 .denied {
   composes: riseIn from '../style/page.module.css';
 
