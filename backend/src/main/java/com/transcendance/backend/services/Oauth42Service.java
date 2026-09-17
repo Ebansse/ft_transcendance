@@ -21,6 +21,8 @@ public class Oauth42Service {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(Oauth42Service.class);
 
+    private static final String DEFAULT_AVATAR_URL = "/default-avatar.png";
+
     private final Oauth42Properties properties;
     private final UserService userService;
     private final UserRoleService userRoleService;
@@ -108,6 +110,9 @@ public class Oauth42Service {
 
         String passwd = UUID.randomUUID().toString();
         User newUser = new User(username, info.getEmail(), passwd);
+
+        newUser.setAvatarUrl(DEFAULT_AVATAR_URL);
+
         User user = userService.createUser(newUser);
         userRoleService.assignRoleUserToNewUser(user);
 
