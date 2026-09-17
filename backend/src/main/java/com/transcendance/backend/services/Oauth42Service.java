@@ -20,6 +20,10 @@ import com.transcendance.backend.model.User;
 public class Oauth42Service {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(Oauth42Service.class);
+    // Same default RegisterService gives a normal signup — kept as a
+    // separate constant rather than a shared one, this app has just these
+    // two call sites.
+    private static final String DEFAULT_AVATAR_URL = "/default-avatar.png";
 
     private final Oauth42Properties properties;
     private final UserService userService;
@@ -108,6 +112,16 @@ public class Oauth42Service {
 
         String passwd = UUID.randomUUID().toString();
         User newUser = new User(username, info.getEmail(), passwd);
+
+        // TODO : Poser newUser.setAvatarUrl(DEFAULT_AVATAR_URL) ici, avant
+        // userService.createUser(newUser) ci-dessous. RegisterService le fait
+        // déjà pour l'inscription classique — ce constructeur User(userName,
+        // email, password) ne pose pas d'avatar par défaut tout seul, donc
+        // sans ça, un compte créé via 42 se retrouve avec avatarUrl == null
+        // (ce qui a fait planter DeleteUserService.deleteUser avant qu'on
+        // ajoute la garde null/blank au TODO 3 de la suppression de compte).
+        newUser.setAvatarUrl(DEFAULT_AVATAR_URL);
+
         User user = userService.createUser(newUser);
         userRoleService.assignRoleUserToNewUser(user);
 

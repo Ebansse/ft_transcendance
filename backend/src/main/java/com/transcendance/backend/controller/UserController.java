@@ -12,6 +12,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.transcendance.backend.config.AvatarProperties;
@@ -171,6 +173,24 @@ public class UserController {
 
         log.info("Avatar uploaded for user id: {}", user.getIdUser());
         return ResponseEntity.ok(toDto(user));
+    }
+
+    // TODO : Ajouter une méthode annotée @ExceptionHandler(MultipartException.class)
+    // qui prend l'exception en paramètre et retourne
+    // ResponseEntity.badRequest().body(...) avec un message clair (ex.
+    // "No file part in the request"). Pourquoi ici et pas un try/catch dans
+    // uploadAvatar : @RequestParam("file") MultipartFile file est résolu par
+    // Spring AVANT que le corps de la méthode ne s'exécute — si la requête
+    // n'est pas multipart du tout (ex. POST sans le champ "file"), Spring
+    // lève MultipartException à ce moment-là, donc aucun try/catch dans le
+    // corps de la méthode ne peut l'intercepter. Un @ExceptionHandler placé
+    // dans ce même controller, lui, s'applique à toutes les méthodes de la
+    // classe, y compris les erreurs levées pendant la résolution des
+    // arguments — ce qui comble exactement ce trou.
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<?> handleMissingFilePart(MultipartException e) {
+        log.warn("No file part in the request", e);
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
      /*
