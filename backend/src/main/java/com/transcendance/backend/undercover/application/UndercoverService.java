@@ -1,5 +1,6 @@
 package com.transcendance.backend.undercover.application;
 
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import com.transcendance.backend.undercover.domain.UndercoverVoteTally;
 import com.transcendance.backend.undercover.domain.UndercoverVoteTally.VoteResult;
 import com.transcendance.backend.undercover.domain.UndercoverWinCondition;
 import com.transcendance.backend.undercover.domain.UndercoverWordMatcher;
+import com.transcendance.backend.undercover.domain.UndercoverWordPair;
 import com.transcendance.backend.undercover.entity.UndercoverClueEntity;
 import com.transcendance.backend.undercover.entity.UndercoverMatchEntity;
 import com.transcendance.backend.undercover.entity.UndercoverParticipantEntity;
@@ -50,6 +52,8 @@ public class UndercoverService {
     public static final int MAX_CLUE_LENGTH = 50;
 
     public static final int MAX_CHAT_LENGTH = 300;
+
+    private final SecureRandom random = new SecureRandom();
 
     private final UndercoverMatchRepository matchRepository;
     private final UndercoverPlayerRepository playerRepository;
@@ -73,18 +77,23 @@ public class UndercoverService {
      *
      * @param userIds     the players to seat, in any order - seats are drawn
      * @param mode        the mode the match is labelled with
-     * @param customRules the rules to play by for CUSTOM; ignored otherwise,
-     *                    since a preset mode brings its own
+     * @param customRules     the rules to play by for CUSTOM; ignored otherwise,
+     *                        since a preset mode brings its own
+     * @param categories      the seeded categories to draw the words from,
+     *                        empty for any
+     * @param customWordPairs the host's own pairs; when not empty, the words
+     *                        are drawn from them and the categories are ignored
      * @return the saved match, participants included
      * @throws UndercoverException.InvalidRules    CUSTOM without rules, or rules
      *                                             that cannot seat these players
      * @throws UndercoverException.DuplicatePlayer the same player listed twice
      * @throws UndercoverException.AlreadyInMatch  a player still has a match in
      *                                             progress
-     * @throws UndercoverException.NoWordPair      no word pair was seeded
+     * @throws UndercoverException.NoWordPair      no word pair to draw from
      */
     @Transactional
-    public UndercoverMatchEntity createMatch(List<UUID> userIds, UndercoverGameMode mode, UndercoverRules customRules) {
+    public UndercoverMatchEntity createMatch(List<UUID> userIds, UndercoverGameMode mode, UndercoverRules customRules,
+            List<String> categories, List<UndercoverWordPair> customWordPairs) {
         UndercoverRules rules = rulesFor(mode, customRules);
 
         for (UUID userId : userIds) {
@@ -93,16 +102,15 @@ public class UndercoverService {
             }
         }
 
-        UndercoverWordPairEntity wordPair = wordPairRepository.findRandomWordPair()
-                .orElseThrow(UndercoverException.NoWordPair::new);
+        UndercoverWordPair wordPair = drawWordPair(categories, customWordPairs);
 
         List<SeatAssignment> assignments = dealer.dealAssignment(userIds, rules);
 
         UndercoverMatchEntity match = new UndercoverMatchEntity();
         match.setGameMode(mode);
         match.setRules(rules);
-        match.setAgentsWord(wordPair.getAgentsWord());
-        match.setUndercoverWord(wordPair.getUndercoverWord());
+        match.setAgentsWord(wordPair.agentsWord());
+        match.setUndercoverWord(wordPair.undercoverWord());
 
         Map<UUID, UndercoverPlayerEntity> players = getOrCreatePlayers(userIds);
 
@@ -679,6 +687,27 @@ public class UndercoverService {
             throw new UndercoverException.InvalidRules("A custom match needs its rules");
         }
         return customRules;
+    }
+
+    /**
+     * The words the match is played on: one of the host's pairs if he wrote
+     * any, a seeded one otherwise.
+     *
+     * A custom pair is flipped half the time, so its author cannot tell from
+     * the order he typed it in which side the undercover got.
+     */
+    private UndercoverWordPair drawWordPair(List<String> categories, List<UndercoverWordPair> customWordPairs) {
+        if (customWordPairs != null && !customWordPairs.isEmpty()) {
+            UndercoverWordPair pair = customWordPairs.get(random.nextInt(customWordPairs.size()));
+            return random.nextBoolean() ? pair : new UndercoverWordPair(pair.undercoverWord(), pair.agentsWord());
+        }
+
+        Optional<UndercoverWordPairEntity> seeded = categories == null || categories.isEmpty()
+                ? wordPairRepository.findRandomWordPair()
+                : wordPairRepository.findRandomWordPairInCategories(categories);
+        return seeded
+                .map(entity -> new UndercoverWordPair(entity.getAgentsWord(), entity.getUndercoverWord()))
+                .orElseThrow(UndercoverException.NoWordPair::new);
     }
 
     /**

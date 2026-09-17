@@ -63,6 +63,7 @@ public class UndercoverExceptionHandler {
 
     @ExceptionHandler({
             UndercoverException.InvalidRules.class,
+            UndercoverException.InvalidWordList.class,
             UndercoverException.DuplicatePlayer.class,
             UndercoverException.InvalidClue.class,
             UndercoverException.InvalidVoteTarget.class,

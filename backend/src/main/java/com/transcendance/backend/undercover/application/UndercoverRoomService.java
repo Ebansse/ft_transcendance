@@ -4,7 +4,9 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,8 +20,11 @@ import com.transcendance.backend.undercover.domain.UndercoverException;
 import com.transcendance.backend.undercover.domain.UndercoverGameMode;
 import com.transcendance.backend.undercover.domain.UndercoverRoom;
 import com.transcendance.backend.undercover.domain.UndercoverRules;
+import com.transcendance.backend.undercover.domain.UndercoverWordMatcher;
+import com.transcendance.backend.undercover.domain.UndercoverWordPair;
 import com.transcendance.backend.undercover.entity.UndercoverMatchEntity;
 import com.transcendance.backend.undercover.entity.repository.UndercoverMatchRepository;
+import com.transcendance.backend.undercover.entity.repository.UndercoverWordPairRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -45,6 +50,8 @@ public class UndercoverRoomService {
 
     private final UndercoverService undercoverService;
     private final UndercoverMatchRepository matchRepository;
+    private final UndercoverWordPairRepository wordPairRepository;
+    private final UndercoverWordMatcher wordMatcher;
     private final UndercoverPlayerChannel playerChannel;
     private final Clock clock;
 
@@ -127,6 +134,103 @@ public class UndercoverRoomService {
     }
 
     /**
+     * Picks what the words are drawn from: some seeded categories, or the
+     * host's own list, which then replaces the seeded pairs altogether.
+     *
+     * @param categories      null or empty for every category; kept while
+     *                        custom pairs are used, so going back to the seeded
+     *                        pairs finds them as they were
+     * @param customWordPairs null or empty to play on the seeded pairs
+     * @throws UndercoverException.NotInRoom       the user is in no room
+     * @throws UndercoverException.NotRoomHost     the user is not the host
+     * @throws UndercoverException.InvalidWordList an unknown category, or a
+     *                                             list that cannot be played
+     */
+    public synchronized UndercoverRoom.View chooseWords(UUID userId, List<String> categories,
+            List<UndercoverWordPair> customWordPairs) {
+        UndercoverRoom room = hostedRoom(userId);
+
+        List<UndercoverWordPair> pairs = cleanWordPairs(customWordPairs);
+        List<String> chosen = cleanCategories(categories);
+        room.chooseWords(chosen, pairs, clock.instant());
+
+        UndercoverRoom.View view = room.view();
+        playerChannel.roomUpdated(view);
+        return view;
+    }
+
+    /**
+     * @return every category a room can pick, sorted
+     */
+    public List<String> categories() {
+        return wordPairRepository.findCategories();
+    }
+
+    /**
+     * Drops blanks and repeats, and refuses a category nothing is seeded in.
+     */
+    private List<String> cleanCategories(List<String> categories) {
+        if (categories == null) {
+            return List.of();
+        }
+        List<String> known = wordPairRepository.findCategories();
+        List<String> chosen = categories.stream()
+                .filter(category -> category != null && !category.isBlank())
+                .distinct()
+                .toList();
+        for (String category : chosen) {
+            if (!known.contains(category)) {
+                throw new UndercoverException.InvalidWordList("Unknown category: " + category);
+            }
+        }
+        return chosen;
+    }
+
+    /**
+     * Trims every word and refuses the pairs a match could not be played on.
+     */
+    private List<UndercoverWordPair> cleanWordPairs(List<UndercoverWordPair> pairs) {
+        if (pairs == null) {
+            return List.of();
+        }
+        if (pairs.size() > UndercoverWordPair.MAX_CUSTOM_PAIRS) {
+            throw new UndercoverException.InvalidWordList(
+                    "A word list holds at most " + UndercoverWordPair.MAX_CUSTOM_PAIRS + " pairs");
+        }
+
+        List<UndercoverWordPair> cleaned = new ArrayList<>(pairs.size());
+        for (UndercoverWordPair pair : pairs) {
+            if (pair == null) {
+                throw new UndercoverException.InvalidWordList("A pair is missing");
+            }
+            String agentsWord = cleanWord(pair.agentsWord());
+            String undercoverWord = cleanWord(pair.undercoverWord());
+            // Compared the way clues are: two words that only differ by case
+            // or accents would hand everyone the same word.
+            if (wordMatcher.normalize(agentsWord).equals(wordMatcher.normalize(undercoverWord))) {
+                throw new UndercoverException.InvalidWordList(
+                        "The two words of a pair must differ: " + agentsWord);
+            }
+            cleaned.add(new UndercoverWordPair(agentsWord, undercoverWord));
+        }
+        return cleaned;
+    }
+
+    private String cleanWord(String word) {
+        String trimmed = word == null ? "" : word.trim();
+        // Normalized, since a word made of punctuation alone could never be
+        // said nor guessed.
+        if (wordMatcher.normalize(trimmed).isEmpty()) {
+            throw new UndercoverException.InvalidWordList("Every pair needs two words");
+        }
+        if (trimmed.length() > UndercoverWordPair.MAX_WORD_LENGTH) {
+            throw new UndercoverException.InvalidWordList(
+                    "A word is at most " + UndercoverWordPair.MAX_WORD_LENGTH + " characters long");
+        }
+        return trimmed;
+    }
+
+    /**
      * Starts the match with every member of the room, then closes the room.
      *
      * A refused start - rules that do not fit the table, a member who joined a
@@ -143,7 +247,8 @@ public class UndercoverRoomService {
         }
 
         UndercoverMatchEntity match = undercoverService.createMatch(room.getMembers(), room.getMode(),
-                room.getMode() == UndercoverGameMode.CUSTOM ? room.effectiveRules() : null);
+                room.getMode() == UndercoverGameMode.CUSTOM ? room.effectiveRules() : null,
+                room.getCategories(), room.getCustomWordPairs());
 
         roomsByCode.remove(room.getCode());
         room.getMembers().forEach(roomCodeByUser::remove);

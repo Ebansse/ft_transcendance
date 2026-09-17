@@ -42,6 +42,16 @@ export type UndercoverUser = {
   avatarUrl: string | null
 }
 
+/** Deux mots proches : celui des agents et celui de l'undercover. */
+export type UndercoverWordPair = {
+  agentsWord: string
+  undercoverWord: string
+}
+
+/** Bornes de la liste de mots perso, vérifiées aussi par le back. */
+export const MAX_CUSTOM_PAIRS = 50
+export const MAX_WORD_LENGTH = 40
+
 /** Miroir de `UndercoverRoomDto`. `rules` : les règles avec lesquelles la
  *  partie serait jouée si elle démarrait maintenant. */
 export type UndercoverRoom = {
@@ -52,6 +62,14 @@ export type UndercoverRoom = {
   members: UndercoverUser[]
   minPlayers: number
   maxPlayers: number
+  /** Catégories dans lesquelles les mots sont tirés ; vide pour toutes. Mises
+   *  de côté tant que la liste perso sert. */
+  categories: string[]
+  /** Nombre de paires de la liste perso ; 0 quand on joue sur les mots du jeu. */
+  customWordCount: number
+  /** La liste perso elle-même, envoyée à l'hôte seul : `null` pour les autres,
+   *  qui liraient sinon les mots avant la partie. */
+  customWordPairs: UndercoverWordPair[] | null
 }
 
 /** Un siège de la table. `role` reste `null` tant qu'il est secret : il est

@@ -39,7 +39,7 @@ public class UndercoverRoomController {
         if (user == null) {
             return unauthenticated("room creation");
         }
-        return ResponseEntity.ok(views.room(roomService.createRoom(user.getIdUser())));
+        return ResponseEntity.ok(views.room(roomService.createRoom(user.getIdUser()), user.getIdUser()));
     }
 
     @PostMapping("/join")
@@ -48,7 +48,7 @@ public class UndercoverRoomController {
         if (user == null) {
             return unauthenticated("room join");
         }
-        return ResponseEntity.ok(views.room(roomService.joinRoom(user.getIdUser(), request.code())));
+        return ResponseEntity.ok(views.room(roomService.joinRoom(user.getIdUser(), request.code()), user.getIdUser()));
     }
 
     @PostMapping("/leave")
@@ -68,7 +68,34 @@ public class UndercoverRoomController {
         }
         UndercoverGameMode mode = request.mode();
         return ResponseEntity.ok(views.room(roomService.configure(user.getIdUser(), mode,
-                mode == UndercoverGameMode.CUSTOM && request.rules() != null ? request.rules().toRules() : null)));
+                mode == UndercoverGameMode.CUSTOM && request.rules() != null ? request.rules().toRules() : null),
+                user.getIdUser()));
+    }
+
+    /**
+     * Picks the seeded categories, or replaces the seeded pairs with the host's
+     * own list.
+     */
+    @PutMapping("/words")
+    public ResponseEntity<?> chooseWords(@AuthenticationPrincipal User user,
+            @RequestBody UndercoverRequests.ChooseWords request) {
+        if (user == null) {
+            return unauthenticated("room words");
+        }
+        return ResponseEntity.ok(views.room(
+                roomService.chooseWords(user.getIdUser(), request.categories(), request.wordPairs()),
+                user.getIdUser()));
+    }
+
+    /**
+     * The categories a room can draw its words from.
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<?> categories(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return unauthenticated("category list");
+        }
+        return ResponseEntity.ok(roomService.categories());
     }
 
     /**
@@ -95,7 +122,7 @@ public class UndercoverRoomController {
             return unauthenticated("room lookup");
         }
         return ResponseEntity.ok(views.room(roomService.roomOf(user.getIdUser())
-                .orElseThrow(UndercoverException.NotInRoom::new)));
+                .orElseThrow(UndercoverException.NotInRoom::new), user.getIdUser()));
     }
 
     private ResponseEntity<?> unauthenticated(String action) {

@@ -19,6 +19,21 @@ export const MODE_DESCRIPTIONS: Record<UndercoverGameMode, string> = {
   CUSTOM: 'Nombre d’imposteurs, Mr White, tours, votes et chronos : vous réglez tout.',
 }
 
+/** Les catégories telles qu'elles sont enregistrées en base. Une catégorie
+ *  ajoutée plus tard sans libellé s'affiche telle quelle, avec une majuscule. */
+const CATEGORY_LABELS: Record<string, string> = {
+  general: 'Général',
+  anime: 'Anime',
+  foot: 'Foot',
+  'jeux video': 'Jeux vidéo',
+  tech: 'Tech',
+  sf: 'Science-fiction',
+}
+
+export function categoryLabel(category: string) {
+  return CATEGORY_LABELS[category] ?? category.charAt(0).toUpperCase() + category.slice(1)
+}
+
 export const ROLE_LABELS: Record<UndercoverRole, string> = {
   AGENT: 'Agent',
   UNDERCOVER: 'Undercover',

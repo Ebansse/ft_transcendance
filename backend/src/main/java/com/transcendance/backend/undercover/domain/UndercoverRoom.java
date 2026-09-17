@@ -20,6 +20,10 @@ public class UndercoverRoom {
     private UndercoverGameMode mode = UndercoverGameMode.CLASSIC;
     /** Only read for CUSTOM. */
     private UndercoverRules customRules = UndercoverRules.defaultsFor(UndercoverGameMode.CLASSIC);
+    /** The seeded categories words are drawn from; empty draws from all of them. */
+    private List<String> categories = List.of();
+    /** The host's own pairs. When there are any, they replace the seeded ones. */
+    private List<UndercoverWordPair> customWordPairs = List.of();
     private Instant lastActivity;
 
     public UndercoverRoom(String code, UUID hostId, Instant now) {
@@ -91,6 +95,25 @@ public class UndercoverRoom {
         return mode == UndercoverGameMode.CUSTOM ? customRules : UndercoverRules.defaultsFor(mode);
     }
 
+    /**
+     * @param categories      empty for every category; kept but unused while
+     *                        there are custom pairs
+     * @param customWordPairs empty to play on the seeded pairs
+     */
+    public void chooseWords(List<String> categories, List<UndercoverWordPair> customWordPairs, Instant now) {
+        this.categories = List.copyOf(categories);
+        this.customWordPairs = List.copyOf(customWordPairs);
+        lastActivity = now;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public List<UndercoverWordPair> getCustomWordPairs() {
+        return customWordPairs;
+    }
+
     public Instant getLastActivity() {
         return lastActivity;
     }
@@ -99,10 +122,13 @@ public class UndercoverRoom {
      * A copy safe to hand out of the lock.
      */
     public View view() {
-        return new View(code, hostId, getMembers(), mode, effectiveRules());
+        return new View(code, hostId, getMembers(), mode, effectiveRules(), categories, customWordPairs);
     }
 
+    /**
+     * Holds the host's custom pairs: only the host may be shown them.
+     */
     public record View(String code, UUID hostId, List<UUID> members, UndercoverGameMode mode,
-            UndercoverRules rules) {
+            UndercoverRules rules, List<String> categories, List<UndercoverWordPair> customWordPairs) {
     }
 }

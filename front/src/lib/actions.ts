@@ -6,6 +6,7 @@ import type {
   UndercoverRoom,
   UndercoverRules,
   UndercoverStats,
+  UndercoverWordPair,
 } from './undercoverClient.ts'
 
 /** Placeholder : les onglets et boutons pas encore branchés passent par ici. */
@@ -241,6 +242,18 @@ export function leaveUndercoverRoom() {
  *  quand le nombre de joueurs est connu. */
 export function configureUndercoverRoom(mode: UndercoverGameMode, rules: UndercoverRules | null) {
   return api.put<UndercoverRoom>('/undercover/rooms/settings', { mode, rules })
+}
+
+/** Réservé à l'hôte. Une liste `wordPairs` non vide remplace les mots du jeu ;
+ *  sinon les mots sont tirés dans `categories` (vide : toutes). Les catégories
+ *  sont gardées pendant que la liste perso sert. */
+export function chooseUndercoverWords(categories: string[], wordPairs: UndercoverWordPair[]) {
+  return api.put<UndercoverRoom>('/undercover/rooms/words', { categories, wordPairs })
+}
+
+/** Les catégories dans lesquelles une salle peut tirer ses mots. */
+export function getUndercoverCategories() {
+  return api.get<string[]>('/undercover/rooms/categories')
 }
 
 /** Réservé à l'hôte. Renvoie sa vue de la partie ; les autres membres la

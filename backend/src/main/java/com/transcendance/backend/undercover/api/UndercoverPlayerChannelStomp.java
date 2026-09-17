@@ -42,8 +42,9 @@ public class UndercoverPlayerChannelStomp implements UndercoverPlayerChannel {
 
     @Override
     public void roomUpdated(UndercoverRoom.View room) {
-        UndercoverRoomDto dto = views.room(room);
-        room.members().forEach(member -> push(member, ROOM_DESTINATION, dto));
+        // The host's copy holds the custom word list, so one copy per member.
+        Map<UUID, User> users = views.usersById(room.members());
+        room.members().forEach(member -> push(member, ROOM_DESTINATION, UndercoverRoomDto.of(room, users, member)));
     }
 
     @Override

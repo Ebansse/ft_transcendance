@@ -108,10 +108,12 @@ public class SecurityConfig {
                                                                 "/api/undercover/matches/{matchId}/chat")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 .requestMatchers(HttpMethod.PUT,
-                                                                "/api/undercover/rooms/settings")
+                                                                "/api/undercover/rooms/settings",
+                                                                "/api/undercover/rooms/words")
                                                 .hasAnyRole("USER", "ADMIN")
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/undercover/rooms/me",
+                                                                "/api/undercover/rooms/categories",
                                                                 "/api/undercover/matches/me",
                                                                 "/api/undercover/stats/me")
                                                 .hasAnyRole("USER", "ADMIN")

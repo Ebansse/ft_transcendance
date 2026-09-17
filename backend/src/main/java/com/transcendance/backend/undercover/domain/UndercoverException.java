@@ -34,6 +34,12 @@ public abstract class UndercoverException extends RuntimeException {
      * The word pair table is empty - a seeding problem, not something a player
      * did.
      */
+    public static class InvalidWordList extends UndercoverException {
+        public InvalidWordList(String message) {
+            super(message);
+        }
+    }
+
     public static class NoWordPair extends UndercoverException {
         public NoWordPair() {
             super("No word pair available to start a match");

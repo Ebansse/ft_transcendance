@@ -38,8 +38,12 @@ public class UndercoverViews {
                 .collect(Collectors.toMap(User::getIdUser, Function.identity()));
     }
 
-    public UndercoverRoomDto room(UndercoverRoom.View room) {
-        return UndercoverRoomDto.of(room, usersById(room.members()));
+    /**
+     * @param viewerId the member the room is shown to: only the host gets the
+     *                 custom word list
+     */
+    public UndercoverRoomDto room(UndercoverRoom.View room, UUID viewerId) {
+        return UndercoverRoomDto.of(room, usersById(room.members()), viewerId);
     }
 
     /**

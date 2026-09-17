@@ -1,7 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './Button.tsx'
-import type { UndercoverGameMode, UndercoverRoom, UndercoverRules } from '../lib/undercoverClient.ts'
-import { MODE_DESCRIPTIONS, MODE_LABELS } from '../lib/undercoverLabels.ts'
+import { getUndercoverCategories } from '../lib/actions.ts'
+import {
+  MAX_CUSTOM_PAIRS,
+  MAX_WORD_LENGTH,
+  type UndercoverGameMode,
+  type UndercoverRoom,
+  type UndercoverRules,
+  type UndercoverWordPair,
+} from '../lib/undercoverClient.ts'
+import { categoryLabel, MODE_DESCRIPTIONS, MODE_LABELS } from '../lib/undercoverLabels.ts'
 import s from './UndercoverRoomPanel.module.css'
 
 type UndercoverRoomPanelProps = {
@@ -9,6 +17,7 @@ type UndercoverRoomPanelProps = {
   myId: string
   pending: boolean
   onConfigure: (mode: UndercoverGameMode, rules: UndercoverRules | null) => Promise<boolean>
+  onChooseWords: (categories: string[], wordPairs: UndercoverWordPair[]) => Promise<boolean>
   onStart: () => void
   onLeave: () => void
 }
@@ -20,6 +29,7 @@ export function UndercoverRoomPanel({
   myId,
   pending,
   onConfigure,
+  onChooseWords,
   onStart,
   onLeave,
 }: UndercoverRoomPanelProps) {
@@ -103,6 +113,19 @@ export function UndercoverRoomPanel({
             <p className={s.hint}>{MODE_DESCRIPTIONS[room.mode]}</p>
             <RulesSummary rules={room.rules} />
           </>
+        )}
+
+        <p className={s.blockTitle}>Mots</p>
+        {isHost ? (
+          <HostWords room={room} pending={pending} onChooseWords={onChooseWords} />
+        ) : (
+          <p className={s.hint}>
+            {room.customWordCount > 0
+              ? `Liste de l’hôte · ${room.customWordCount} paire${room.customWordCount > 1 ? 's' : ''}`
+              : room.categories.length > 0
+                ? `Catégories : ${room.categories.map(categoryLabel).join(', ')}`
+                : 'Toutes les catégories'}
+          </p>
         )}
       </section>
     </div>
@@ -233,6 +256,171 @@ function HostSettings({ room, pending, onConfigure }: HostSettingsProps) {
             {saved ? 'Réglages enregistrés ✓' : 'Enregistrer les réglages'}
           </Button>
           <p className={s.hint}>Les règles sont vérifiées au lancement, selon le nombre de joueurs.</p>
+        </form>
+      )}
+    </>
+  )
+}
+
+/** Une paire par ligne, les deux mots séparés par ce caractère. */
+const PAIR_SEPARATOR = '/'
+
+const PAIR_EXAMPLE = ['Naruto/Sasuke', 'Pizza/Burger', 'Messi/Ronaldo'].join('\n')
+
+/** Lit la liste saisie. Les lignes vides sont ignorées ; toute autre ligne doit
+ *  donner deux mots, sinon elle est signalée. Le back revérifie tout. */
+function parseWordList(text: string) {
+  const pairs: UndercoverWordPair[] = []
+  const errors: string[] = []
+
+  text.split('\n').forEach((raw, index) => {
+    const line = raw.trim()
+    if (line === '') return
+
+    const words = line.split(PAIR_SEPARATOR).map((word) => word.trim())
+    const where = `Ligne ${index + 1}`
+    if (words.length !== 2 || words[0] === '' || words[1] === '') {
+      errors.push(`${where} : écrivez deux mots séparés par « ${PAIR_SEPARATOR} ».`)
+    } else if (words.some((word) => word.length > MAX_WORD_LENGTH)) {
+      errors.push(`${where} : ${MAX_WORD_LENGTH} caractères au plus par mot.`)
+    } else if (words[0].toLowerCase() === words[1].toLowerCase()) {
+      errors.push(`${where} : les deux mots doivent être différents.`)
+    } else {
+      pairs.push({ agentsWord: words[0], undercoverWord: words[1] })
+    }
+  })
+
+  if (pairs.length > MAX_CUSTOM_PAIRS) {
+    errors.push(`${MAX_CUSTOM_PAIRS} paires au maximum, ${pairs.length} saisies.`)
+  }
+  return { pairs, errors }
+}
+
+function toWordList(pairs: UndercoverWordPair[]) {
+  return pairs.map((pair) => `${pair.agentsWord}${PAIR_SEPARATOR}${pair.undercoverWord}`).join('\n')
+}
+
+/** Au-delà, les erreurs suivantes attendent que les premières soient corrigées. */
+const SHOWN_ERRORS = 5
+
+type HostWordsProps = {
+  room: UndercoverRoom
+  pending: boolean
+  onChooseWords: (categories: string[], wordPairs: UndercoverWordPair[]) => Promise<boolean>
+}
+
+function HostWords({ room, pending, onChooseWords }: HostWordsProps) {
+  const savedPairs = room.customWordPairs ?? []
+  const [categories, setCategories] = useState<string[]>([])
+  const [useCustom, setUseCustom] = useState(room.customWordCount > 0)
+  /* Brouillon local : le texte reste là si l'hôte repasse aux mots du jeu puis
+     revient à sa liste. */
+  const [text, setText] = useState(() => toWordList(savedPairs))
+
+  useEffect(() => {
+    /* Sans la liste, on peut toujours jouer : toutes les catégories ou sa liste. */
+    getUndercoverCategories()
+      .then(setCategories)
+      .catch(() => {})
+  }, [])
+
+  const toggleCategory = (category: string) => {
+    const next = room.categories.includes(category)
+      ? room.categories.filter((chosen) => chosen !== category)
+      : [...room.categories, category]
+    void onChooseWords(next, [])
+  }
+
+  const pickGameWords = () => {
+    setUseCustom(false)
+    if (savedPairs.length > 0) void onChooseWords(room.categories, [])
+  }
+
+  const { pairs, errors } = parseWordList(text)
+  const dirty = JSON.stringify(pairs) !== JSON.stringify(savedPairs)
+  /* Les catégories cochées restent affichées même si le chargement a échoué. */
+  const shownCategories = [...new Set([...categories, ...room.categories])]
+
+  return (
+    <>
+      <div className={s.sources} role="group" aria-label="Origine des mots">
+        <Button variant={useCustom ? 'secondary' : 'primary'} fullWidth disabled={pending} onClick={pickGameWords}>
+          Mots du jeu
+        </Button>
+        <Button
+          variant={useCustom ? 'primary' : 'secondary'}
+          fullWidth
+          disabled={pending}
+          onClick={() => setUseCustom(true)}
+        >
+          Ma liste
+        </Button>
+      </div>
+
+      {!useCustom ? (
+        <fieldset className={s.categories}>
+          <legend className={s.label}>Catégories</legend>
+          <div className={s.chips}>
+            {shownCategories.map((category) => (
+              <label key={category} className={s.chip}>
+                <input
+                  type="checkbox"
+                  checked={room.categories.includes(category)}
+                  disabled={pending}
+                  onChange={() => toggleCategory(category)}
+                />
+                <span>{categoryLabel(category)}</span>
+              </label>
+            ))}
+          </div>
+          <p className={s.hint}>
+            {room.categories.length === 0
+              ? 'Aucune case cochée : les mots viennent de toutes les catégories.'
+              : `Les mots sont tirés parmi ${room.categories.length} catégorie${room.categories.length > 1 ? 's' : ''}.`}
+          </p>
+        </fieldset>
+      ) : (
+        <form
+          className={s.form}
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (pairs.length > 0 && errors.length === 0 && dirty) void onChooseWords(room.categories, pairs)
+          }}
+        >
+          <label className={s.field}>
+            <span className={s.label}>Une paire par ligne : mot1{PAIR_SEPARATOR}mot2</span>
+            <textarea
+              className={s.wordList}
+              rows={8}
+              value={text}
+              placeholder={PAIR_EXAMPLE}
+              spellCheck={false}
+              onChange={(event) => setText(event.target.value)}
+            />
+          </label>
+
+          {errors.length > 0 && (
+            <ul className={s.errors}>
+              {errors.slice(0, SHOWN_ERRORS).map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          )}
+
+          <p className={s.hint}>
+            {pairs.length} paire{pairs.length > 1 ? 's' : ''}. Chaque partie en tire une au hasard, et le
+            camp qui reçoit chaque mot est lui aussi tiré au sort.
+            {savedPairs.length === 0 && ' Tant que la liste n’est pas enregistrée, les mots du jeu restent utilisés.'}
+          </p>
+
+          <Button
+            type="submit"
+            variant="primary"
+            fullWidth
+            disabled={pending || pairs.length === 0 || errors.length > 0 || !dirty}
+          >
+            {!dirty && savedPairs.length > 0 ? 'Liste enregistrée ✓' : 'Enregistrer la liste'}
+          </Button>
         </form>
       )}
     </>

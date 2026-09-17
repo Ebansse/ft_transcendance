@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import {
+  chooseUndercoverWords,
   configureUndercoverRoom,
   createUndercoverRoom,
   getMyUndercoverMatch,
@@ -26,6 +27,7 @@ import {
   type UndercoverRoom,
   type UndercoverRules,
   type UndercoverStats,
+  type UndercoverWordPair,
 } from '../lib/undercoverClient.ts'
 import { useSocket } from './socketContext.ts'
 
@@ -192,6 +194,15 @@ export function useUndercover() {
     [run],
   )
 
+  const chooseWords = useCallback(
+    async (categories: string[], wordPairs: UndercoverWordPair[]) => {
+      const updated = await run(() => chooseUndercoverWords(categories, wordPairs), 'Mots refusés.')
+      if (updated) setRoom(updated)
+      return updated !== undefined
+    },
+    [run],
+  )
+
   const start = useCallback(async () => {
     const started = await run(startUndercoverMatch, 'Lancement impossible.')
     if (started) {
@@ -286,6 +297,7 @@ export function useUndercover() {
     joinRoom,
     leaveRoom,
     configure,
+    chooseWords,
     start,
     clue,
     vote,

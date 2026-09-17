@@ -101,6 +101,7 @@ export function UndercoverPage({ onNavigate }: UndercoverPageProps) {
           myId={user.id}
           pending={pending}
           onConfigure={undercover.configure}
+          onChooseWords={undercover.chooseWords}
           onStart={() => void undercover.start()}
           onLeave={() => void undercover.leaveRoom()}
         />
