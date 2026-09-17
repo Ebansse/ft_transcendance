@@ -113,8 +113,6 @@ public class Oauth42Service {
         String passwd = UUID.randomUUID().toString();
         User newUser = new User(username, info.getEmail(), passwd);
 
-        // This constructor doesn't set a default avatar on its own, unlike
-        // RegisterService's own signup path.
         newUser.setAvatarUrl(DEFAULT_AVATAR_URL);
 
         User user = userService.createUser(newUser);
