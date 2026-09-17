@@ -176,18 +176,11 @@ public class UserController {
         return ResponseEntity.ok(toDto(user));
     }
 
-    // TODO : Ajouter une méthode annotée @ExceptionHandler(MultipartException.class)
-    // qui prend l'exception en paramètre et retourne
-    // ResponseEntity.badRequest().body(...) avec un message clair (ex.
-    // "No file part in the request"). Pourquoi ici et pas un try/catch dans
-    // uploadAvatar : @RequestParam("file") MultipartFile file est résolu par
-    // Spring AVANT que le corps de la méthode ne s'exécute — si la requête
-    // n'est pas multipart du tout (ex. POST sans le champ "file"), Spring
-    // lève MultipartException à ce moment-là, donc aucun try/catch dans le
-    // corps de la méthode ne peut l'intercepter. Un @ExceptionHandler placé
-    // dans ce même controller, lui, s'applique à toutes les méthodes de la
-    // classe, y compris les erreurs levées pendant la résolution des
-    // arguments — ce qui comble exactement ce trou.
+    /**
+     * @RequestParam("file") is resolved before uploadAvatar's body runs, so
+     * a request with no "file" part at all throws MultipartException before
+     * any try/catch inside that method could ever catch it.
+     */
     @ExceptionHandler(MultipartException.class)
     public ResponseEntity<?> handleMissingFilePart(MultipartException e) {
         log.warn("No file part in the request", e);

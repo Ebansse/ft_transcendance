@@ -113,13 +113,8 @@ public class Oauth42Service {
         String passwd = UUID.randomUUID().toString();
         User newUser = new User(username, info.getEmail(), passwd);
 
-        // TODO : Poser newUser.setAvatarUrl(DEFAULT_AVATAR_URL) ici, avant
-        // userService.createUser(newUser) ci-dessous. RegisterService le fait
-        // déjà pour l'inscription classique — ce constructeur User(userName,
-        // email, password) ne pose pas d'avatar par défaut tout seul, donc
-        // sans ça, un compte créé via 42 se retrouve avec avatarUrl == null
-        // (ce qui a fait planter DeleteUserService.deleteUser avant qu'on
-        // ajoute la garde null/blank au TODO 3 de la suppression de compte).
+        // This constructor doesn't set a default avatar on its own, unlike
+        // RegisterService's own signup path.
         newUser.setAvatarUrl(DEFAULT_AVATAR_URL);
 
         User user = userService.createUser(newUser);
