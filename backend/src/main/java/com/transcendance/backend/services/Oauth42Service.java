@@ -20,9 +20,7 @@ import com.transcendance.backend.model.User;
 public class Oauth42Service {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(Oauth42Service.class);
-    // Same default RegisterService gives a normal signup — kept as a
-    // separate constant rather than a shared one, this app has just these
-    // two call sites.
+
     private static final String DEFAULT_AVATAR_URL = "/default-avatar.png";
 
     private final Oauth42Properties properties;
