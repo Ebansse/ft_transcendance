@@ -1,6 +1,5 @@
 package com.transcendance.backend.undercover.application;
 
-import java.util.UUID;
 
 import com.transcendance.backend.undercover.domain.UndercoverRoom;
 
