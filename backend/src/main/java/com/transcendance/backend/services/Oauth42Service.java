@@ -21,7 +21,7 @@ public class Oauth42Service {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(Oauth42Service.class);
 
-    private static final String DEFAULT_AVATAR_URL = "/default-avatar.png";
+    private static final String DEFAULT_AVATAR_URL = "/api/default-avatar.png";
 
     private final Oauth42Properties properties;
     private final UserService userService;
