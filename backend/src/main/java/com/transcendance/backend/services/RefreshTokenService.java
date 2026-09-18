@@ -7,6 +7,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.List;
 
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,8 @@ import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.model.RefreshToken;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.repository.RefreshTokenRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class RefreshTokenService {
@@ -43,9 +46,12 @@ public class RefreshTokenService {
      * @param user the user for whom to generate a refresh token
      * @return the generated refresh token
      */
+    @Transactional
     public String generateRefreshToken(User user) {
 
         log.info("Generating refresh token for user: {}", user.getEmail());
+
+        revokeActiveSessions(user);
 
         String rawToken = generateSecureRandomToken();
         String hashedToken = hashToken(rawToken);
@@ -61,6 +67,19 @@ public class RefreshTokenService {
 
         log.info("Refresh token generated for user: {}", user.getEmail());
         return rawToken;
+    }
+
+    /**
+     * revokes every refresh token still active for this user
+     *
+     * @param user the user whose other active sessions must be revoked
+     */
+    private void revokeActiveSessions(User user) {
+        List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserAndRevokedFalse(user);
+        for (RefreshToken refreshToken : refreshTokenList) {
+            refreshToken.setRevoked(true);
+        }
+        refreshTokenRepository.saveAll(refreshTokenList);
     }
 
     /**
