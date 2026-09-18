@@ -352,6 +352,11 @@ public class FriendListService {
 
         List<FriendListDto> friendListDtos = new ArrayList<>();
         for (FriendList friendList : friendLists) {
+
+            if (friendList.getStatus() == FriendshipStatus.BLOCKED
+                 && !user.getIdUser().equals(friendList.getBlockedBy()))
+                continue;
+
             UUID targetId;
             if (friendList.getUserId1().equals(user.getIdUser())) {
                 targetId = friendList.getUserId2();
