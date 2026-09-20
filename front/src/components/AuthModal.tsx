@@ -25,12 +25,14 @@ const WORDING = {
     title: 'Rejoindre la table',
     submit: "S'inscrire",
     submitting: 'Création…',
+    oauth42: "S'inscrire via 42",
     firstField: '#signup-username',
   },
   login: {
     title: 'Reprendre la partie',
     submit: 'Se connecter',
     submitting: 'Connexion…',
+    oauth42: 'Se connecter via 42',
     firstField: '#login-email',
   },
 }
@@ -42,9 +44,10 @@ type AuthModalProps = {
   onClose: () => void
   onSignup: (values: SignupForm) => Promise<void>
   onLogin: (values: LoginForm) => Promise<void>
+  onOAuth42?: () => void
 }
 
-export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLogin }: AuthModalProps) {
+export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLogin, onOAuth42 }: AuthModalProps) {
   const isSignup = mode === 'signup'
   const wording = isSignup ? WORDING.signup : WORDING.login
 
@@ -188,6 +191,9 @@ export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLog
         <div className={s.submit}>
           <Button type="submit" variant="primary" fullWidth disabled={pending}>
             {pending ? wording.submitting : wording.submit}
+          </Button>
+          <Button variant="42" fullWidth disabled={pending} onClick={onOAuth42}>
+            {wording.oauth42}
           </Button>
         </div>
       </form>

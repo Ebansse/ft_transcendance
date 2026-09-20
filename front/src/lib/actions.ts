@@ -241,3 +241,11 @@ export function getMyChessStats() {
 export function getMyChessHistory() {
   return api.get<ChessHistoryDto[]>('/chess/historique/me')
 }
+
+/** Lance la connexion via 42. `GET /auth/42/login` répond une redirection (302)
+ *  vers l'intra : il faut donc une vraie navigation du navigateur, pas un fetch,
+ *  qui la suivrait en CORS. Le back renvoie ensuite sur le front avec les cookies
+ *  de session posés (ou `?twoFactor=required` si le compte a l'A2F). */
+export function loginWith42() {
+  window.location.href = '/api/auth/42/login'
+}

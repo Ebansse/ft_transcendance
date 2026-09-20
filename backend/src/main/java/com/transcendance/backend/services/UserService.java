@@ -32,7 +32,7 @@ public class UserService {
 
     // Method to check if the username format is invalid
     public boolean isInvalidUsername(String username) {
-        String usernameRegex = "^[A-Za-z0-9_]{3,20}$"; // Example: 3-20 characters, alphanumeric and underscores
+        String usernameRegex = "^[A-Za-z0-9_-]{3,20}$"; // Example: 3-20 characters, alphanumeric, underscores and hyphens
         return !username.matches(usernameRegex);
     }
 

@@ -122,3 +122,16 @@
   color: var(--bone);
   background: transparent;
 }
+
+/* Connexion 42 : fond blanc, texte noir — les couleurs de l'intra. */
+.ft42 {
+  color: #000;
+  background: #fff;
+  border-color: #fff;
+  font-weight: 600;
+}
+
+.ft42:hover:not(:disabled) {
+  background: #e8e8e8;
+  border-color: #e8e8e8;
+}

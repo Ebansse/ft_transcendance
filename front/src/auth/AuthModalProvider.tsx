@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
 import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
 import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
-import { getMyProfile } from '../lib/actions.ts'
+import { getMyProfile, loginWith42 } from '../lib/actions.ts'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
 import { api, ApiError } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
@@ -140,6 +140,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
         onClose={closeModal}
         onSignup={signup}
         onLogin={login}
+        onOAuth42={loginWith42}
       />
       {/* La clé vide le champ du code à chaque nouvelle connexion. */}
       <TwoFactorModal

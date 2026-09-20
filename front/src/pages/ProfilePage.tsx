@@ -18,7 +18,7 @@ import type { TwoFactorSetupDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './ProfilePage.module.css'
 
-const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/
+const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 const EMAIL_RE = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 const AVATAR_TYPES = ['image/png', 'image/jpeg']
@@ -128,7 +128,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     const mail = email.trim()
 
     const next: Record<string, string> = {}
-    if (!USERNAME_RE.test(name)) next.userName = '3 à 20 caractères : lettres, chiffres ou _.'
+    if (!USERNAME_RE.test(name)) next.userName = '3 à 20 caractères : lettres, chiffres, _ ou -.'
     if (!EMAIL_RE.test(mail)) next.email = 'Adresse e-mail invalide.'
     setIdErrors(next)
     setIdError(null)
