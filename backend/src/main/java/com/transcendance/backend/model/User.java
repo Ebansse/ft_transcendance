@@ -64,6 +64,11 @@ public class User {
 
     /** Renseigne uniquement sur les comptes lies a 42 ; null partout ailleurs,
      *  et Postgres tolere plusieurs null sous une contrainte unique. */
+    /** False sur un compte cree par le flux 42 : son mot de passe est un UUID
+     *  aleatoire jamais communique, donc le delier reviendrait a l'enfermer dehors. */
+    @Column(name = "password_set", nullable = false, columnDefinition = "boolean default true")
+    private boolean passwordSet = true;
+
     @Column(name = "oauth42_id", unique = true)
     private Long oauth42Id;
 

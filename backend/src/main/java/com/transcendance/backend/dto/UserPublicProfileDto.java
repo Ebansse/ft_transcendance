@@ -19,5 +19,6 @@ public class UserPublicProfileDto {
         private String          role;
         // Only filled on /api/users/me: null on other users' profiles.
         private Boolean         twoFactorEnabled;
+        private Boolean         oauth42Linked;
         //private UserStatsDto    stats;
 }

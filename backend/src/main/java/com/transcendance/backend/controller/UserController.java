@@ -112,6 +112,7 @@ public class UserController {
 
         UserPublicProfileDto dto = toDto(user);
         dto.setTwoFactorEnabled(user.isTwoFactorEnabled());
+        dto.setOauth42Linked(user.getOauth42Id() != null);
 
         log.info("Public profile fetched for user: {}", user.getIdUser());
         return ResponseEntity.ok(dto);

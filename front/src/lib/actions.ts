@@ -17,6 +17,8 @@ export type UserPublicProfileDto = {
   role: string | null
   /** Renseigné uniquement par `/users/me` : `null` sur le profil d'un autre. */
   twoFactorEnabled: boolean | null
+  /** Idem : `true` si un compte 42 est rattaché à ce compte local. */
+  oauth42Linked: boolean | null
 }
 
 /** Réponse du setup A2F : le QR code (PNG en data URI) et le secret en clair,
@@ -248,4 +250,18 @@ export function getMyChessHistory() {
  *  de session posés (ou `?twoFactor=required` si le compte a l'A2F). */
 export function loginWith42() {
   window.location.href = '/api/auth/42/login'
+}
+
+/** Rattache son compte 42 au compte local déjà connecté. Même contrainte que
+ *  `loginWith42` — le back répond une redirection vers l'intra — et c'est le seul
+ *  chemin pour réconcilier les deux comptes, le callback refusant de fusionner sur
+ *  l'e-mail. Le retour se fait sur `/profile?linked=42` ou `?error=…`. */
+export function link42Account() {
+  window.location.href = '/api/auth/42/link'
+}
+
+/** Détache le compte 42. Le back répond 409 si le compte est né du flux 42 : son
+ *  mot de passe est un UUID aléatoire, le délier le rendrait inaccessible. */
+export function unlink42Account() {
+  return api.post<void>('/auth/42/unlink')
 }

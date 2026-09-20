@@ -45,9 +45,20 @@ type AuthModalProps = {
   onSignup: (values: SignupForm) => Promise<void>
   onLogin: (values: LoginForm) => Promise<void>
   onOAuth42?: () => void
+  /** Message venu du back (retour d'OAuth 42 raté), affiché au-dessus du bouton. */
+  notice?: string | null
 }
 
-export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLogin, onOAuth42 }: AuthModalProps) {
+export function AuthModal({
+  isOpen,
+  mode,
+  onModeChange,
+  onClose,
+  onSignup,
+  onLogin,
+  onOAuth42,
+  notice,
+}: AuthModalProps) {
   const isSignup = mode === 'signup'
   const wording = isSignup ? WORDING.signup : WORDING.login
 
@@ -182,9 +193,9 @@ export function AuthModal({ isOpen, mode, onModeChange, onClose, onSignup, onLog
           </>
         )}
 
-        {globalError && (
+        {(globalError ?? notice) && (
           <p className={s.globalError} role="alert">
-            {globalError}
+            {globalError ?? notice}
           </p>
         )}
 
