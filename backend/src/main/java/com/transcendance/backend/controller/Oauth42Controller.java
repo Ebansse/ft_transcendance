@@ -125,6 +125,11 @@ public class Oauth42Controller {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .build();
     
+        } catch (IllegalStateException e) {
+            log.warn("42 OAuth callback refused: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(properties.getFrontendRedirectUri() + "?error=email_already_registered"))
+                .build();
         } catch (RestClientException e) {
             log.warn("42 OAuth callback failed: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.FOUND)

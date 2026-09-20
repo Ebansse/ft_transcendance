@@ -42,6 +42,12 @@ public class UserService {
         return userRepository.findByEmail(email);
     }
 
+    // Method to check if a 42 account is already linked to a local user
+    public Optional<User> getUserByOauth42Id(Long oauth42Id) {
+        Log.debug("Fetching user by 42 id: {}", oauth42Id);
+        return userRepository.findByOauth42Id(oauth42Id);
+    }
+
     // Method to fetch a user by their id
     public Optional<User> getUserById(UUID idUser) {
         Log.debug("Fetching user by id: {}", idUser);

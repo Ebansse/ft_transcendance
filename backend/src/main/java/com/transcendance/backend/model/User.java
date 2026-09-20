@@ -62,6 +62,11 @@ public class User {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
+    /** Renseigne uniquement sur les comptes lies a 42 ; null partout ailleurs,
+     *  et Postgres tolere plusieurs null sous une contrainte unique. */
+    @Column(name = "oauth42_id", unique = true)
+    private Long oauth42Id;
+
     @Column(name = "two_factor_secret")
     private String totpSecret;
 

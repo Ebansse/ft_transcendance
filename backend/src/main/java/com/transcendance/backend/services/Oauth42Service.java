@@ -95,11 +95,19 @@ public class Oauth42Service {
     public User findOrCreateUser(Oauth42UserInfoDto info) {
         log.info("Looking up local account for 42 login: {}", info.getLogin());
 
-        Optional<User> userOpt = userService.getUserByEmail(info.getEmail());
+        Optional<User> userOpt = userService.getUserByOauth42Id(info.getId());
         if (userOpt.isPresent()) {
-            log.info("Existing local account found for email: {}", info.getEmail());
+            log.info("Existing local account found for 42 id: {}", info.getId());
             User user = userOpt.get();
             return user;
+        }
+
+        // Un compte local porte deja cet email sans etre lie a ce compte 42 : le
+        // rattacher ici reviendrait a ouvrir une session sur un compte dont on
+        // n'a pas prouve la possession, les emails du register n'etant pas verifies.
+        if (userService.getUserByEmail(info.getEmail()).isPresent()) {
+            log.warn("42 login refused: email {} already belongs to a local account", info.getEmail());
+            throw new IllegalStateException("email already registered");
         }
 
         String username = info.getLogin();
@@ -112,6 +120,8 @@ public class Oauth42Service {
         User newUser = new User(username, info.getEmail(), passwd);
 
         newUser.setAvatarUrl(DEFAULT_AVATAR_URL);
+
+        newUser.setOauth42Id(info.getId());
 
         User user = userService.createUser(newUser);
         userRoleService.assignRoleUserToNewUser(user);
