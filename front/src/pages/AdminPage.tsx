@@ -10,15 +10,12 @@ import { Tableau, type Colonne } from '../components/Tableau.tsx'
 import {
   deleteUser,
   getAllUsers,
-  handleAction,
   updateUser,
   type UpdateUserPayload,
   type UserPublicProfileDto,
 } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './AdminPage.module.css'
-
-const PLACEHOLDER_ACTIONS = ['test3', 'test4']
 
 function formatDate(value: string | null) {
   if (!value) return '—'
@@ -125,11 +122,6 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
           items={[
             { key: 'edit', label: 'Edit', onSelect: () => askEdit(u) },
             { key: 'delete', label: 'Delete', onSelect: () => askDelete(u) },
-            ...PLACEHOLDER_ACTIONS.map((action) => ({
-              key: action,
-              label: action,
-              onSelect: () => handleAction(`admin:user:${action}:${u.id}`),
-            })),
           ]}
         />
       ),

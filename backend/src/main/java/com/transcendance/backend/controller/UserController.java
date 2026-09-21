@@ -12,6 +12,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.transcendance.backend.config.AvatarProperties;
@@ -110,6 +112,7 @@ public class UserController {
 
         UserPublicProfileDto dto = toDto(user);
         dto.setTwoFactorEnabled(user.isTwoFactorEnabled());
+        dto.setOauth42Linked(user.getOauth42Id() != null);
 
         log.info("Public profile fetched for user: {}", user.getIdUser());
         return ResponseEntity.ok(dto);
@@ -172,6 +175,17 @@ public class UserController {
 
         log.info("Avatar uploaded for user id: {}", user.getIdUser());
         return ResponseEntity.ok(toDto(user));
+    }
+
+    /**
+     * @RequestParam("file") is resolved before uploadAvatar's body runs, so
+     * a request with no "file" part at all throws MultipartException before
+     * any try/catch inside that method could ever catch it.
+     */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<?> handleMissingFilePart(MultipartException e) {
+        log.warn("No file part in the request", e);
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
 
      /*

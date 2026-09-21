@@ -149,6 +149,12 @@
   --btn-font-size: 0.9rem;
 }
 
+/* --- Compte 42 --- */
+
+.linkActions {
+  composes: twoFactorActions;
+}
+
 /* --- États partagés --- */
 
 .hint {

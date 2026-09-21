@@ -13,7 +13,7 @@ public class RegisterService {
 
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(RegisterService.class);
 
-    private static final String DEFAULT_AVATAR_URL = "/default-avatar.png";
+    private static final String DEFAULT_AVATAR_URL = "/api/default-avatar.png";
 
     private final UserService userService;
     private final UserRoleService userRoleService;

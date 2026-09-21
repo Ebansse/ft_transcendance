@@ -104,6 +104,8 @@
 }
 
 .submit {
+  display: grid;
+  gap: 0.55rem;
   margin-top: 0.4rem;
 
   /* Contrat Button : l'action de validation est plus généreuse. */

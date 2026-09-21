@@ -55,12 +55,14 @@ public class SecurityConfig {
 
                                                 // --- USER et ADMIN ---
                                                 .requestMatchers(HttpMethod.GET,
+                                                                "/api/auth/42/link",
                                                                 "/api/users/me",
                                                                 "/api/users/{idUser}",
                                                                 "/api/friend-list/me/list")
                                                 .hasAnyRole("USER", "ADMIN")
 
                                                 .requestMatchers(HttpMethod.POST,
+                                                                "/api/auth/42/unlink",
                                                                 "/api/friend-list/send-request",
                                                                 "/api/friend-list/{idUser}/accept",
                                                                 "/api/friend-list/{idUser}/decline",

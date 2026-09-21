@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
 import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
 import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
-import { getMyProfile } from '../lib/actions.ts'
+import { getMyProfile, loginWith42 } from '../lib/actions.ts'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
 import { api, ApiError } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
@@ -15,12 +15,26 @@ type LoginResponse = string | { twoFactorRequired: true }
 /** Retour d'OAuth 42 sur un compte A2F : le back redirige avec `?twoFactor=required`. */
 const OAUTH_TWO_FACTOR = new URLSearchParams(window.location.search).get('twoFactor') === 'required'
 
+/** Retour d'OAuth 42 en échec. Le back refuse de rattacher un compte 42 à un compte
+ *  local de même e-mail : l'e-mail du register n'étant pas vérifié, la fusion
+ *  automatique offrirait le compte au premier inscrit. */
+const OAUTH_ERROR = new URLSearchParams(window.location.search).get('error')
+
+const OAUTH_ERRORS: Record<string, string> = {
+  email_already_registered:
+    'Un compte existe déjà avec cet e-mail. Connecte-toi avec ton mot de passe, puis lie ton compte 42 depuis ton profil.',
+  oauth_failed: 'L’intra 42 n’a pas répondu. Réessaie dans un instant.',
+}
+
+const OAUTH_NOTICE = OAUTH_ERROR ? (OAUTH_ERRORS[OAUTH_ERROR] ?? null) : null
+
 /**
  * Détient la session et parle au back. La modale garde ses propres champs et ses
  * erreurs : elle ne reçoit d'ici que de quoi s'ouvrir et de quoi envoyer.
  */
 export function AuthModalProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false)
+  // Un retour 42 en échec ouvre la modale d'emblée, sur le message du back.
+  const [isOpen, setIsOpen] = useState(OAUTH_NOTICE !== null)
   const [mode, setMode] = useState<AuthMode>('login')
   const [user, setUser] = useState<UserPublicProfileDto | null>(null)
   // Tant que la session n'est pas vérifiée, l'UI n'affiche ni « connecté » ni « invité ».
@@ -32,10 +46,14 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   )
   const [twoFactorPending, setTwoFactorPending] = useState(false)
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null)
+  // Message du back au retour d'un login 42 raté : la modale s'ouvre dessus.
+  const [oauthNotice, setOauthNotice] = useState<string | null>(OAUTH_NOTICE)
 
   // Restauration de session : le cookie httpOnly survit au rechargement de la page.
   useEffect(() => {
-    if (OAUTH_TWO_FACTOR) window.history.replaceState(null, '', window.location.pathname)
+    if (OAUTH_TWO_FACTOR || OAUTH_ERROR) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
 
     let cancelled = false
     getMyProfile()
@@ -54,11 +72,15 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const openModal = useCallback((next: AuthMode = 'login') => {
+    setOauthNotice(null)
     setMode(next)
     setIsOpen(true)
   }, [])
 
-  const closeModal = useCallback(() => setIsOpen(false), [])
+  const closeModal = useCallback(() => {
+    setIsOpen(false)
+    setOauthNotice(null)
+  }, [])
 
   const logout = useCallback(async () => {
     try {
@@ -140,6 +162,8 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
         onClose={closeModal}
         onSignup={signup}
         onLogin={login}
+        onOAuth42={loginWith42}
+        notice={oauthNotice}
       />
       {/* La clé vide le champ du code à chaque nouvelle connexion. */}
       <TwoFactorModal

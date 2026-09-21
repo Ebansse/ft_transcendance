@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
@@ -10,7 +11,9 @@ import { UserAvatar } from '../components/UserAvatar.tsx'
 import {
   disableTwoFactor,
   enableTwoFactor,
+  link42Account,
   setupTwoFactor,
+  unlink42Account,
   updateMyProfile,
   uploadMyAvatar,
 } from '../lib/actions.ts'
@@ -18,10 +21,17 @@ import type { TwoFactorSetupDto } from '../lib/actions.ts'
 import { ApiError } from '../lib/apiClient.ts'
 import s from './ProfilePage.module.css'
 
-const USERNAME_RE = /^[A-Za-z0-9_]{3,20}$/
+const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/
 const EMAIL_RE = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$/
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024
 const AVATAR_TYPES = ['image/png', 'image/jpeg']
+
+/** Ce que le back peut nous renvoyer en query string au retour d'un liage 42. */
+const LINK_MESSAGES: Record<string, string> = {
+  already_linked: 'Ce compte 42 est déjà rattaché à un compte.',
+  link_failed: 'La liaison a échoué : relance-la depuis cette page.',
+  oauth_failed: 'L’intra 42 n’a pas répondu. Réessaie dans un instant.',
+}
 
 function messageOf(err: unknown, fallback: string) {
   return err instanceof ApiError ? err.message : fallback
@@ -37,6 +47,7 @@ type ProfilePageProps = {
 
 export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { user, isLoggedIn, authChecked, refreshUser } = useAuthModal()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [userName, setUserName] = useState('')
   const [email, setEmail] = useState('')
@@ -51,6 +62,10 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarNotice, setAvatarNotice] = useState<string | null>(null)
 
+  const [linkPending, setLinkPending] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
+  const [linkNotice, setLinkNotice] = useState<string | null>(null)
+
   const [twoFactorMode, setTwoFactorMode] = useState<'enable' | 'disable' | null>(null)
   const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetupDto | null>(null)
   const [twoFactorPending, setTwoFactorPending] = useState(false)
@@ -63,6 +78,18 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       setEmail(user.email)
     }
   }, [user])
+
+  // Le back nous renvoie ici avec le resultat du liage : on l'affiche une fois,
+  // puis on nettoie l'URL pour qu'un rechargement ne le ressorte pas.
+  useEffect(() => {
+    const linked = searchParams.get('linked')
+    const error = searchParams.get('error')
+    if (!linked && !error) return
+
+    if (linked) setLinkNotice('Compte 42 rattaché.')
+    if (error) setLinkError(LINK_MESSAGES[error] ?? 'La liaison a échoué.')
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setSearchParams])
 
   useEffect(() => {
     if (!file) {
@@ -128,7 +155,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     const mail = email.trim()
 
     const next: Record<string, string> = {}
-    if (!USERNAME_RE.test(name)) next.userName = '3 à 20 caractères : lettres, chiffres ou _.'
+    if (!USERNAME_RE.test(name)) next.userName = '3 à 20 caractères : lettres, chiffres, _ ou -.'
     if (!EMAIL_RE.test(mail)) next.email = 'Adresse e-mail invalide.'
     setIdErrors(next)
     setIdError(null)
@@ -191,6 +218,28 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       setTwoFactorError(codeErrorOf(err, 'Vérification impossible.'))
     } finally {
       setTwoFactorPending(false)
+    }
+  }
+
+  const startLink = () => {
+    setLinkError(null)
+    setLinkNotice(null)
+    setLinkPending(true)
+    link42Account()
+  }
+
+  const startUnlink = async () => {
+    setLinkError(null)
+    setLinkNotice(null)
+    setLinkPending(true)
+    try {
+      await unlink42Account()
+      await refreshUser()
+      setLinkNotice('Compte 42 détaché.')
+    } catch (err) {
+      setLinkError(messageOf(err, 'Impossible de détacher le compte 42.'))
+    } finally {
+      setLinkPending(false)
     }
   }
 
@@ -299,6 +348,25 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
             </div>
             {twoFactorError && !twoFactorMode && <p className={s.error}>{twoFactorError}</p>}
             {twoFactorNotice && <p className={s.notice}>{twoFactorNotice}</p>}
+          </section>
+
+          <section className={s.section} aria-labelledby="profile-42-title">
+            <SectionTitle id="profile-42-title">Compte 42</SectionTitle>
+            <p className={s.hint}>
+              {user.oauth42Linked
+                ? 'Un compte 42 est rattaché : tu peux te connecter d’un clic depuis l’écran d’accueil.'
+                : 'Aucun compte 42 rattaché. Le lier te permettra de te connecter via l’intra, même si ton e-mail ici diffère du sien.'}
+            </p>
+            <div className={s.linkActions}>
+              <Button variant="42" onClick={startLink} disabled={linkPending || user.oauth42Linked === true}>
+                {linkPending ? 'Redirection…' : 'Lier mon compte 42'}
+              </Button>
+              <Button onClick={startUnlink} disabled={linkPending || !user.oauth42Linked}>
+                Délier
+              </Button>
+            </div>
+            {linkError && <p className={s.error}>{linkError}</p>}
+            {linkNotice && <p className={s.notice}>{linkNotice}</p>}
           </section>
 
           <TwoFactorModal

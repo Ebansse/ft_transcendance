@@ -32,7 +32,7 @@ public class UserService {
 
     // Method to check if the username format is invalid
     public boolean isInvalidUsername(String username) {
-        String usernameRegex = "^[A-Za-z0-9_]{3,20}$"; // Example: 3-20 characters, alphanumeric and underscores
+        String usernameRegex = "^[A-Za-z0-9_-]{3,20}$"; // Example: 3-20 characters, alphanumeric, underscores and hyphens
         return !username.matches(usernameRegex);
     }
 
@@ -40,6 +40,12 @@ public class UserService {
     public Optional<User> getUserByEmail(String email) {
         Log.debug("Fetching user by email: {}", email);
         return userRepository.findByEmail(email);
+    }
+
+    // Method to check if a 42 account is already linked to a local user
+    public Optional<User> getUserByOauth42Id(Long oauth42Id) {
+        Log.debug("Fetching user by 42 id: {}", oauth42Id);
+        return userRepository.findByOauth42Id(oauth42Id);
     }
 
     // Method to fetch a user by their id
