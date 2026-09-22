@@ -8,12 +8,9 @@ type CapturedPiecesProps = {
   advantage: number
 }
 
-/** Les prises d'un camp, en glyphes, avec l'avance qu'elles représentent.
- *
- *  Vue pure : elle ne compte rien, `capturesOf` s'en charge. Les glyphes sont
- *  décoratifs, la ligne entière porte son propre libellé pour les lecteurs
- *  d'écran — « pion noir, pion noir, tour noire » se lit mieux d'un bloc que
- *  pièce par pièce. */
+/** Les prises d'un camp, en glyphes. Les glyphes sont décoratifs : la ligne
+ *  entière porte son libellé, « pion noir, pion noir, tour noire » se lisant
+ *  mieux d'un bloc que pièce par pièce. */
 export function CapturedPieces({ pieces, advantage }: CapturedPiecesProps) {
   if (pieces.length === 0 && advantage <= 0) return null
 

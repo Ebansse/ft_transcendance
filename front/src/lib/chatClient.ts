@@ -19,7 +19,7 @@ export const CHAT_MESSAGES = '/user/queue/messages'
 export const CHAT_ERRORS = '/user/queue/errors'
 export const CHAT_SEND = '/app/chat.send'
 
-export const HISTORY_PAGE_SIZE = 50
+const HISTORY_PAGE_SIZE = 50
 
 export function sendChatMessage(
   publish: (destination: string, body: unknown) => boolean,

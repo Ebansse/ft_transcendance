@@ -18,13 +18,13 @@ type TwoFactorModalProps = {
   /** QR code et secret à afficher en mode `enable`. */
   setup?: TwoFactorSetupDto | null
   pending?: boolean
-  /** Refus du back (code invalide…) ; la modale reste ouverte. */
+  /** Refus du back ; la modale reste ouverte. */
   error?: string | null
   onSubmit: (code: string) => void
   onClose: () => void
 }
 
-/** Saisie d'un code A2F (activation, désactivation, connexion) : précédée du QR code à scanner pour l'activation. */
+/** Saisie d'un code A2F, précédée du QR code en mode activation. */
 export function TwoFactorModal({ mode, setup, pending = false, error, onSubmit, onClose }: TwoFactorModalProps) {
   const dialog = useDialog(mode !== null, '#two-factor-code', onClose)
   const [code, setCode] = useState('')

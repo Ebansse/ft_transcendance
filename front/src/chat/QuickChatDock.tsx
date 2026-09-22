@@ -7,24 +7,16 @@ import s from './QuickChatDock.module.css'
 
 const MINIMIZED_STORAGE = 'transcendence.quickchat.minimized'
 
-function readStoredMinimized() {
+function readStoredMinimized(): Record<string, boolean> {
   try {
-    const raw = sessionStorage.getItem(MINIMIZED_STORAGE)
-    if (!raw) return {}
-
-    const parsed = JSON.parse(raw) as unknown
-    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return {}
-
-    const entries = Object.entries(parsed as Record<string, unknown>).filter(
-      ([, flag]) => typeof flag === 'boolean',
-    )
-    return Object.fromEntries(entries) as Record<string, boolean>
+    return JSON.parse(sessionStorage.getItem(MINIMIZED_STORAGE) ?? '{}')
   } catch {
     return {}
   }
 }
 
 function writeStoredMinimized(state: Record<string, boolean>) {
+  // setItem lève en navigation privée ou quota plein : ce n'est qu'un confort.
   try {
     sessionStorage.setItem(MINIMIZED_STORAGE, JSON.stringify(state))
   } catch {

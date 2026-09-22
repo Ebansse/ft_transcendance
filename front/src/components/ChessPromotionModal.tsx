@@ -3,8 +3,7 @@ import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import s from './ChessPromotionModal.module.css'
 
-/** Les quatre promotions possibles, de la plus forte à la plus faible. Le roi et
- *  le pion n'en sont pas : les règles ne les autorisent pas. */
+/** Les quatre promotions autorisées, de la plus forte à la plus faible. */
 export type PromotionPiece = 'q' | 'r' | 'b' | 'n'
 
 const CHOICES: PromotionPiece[] = ['q', 'r', 'b', 'n']
@@ -18,20 +17,14 @@ type ChessPromotionModalProps = {
   onSelect: (piece: PromotionPiece) => void
 }
 
-/** Choix de la pièce quand un pion atteint la dernière rangée.
- *
- *  Modale ordinaire, qui se referme comme les autres (croix, Échap, clic dans le
- *  fond) : refermer annule simplement le coup, le pion reste où il est et on
- *  peut en jouer un autre. Une modale sans issue serait un piège — Chrome force
- *  de toute façon la fermeture au deuxième Échap, et la partie resterait alors
- *  bloquée sur un demi-coup. */
+/** Choix de la pièce quand un pion atteint la dernière rangée. Refermer annule
+ *  le coup : le pion reste où il est et on peut en jouer un autre. */
 export function ChessPromotionModal({
   open,
   white,
   onClose,
   onSelect,
 }: ChessPromotionModalProps) {
-  // Le focus part sur le premier bouton de la modale, la croix de fermeture.
   const dialog = useDialog(open, 'button', onClose)
 
   return (

@@ -4,13 +4,9 @@ import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
 import { deleteMyAccount, downloadJson, exportMyData } from '../lib/gdpr.ts'
 import s from './SettingsPage.module.css'
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
 
 function fileStamp() {
   return new Date().toISOString().slice(0, 10)
@@ -48,7 +44,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
       downloadJson(data, `transcendence-donnees-${userName || 'compte'}-${fileStamp()}.json`)
       setNotice('Export téléchargé.')
     } catch (err) {
-      setError(messageOf(err, 'Export impossible pour le moment.'))
+      setError(errorMessage(err, 'Export impossible pour le moment.'))
     } finally {
       setBusy(null)
     }
@@ -61,7 +57,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
       await deleteMyAccount()
       window.location.assign('/')
     } catch (err) {
-      setError(messageOf(err, 'Suppression impossible pour le moment.'))
+      setError(errorMessage(err, 'Suppression impossible pour le moment.'))
       setBusy(null)
     }
   }

@@ -45,7 +45,7 @@ type AuthModalProps = {
   onSignup: (values: SignupForm) => Promise<void>
   onLogin: (values: LoginForm) => Promise<void>
   onOAuth42?: () => void
-  /** Message venu du back (retour d'OAuth 42 raté), affiché au-dessus du bouton. */
+  /** Message du back au retour d'un OAuth 42 raté. */
   notice?: string | null
 }
 
@@ -75,16 +75,6 @@ export function AuthModal({
     setGlobalError(null)
   }, [isOpen, mode])
 
-  const report = (err: unknown) => {
-    if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
-      setFieldErrors(err.fieldErrors)
-    } else if (err instanceof ApiError) {
-      setGlobalError(err.status === 401 ? 'Email ou mot de passe incorrect.' : err.message)
-    } else {
-      setGlobalError('Erreur inconnue.')
-    }
-  }
-
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     setFieldErrors({})
@@ -101,7 +91,13 @@ export function AuthModal({
       setSignup(EMPTY_SIGNUP)
       setLogin(EMPTY_LOGIN)
     } catch (err) {
-      report(err)
+      if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
+        setFieldErrors(err.fieldErrors)
+      } else if (err instanceof ApiError) {
+        setGlobalError(err.status === 401 ? 'Email ou mot de passe incorrect.' : err.message)
+      } else {
+        setGlobalError('Erreur inconnue.')
+      }
     } finally {
       setPending(false)
     }

@@ -15,22 +15,20 @@ const EMPTY_FORM: UpdateUserPayload = { userName: '', email: '', role: 'USER' }
 type EditUserModalProps = {
   /** Le compte à éditer, ou `null` quand la modale est fermée. */
   user: UserPublicProfileDto | null
-  /** Requête d'enregistrement en cours : on verrouille les boutons. */
   pending?: boolean
-  /** Refus du back (e-mail déjà pris, rôle inconnu…) ; la modale reste ouverte. */
+  /** Refus du back ; la modale reste ouverte. */
   error?: string | null
   onClose: () => void
   onSave: (idUser: string, values: UpdateUserPayload) => void
 }
 
-/** Modale d'édition d'un compte. L'UUID y est affiché mais jamais éditable :
- *  c'est la clé avec laquelle le back retrouve le compte. */
+/** L'UUID est affiché mais jamais éditable : c'est la clé du compte. */
 export function EditUserModal({ user, pending = false, error, onClose, onSave }: EditUserModalProps) {
   const dialog = useDialog(user !== null, '#edit-user-name', onClose)
   const [form, setForm] = useState<UpdateUserPayload>(EMPTY_FORM)
 
-  // On repart des valeurs du compte à chaque ouverture, sinon la modale rouvrirait
-  // sur les saisies abandonnées du compte précédent.
+  // Repartir des valeurs du compte, sinon la modale rouvrirait sur les saisies
+  // abandonnées du compte précédent.
   useEffect(() => {
     if (user) setForm({ userName: user.userName, email: user.email, role: user.role ?? 'USER' })
   }, [user])

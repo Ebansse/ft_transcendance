@@ -2,31 +2,24 @@ import { useEffect, useState } from 'react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import { getFriendList, type FriendListDto } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
 import type { ChessSide } from '../lib/chessClient.ts'
 import s from './ChessInviteModal.module.css'
 
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
-
 type ChessInviteModalProps = {
   open: boolean
-  /** Pseudo dont l'invitation est en cours d'envoi, `null` sinon : on verrouille
-   *  toute la liste le temps de la requête pour éviter les doubles invitations. */
+  /** Pseudo dont l'invitation part : verrouille toute la liste le temps de la
+   *  requête, pour éviter les doubles invitations. */
   pending?: string | null
-  /** Refus du back (adversaire déjà en partie, invitation en double…) ; la modale
-   *  reste ouverte pour que le message soit lisible. */
+  /** Refus du back ; la modale reste ouverte pour que le message soit lisible. */
   error?: string | null
   onClose: () => void
   /** `side` à `null` : le back tire la couleur au sort. */
   onInvite: (userName: string, side: ChessSide | null) => void
 }
 
-/** Choix du camp puis de l'adversaire pour une partie d'échecs : un bouton par ami.
- *
- *  La liste n'est chargée qu'à l'ouverture, et rechargée à chaque réouverture :
- *  une amitié acceptée entre-temps doit apparaître sans recharger la page. */
+/** Un bouton par ami. La liste est rechargée à chaque ouverture : une amitié
+ *  acceptée entre-temps doit apparaître sans recharger la page. */
 export function ChessInviteModal({
   open,
   pending = null,
@@ -34,7 +27,6 @@ export function ChessInviteModal({
   onClose,
   onInvite,
 }: ChessInviteModalProps) {
-  // Le focus part sur le premier bouton de la modale, la croix de fermeture.
   const dialog = useDialog(open, 'button', onClose)
 
   const [side, setSide] = useState<ChessSide | null>('WHITE')
@@ -42,8 +34,7 @@ export function ChessInviteModal({
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  // Seuls les ACCEPTED sont invitables : une demande en attente ou refusée ne
-  // désigne pas encore un ami. Même filtre que ChatPage et FriendsPage.
+  // Seuls les ACCEPTED sont invitables.
   useEffect(() => {
     if (!open) return
 
@@ -56,7 +47,7 @@ export function ChessInviteModal({
         if (alive) setFriends(list.filter((row) => row.status === 'ACCEPTED'))
       })
       .catch((err: unknown) => {
-        if (alive) setLoadError(messageOf(err, 'Chargement de la liste d’amis impossible.'))
+        if (alive) setLoadError(errorMessage(err, 'Chargement de la liste d’amis impossible.'))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -78,8 +69,7 @@ export function ChessInviteModal({
         </Button>
       </div>
 
-      {/* Même sélecteur que la modale du bot : le camp se choisit avant l'ami,
-          l'invité recevra l'autre couleur. */}
+      {/* Le camp se choisit avant l'ami : l'invité recevra l'autre couleur. */}
       <div className={s.field}>
         <span className={s.label} id="chess-invite-side">
           Votre camp

@@ -5,6 +5,12 @@ import { useSocket } from '../ws/socketContext.ts'
 import { Button } from './Button.tsx'
 import s from './ChatConversation.module.css'
 
+function connectionLabel(status: string) {
+  if (status === 'connected') return null
+  if (status === 'disconnected') return 'Connexion perdue, nouvelle tentative…'
+  return 'Connexion au chat…'
+}
+
 function formatTime(value: string) {
   const date = new Date(value)
   return Number.isNaN(date.getTime())
@@ -69,12 +75,7 @@ export function ChatConversation({ targetId, targetName, compact = false }: Chat
     setDraft('')
   }
 
-  const statusLabel =
-    status === 'connected'
-      ? null
-      : status === 'disconnected'
-        ? 'Connexion perdue, nouvelle tentative…'
-        : 'Connexion au chat…'
+  const statusLabel = connectionLabel(status)
 
   return (
     <div className={compact ? `${s.root} ${s.rootCompact}` : s.root}>

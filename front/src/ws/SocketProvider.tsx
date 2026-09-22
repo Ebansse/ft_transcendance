@@ -5,9 +5,8 @@ import { useAuthModal } from '../auth/authModalContext.ts'
 import { createStompClient } from '../lib/socketClient.ts'
 import { SocketContext, type SocketStatus, type SocketValue } from './socketContext.ts'
 
-/** Au-delà de ce nombre d'échecs consécutifs, on cesse de retenter : le cas
- *  typique est une session expirée, le handshake est alors refusé par
- *  JwtHandshakeInterceptor et rien ne sert de marteler le serveur. */
+/** Au-delà de ce nombre d'échecs consécutifs on cesse de retenter : le cas
+ *  typique est une session expirée, et marteler le serveur ne sert à rien. */
 const MAX_CONSECUTIVE_FAILURES = 5
 
 type Registration = {
@@ -18,10 +17,9 @@ type Registration = {
   sub: StompSubscription | null
 }
 
-/** Possède l'unique connexion STOMP de l'application. Placé au-dessus des
- *  routes (voir main.tsx) : la socket survit donc à la navigation et n'est
- *  fermée qu'à la déconnexion. Les pages n'ouvrent jamais de client, elles
- *  appellent seulement `subscribe` / `publish`. */
+/** Possède l'unique connexion STOMP. Placé au-dessus des routes (main.tsx) :
+ *  la socket survit à la navigation et n'est fermée qu'à la déconnexion. Les
+ *  pages appellent seulement `subscribe` / `publish`. */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { authChecked, isLoggedIn, user } = useAuthModal()
   const userId = user?.id ?? null
@@ -37,8 +35,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!authChecked || !isLoggedIn || !userId) return
 
-    // Copié ici : la Map est créée une seule fois, la lire dans le cleanup
-    // via la ref déclencherait un avertissement react-hooks.
+    // Copié ici : la lire dans le cleanup via la ref avertirait react-hooks.
     const registry = registryRef.current
 
     failuresRef.current = 0
@@ -47,7 +44,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const client = createStompClient({
       onConnect: () => {
-        // Le client remplacé par un remontage (StrictMode, changement de
+        // Un client remplacé par un remontage (StrictMode, changement de
         // compte) ne doit plus toucher à l'état partagé.
         if (clientRef.current !== client) return
         failuresRef.current = 0
@@ -83,8 +80,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   }, [authChecked, isLoggedIn, userId])
 
-  /** Référence stable (aucune dépendance) : les `useEffect` des pages qui en
-   *  dépendent ne se relancent pas à chaque rendu du provider. */
+  /** Référence stable : les effets des pages ne se relancent pas à chaque
+   *  rendu du provider. */
   const subscribe = useCallback((destination: string, handler: (body: string) => void) => {
     const id = nextIdRef.current++
     const entry: Registration = { destination, handler, sub: null }
