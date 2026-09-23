@@ -1,5 +1,6 @@
 package com.transcendance.backend.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
@@ -12,6 +13,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtHandshakeInterceptor jwtHandshakeInterceptor;
 
+    @Value("${app.frontend-origin}")
+    private String frontendOrigin;
+
     public WebSocketConfig(JwtHandshakeInterceptor jwtHandshakeInterceptor) {
         this.jwtHandshakeInterceptor = jwtHandshakeInterceptor;
     }
@@ -21,7 +25,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.addEndpoint("/ws")
                 .setHandshakeHandler(new StompPrincipalConfig.UserHandshakeHandler())
                 .addInterceptors(jwtHandshakeInterceptor)
-                .setAllowedOriginPatterns("*") // TODO: a modifier
+                .setAllowedOriginPatterns(frontendOrigin)
                 .withSockJS();
     }
 
