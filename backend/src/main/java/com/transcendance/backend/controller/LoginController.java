@@ -93,6 +93,12 @@ public class LoginController {
             return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
         log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
+        // Slow down brute force: every failed attempt waits 2 seconds
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
         return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
     }
     }
