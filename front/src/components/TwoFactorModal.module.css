@@ -47,7 +47,7 @@
   font-size: 0.9rem;
   font-weight: 300;
   line-height: 1.5;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 /* Le PNG du back est noir sur blanc : on garde le fond blanc pour qu'il reste scannable. */
@@ -62,7 +62,7 @@
 .secret {
   font-family: var(--font-mono);
   font-size: 0.8rem;
-  color: var(--bone);
+  color: var(--ivory);
   word-break: break-all;
 }
 

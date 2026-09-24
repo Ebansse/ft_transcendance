@@ -1,121 +1,134 @@
+/* La carte est une mini-borne : façade bordeaux, petit écran à lignes de
+   balayage, bouton moutarde. Ombre dure plutôt que floue. */
 .card {
-  --tilt: 0deg;
-
-  /* Contrat Button : sur ce fond gris, le bouton secondaire s'éclaircit et
-     son survol passe au rouge vif (le rouge plein ne tient pas le contraste
-     à 3:1 sur --card). */
+  /* Contrat Button : sur le bordeaux, le secondaire reste ivoire. */
   --btn-secondary-color: var(--card-ink);
   --btn-secondary-bg: transparent;
-  --btn-secondary-border: rgba(245, 241, 234, 0.24);
-  --btn-secondary-color-hover: var(--red-bright);
-  --btn-secondary-bg-hover: rgba(228, 42, 49, 0.14);
-  --btn-secondary-border-hover: var(--red-bright);
+  --btn-secondary-border: rgba(239, 230, 210, 0.3);
+  --btn-secondary-color-hover: var(--wood-dark);
+  --btn-secondary-bg-hover: var(--accent);
+  --btn-secondary-border-hover: var(--accent);
+  --btn-padding: 0.85rem 1rem;
+  --btn-font-size: 1rem;
 
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1.35rem 1.35rem;
+  padding: 1rem 1.1rem 1.25rem;
   color: var(--card-ink);
   background: var(--card);
-  border: none;
-  border-radius: var(--radius-card);
-  /* Filet imprimé en retrait, comme sur une face de carte */
+  border-radius: var(--radius-card) var(--radius-card) 8px 8px;
   box-shadow:
-    inset 0 0 0 1px rgba(245, 241, 234, 0.09),
-    0 16px 30px -20px rgba(0, 0, 0, 1);
-  transform: translate(0, 0) rotate(var(--tilt)) scale(1);
-  transform-origin: 50% 92%;
+    inset 0 0 0 2px var(--bordeaux-deep),
+    6px 6px 0 var(--wood-dark);
   transition:
-    transform 260ms var(--ease),
-    box-shadow 260ms ease;
-  animation: deal 620ms var(--ease) backwards;
+    transform 240ms var(--ease-snap),
+    box-shadow 240ms var(--ease);
+  animation: cabinet-drop 700ms var(--ease-snap) backwards;
 }
 
-/* Chaque carte tombe avec sa propre inclinaison et son propre retard. */
+/* Les bornes tombent l'une après l'autre. */
 .card:nth-child(1) {
-  --tilt: -0.7deg;
-  animation-delay: 760ms;
+  animation-delay: 1500ms;
 }
 
 .card:nth-child(2) {
-  --tilt: 0.2deg;
-  animation-delay: 880ms;
+  animation-delay: 1620ms;
 }
 
 .card:nth-child(3) {
-  --tilt: 0.8deg;
-  animation-delay: 1000ms;
+  animation-delay: 1740ms;
 }
 
 .card:hover,
 .card:focus-within {
-  transform: translate(0, -8px) rotate(0deg) scale(1);
+  transform: translate(-4px, -6px);
   box-shadow:
-    inset 0 0 0 1px rgba(200, 22, 29, 0.35),
-    0 30px 44px -24px rgba(0, 0, 0, 1);
+    inset 0 0 0 2px var(--bordeaux-deep),
+    12px 14px 0 var(--wood-dark);
 }
 
+/* L'écran de la borne, qui encadre l'icône du jeu. */
 .icon {
-  font-size: 1.6rem;
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 140px;
+  font-size: 3.2rem;
   line-height: 1;
-  transition: transform 260ms var(--ease);
-  transform-origin: left center;
+  border-radius: 12px / 10px;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.25) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at 50% 45%, #2e241d, var(--screen) 75%);
+  box-shadow:
+    inset 0 0 0 4px #120c08,
+    inset 0 0 30px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+/* L'emoji du pion est noir sur un écran sombre : un contour ivoire en ombres
+   pleines le détache, façon sprite. Il saute en L comme un cavalier ; c'est
+   le rembourrage qui bouge (et pas un transform), pour que l'écran reste
+   immobile autour de lui. */
+.icon {
+  text-shadow:
+    2px 0 0 var(--ivory),
+    -2px 0 0 var(--ivory),
+    0 2px 0 var(--ivory),
+    0 -2px 0 var(--ivory),
+    4px 4px 0 var(--bordeaux);
+  animation: knight-hop 2.8s var(--ease) 2.4s infinite;
+}
+
+.card:hover .icon {
+  animation-duration: 1.2s;
 }
 
 .title {
-  margin: 0.7rem 0 0.4rem;
+  margin: 1rem 0 0.4rem;
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.5rem;
+  font-weight: 700;
+  font-size: 1.45rem;
   line-height: 1.1;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
   color: var(--card-ink);
   transition: color 200ms ease;
 }
 
 .card:hover .title {
-  color: var(--red-bright);
+  color: var(--accent-bright);
 }
 
 .desc {
-  margin: 0 0 1.1rem;
-  font-size: 0.9rem;
-  font-weight: 300;
+  margin: 0 0 1rem;
+  font-size: 0.92rem;
   color: var(--card-ink-dim);
 }
 
-/* Compteur : donnée de table, donc chiffres en chasse fixe. */
 .online {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 1.1rem;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--card-line);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.85rem;
   color: var(--card-ink-dim);
 }
 
 .online::before {
   content: '';
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--card-line);
-  box-shadow: 0 0 0 3px rgba(245, 241, 234, 0.06);
+  background: var(--card-ink-dim);
+  animation: blink 2s steps(1) infinite;
 }
 
-/* Au moins un joueur connecté : la pastille s'allume et respire. */
+/* Au moins un joueur connecté : la pastille passe au vert et respire. */
 .isLive {
   color: var(--card-ink);
 }
 
 .isLive::before {
   background: var(--live);
-  box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.16);
+  box-shadow: 0 0 0 3px rgba(143, 191, 106, 0.2);
   animation: live-pulse 2.4s var(--ease) infinite;
 }
 
@@ -127,43 +140,59 @@
 }
 
 .card :focus-visible {
-  outline-color: var(--red-bright);
+  outline-color: var(--accent-bright);
 }
 
-@keyframes deal {
-  from {
+@keyframes cabinet-drop {
+  0% {
     opacity: 0;
-    transform: translate(18px, 34px) rotate(calc(var(--tilt) * 5)) scale(0.96);
+    transform: translateY(-60px);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+
+@keyframes knight-hop {
+  0%,
+  60%,
+  100% {
+    padding: 0;
+  }
+  15% {
+    padding: 0 0 36px;
+  }
+  30% {
+    padding: 0 0 72px;
+  }
+  42% {
+    padding: 0 0 72px 52px;
+  }
+  54% {
+    padding: 0 0 0 52px;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
   }
 }
 
 @keyframes live-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.16);
+    box-shadow: 0 0 0 3px rgba(143, 191, 106, 0.2);
   }
 
   50% {
-    box-shadow: 0 0 0 5px rgba(61, 220, 132, 0.04);
-  }
-}
-
-/* `:nth-child(n)` et non `.card` seul : il faut la même spécificité que les
-   règles d'inclinaison ci-dessus pour pouvoir les annuler. */
-@media (max-width: 768px) {
-  .card:nth-child(n) {
-    --tilt: 0deg;
+    box-shadow: 0 0 0 6px rgba(143, 191, 106, 0.04);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card:nth-child(n) {
-    --tilt: 0deg;
-  }
-
   .card:hover,
-  .card:focus-within,
-  .card:hover .icon {
+  .card:focus-within {
     transform: none;
   }
 }

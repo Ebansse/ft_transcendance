@@ -1,6 +1,6 @@
 /* L'échiquier : une grille 8×8 carrée, dont la taille des pièces suit celle
-   des cases. Les deux teintes sont un bleu clair et un bleu moyen, et non les
-   noirs du design system : une pièce noire posée sur une case sombre ne se
+   des cases. Les deux teintes sont un ivoire et un bois clair, et non les
+   bruns sombres du cabinet : une pièce noire posée sur une case sombre ne se
    distingue plus, quel que soit le liseré qu'on lui ajoute. Le plateau est donc
    la seule surface claire de l'interface, et les deux teintes restent assez
    écartées pour se lire en pleine page comme en 375 px. */
@@ -8,11 +8,14 @@
 .board {
   composes: riseIn from '../style/page.module.css';
 
-  /* Le bleu plutôt que le vert : `--green` et `--live` portent déjà un sens
-     dans le design system (accepter, être en ligne), qu'un plateau vert
-     viendrait brouiller. */
-  --square-light: #dce6ee;
-  --square-dark: #7fa1bd;
+  /* Au-dessus des lignes de balayage de l'écran : le plateau doit rester net. */
+  position: relative;
+  z-index: 6;
+
+  /* Pas de vert : `--green` et `--live` portent déjà un sens dans le design
+     system (accepter, être en ligne), qu'un plateau vert viendrait brouiller. */
+  --square-light: #efe6d2;
+  --square-dark: #b58a5a;
   /* Tout part de là : une case assez grande pour une pièce, jamais déformée.
      Le plateau fait huit fois cette taille, colonnes *et* rangées, donc les 64
      cases sont strictement identiques quelle que soit la position. */
@@ -30,9 +33,11 @@
   margin-inline: auto;
   border-radius: var(--radius);
   overflow: hidden;
+  /* Cadre en bois du plateau, ombre dure comme les bornes */
   box-shadow:
-    inset 0 0 0 1px var(--line-strong),
-    0 26px 44px -28px rgba(0, 0, 0, 1);
+    0 0 0 6px var(--wood-light),
+    0 0 0 9px var(--wood-dark),
+    10px 12px 0 9px rgba(0, 0, 0, 0.45);
 }
 
 .square {
@@ -63,7 +68,7 @@
 /* On rentre le filet de focus dans la case pour qu'il ne soit pas rogné par
    l'`overflow` du plateau. */
 .square:focus-visible {
-  outline: 2px solid var(--red-bright);
+  outline: 2px solid var(--accent-bright);
   outline-offset: -3px;
   z-index: 2;
 }
@@ -73,7 +78,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(228, 42, 49, 0.2);
+  background: rgba(217, 164, 65, 0.2);
 }
 
 /* Case sélectionnée : un cadre plein, visible sur les deux teintes. */
@@ -81,7 +86,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  box-shadow: inset 0 0 0 3px var(--red-hot);
+  box-shadow: inset 0 0 0 3px var(--accent-hot);
   animation: square-pick 320ms var(--ease) both;
 }
 
@@ -99,32 +104,32 @@
 .target::after {
   /* Centrage explicite : 22 % au milieu, donc 39 % de marge de chaque côté. */
   inset: 39%;
-  background: var(--red-hot);
+  background: var(--accent-hot);
   border-radius: 50%;
   opacity: 0.75;
 }
 
 .capture::after {
   inset: 0;
-  box-shadow: inset 0 0 0 4px var(--red-hot);
+  box-shadow: inset 0 0 0 4px var(--accent-hot);
   opacity: 0.8;
 }
 
 .piece {
   position: relative;
-  color: var(--void);
+  color: var(--wood-dark);
   /* Une simple ombre portée. Le liseré clair d'avant servait à décoller la
      pièce noire d'une case sombre ; sur les deux teintes actuelles il ne ferait
      plus que manger le contour du glyphe. */
-  text-shadow: 0 2px 3px rgba(10, 10, 11, 0.35);
+  text-shadow: 0 2px 3px rgba(18, 12, 8, 0.35);
   pointer-events: none;
 }
 
 .white {
-  color: var(--bone);
+  color: var(--ivory);
   text-shadow:
-    0 0 1px var(--void),
-    0 0 2px var(--void),
+    0 0 1px var(--wood-dark),
+    0 0 2px var(--wood-dark),
     0 2px 3px rgba(0, 0, 0, 0.5);
 }
 
@@ -161,7 +166,7 @@
 
 @keyframes square-pick {
   from {
-    box-shadow: inset 0 0 0 10px rgba(228, 42, 49, 0.35);
+    box-shadow: inset 0 0 0 10px rgba(217, 164, 65, 0.35);
   }
 }
 

@@ -4,7 +4,7 @@
   max-width: 46ch;
   font-size: 1.05rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 480ms;
 }
 
@@ -14,14 +14,14 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 640ms;
 }
 
 .error {
   margin: 0.4rem 0 0;
   font-size: 0.85rem;
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .section {
@@ -44,7 +44,7 @@
   flex-direction: column;
   gap: 0.35rem;
   padding: 1.1rem 1.2rem;
-  background: var(--ink-800);
+  background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
 }
@@ -53,7 +53,7 @@
   font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1;
-  color: var(--bone);
+  color: var(--ivory);
 }
 
 .tileLabel {
@@ -77,9 +77,9 @@
 }
 
 .loss {
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .draw {
-  color: var(--mute);
+  color: var(--ivory-dim);
 }

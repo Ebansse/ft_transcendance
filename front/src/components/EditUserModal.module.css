@@ -44,8 +44,8 @@
   font-family: var(--font-mono);
   font-size: 0.8rem;
   white-space: nowrap;
-  color: var(--mute);
-  background: rgba(245, 241, 234, 0.03);
+  color: var(--ivory-dim);
+  background: rgba(239, 230, 210, 0.03);
   border: 1px dashed var(--line);
   border-radius: var(--radius);
 }

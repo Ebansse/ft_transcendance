@@ -38,7 +38,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--mute);
+  color: var(--ivory-dim);
   background: none;
   border: none;
   cursor: pointer;
@@ -52,19 +52,19 @@
   right: 0;
   bottom: -1px;
   height: 2px;
-  background: var(--red-hot);
+  background: var(--accent-hot);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform 240ms var(--ease);
 }
 
 .tab:hover {
-  color: var(--bone);
+  color: var(--ivory);
 }
 
 /* Après `.tab` : à spécificité égale, c'est l'ordre qui tranche. */
 .tabActive {
-  color: var(--bone);
+  color: var(--ivory);
 }
 
 .tabActive::after {
@@ -94,7 +94,7 @@
 .error {
   margin: 0;
   font-size: 0.78rem;
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .globalError {

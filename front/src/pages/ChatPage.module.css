@@ -3,7 +3,7 @@
   max-width: 46ch;
   font-size: 1.05rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 480ms;
 }
 
@@ -11,13 +11,13 @@
   margin: 0;
   font-size: 0.9rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 .error {
   margin: 0;
   font-size: 0.85rem;
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .hint {
@@ -68,7 +68,7 @@
   font-family: inherit;
   font-size: 0.9rem;
   text-align: left;
-  color: var(--bone);
+  color: var(--ivory);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -79,13 +79,13 @@
 }
 
 .friendButton:hover {
-  background: var(--ink-800);
+  background: var(--panel);
   border-color: var(--line-strong);
 }
 
 .friendButtonActive {
-  background: var(--ink-800);
-  border-color: var(--red-hot);
+  background: var(--panel);
+  border-color: var(--accent-hot);
 }
 
 .rowTop {
@@ -109,8 +109,8 @@
   font-size: 0.7rem;
   line-height: 1.25rem;
   text-align: center;
-  color: var(--bone);
-  background: var(--red-hot);
+  color: var(--wood-dark);
+  background: var(--accent-hot);
   border-radius: 999px;
 }
 
@@ -129,7 +129,7 @@
   font-family: inherit;
   font-size: 0.9rem;
   line-height: 1;
-  color: var(--mute);
+  color: var(--ivory-dim);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -141,8 +141,8 @@
 }
 
 .popButton:hover {
-  color: var(--bone);
-  background: var(--ink-800);
+  color: var(--ivory);
+  background: var(--panel);
   border-color: var(--line-strong);
 }
 
@@ -152,7 +152,7 @@
   gap: 0.75rem;
   min-width: 0;
   padding: 1rem;
-  background: var(--ink-800);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
 }
@@ -170,7 +170,7 @@
   margin: 0;
   font-size: 1rem;
   font-weight: 500;
-  color: var(--bone);
+  color: var(--ivory);
 }
 
 @media (max-width: 60rem) {

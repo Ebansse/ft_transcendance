@@ -22,12 +22,12 @@
 .toast {
   width: min(320px, calc(100vw - 2.5rem));
   padding: 0.85rem 0.95rem 0.9rem;
-  color: var(--bone);
-  background: var(--ink-900);
+  color: var(--ivory);
+  background: var(--wood);
   border: 1px solid var(--line-strong);
 
   /* Même accent que les messages d'erreur des modales : un filet rouge à gauche. */
-  border-left: 2px solid var(--red-hot);
+  border-left: 2px solid var(--accent-hot);
   border-radius: var(--radius-card);
   box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 1);
 
@@ -59,7 +59,7 @@
   line-height: 1.2;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--bone);
+  color: var(--ivory);
 }
 
 .body {
@@ -91,19 +91,19 @@
 .accept {
   --btn-secondary-color: var(--green-bright);
   --btn-secondary-border: var(--green);
-  --btn-secondary-bg: rgba(47, 187, 106, 0.1);
-  --btn-secondary-color-hover: var(--bone);
+  --btn-secondary-bg: rgba(143, 191, 106, 0.1);
+  --btn-secondary-color-hover: var(--ivory);
   --btn-secondary-border-hover: var(--green-bright);
-  --btn-secondary-bg-hover: rgba(47, 187, 106, 0.18);
+  --btn-secondary-bg-hover: rgba(143, 191, 106, 0.18);
 }
 
 .decline {
-  --btn-secondary-color: var(--red-bright);
-  --btn-secondary-border: var(--red);
-  --btn-secondary-bg: rgba(228, 42, 49, 0.08);
-  --btn-secondary-color-hover: var(--bone);
-  --btn-secondary-border-hover: var(--red-bright);
-  --btn-secondary-bg-hover: rgba(228, 42, 49, 0.16);
+  --btn-secondary-color: var(--danger);
+  --btn-secondary-border: var(--danger);
+  --btn-secondary-bg: rgba(224, 121, 107, 0.08);
+  --btn-secondary-color-hover: var(--ivory);
+  --btn-secondary-border-hover: var(--danger);
+  --btn-secondary-bg-hover: rgba(224, 121, 107, 0.16);
 }
 
 /* Le rectangle part hors de l'écran, marge du conteneur comprise, pour qu'aucun

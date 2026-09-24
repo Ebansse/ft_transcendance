@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 0.45rem;
-  color: var(--bone);
+  color: var(--ivory);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -17,7 +17,7 @@
 }
 
 .bell:hover {
-  background: var(--ink-700);
+  background: var(--panel-hi);
   border-color: var(--line-strong);
 }
 
@@ -41,8 +41,8 @@
   font-size: 0.62rem;
   line-height: 1.05rem;
   text-align: center;
-  color: #fff;
-  background: var(--red-hot);
+  color: var(--wood-dark);
+  background: var(--accent-hot);
   border-radius: 999px;
   pointer-events: none;
 }
@@ -61,8 +61,8 @@
   max-height: calc(100vh - 6rem);
   overflow-y: auto;
   padding: 0.75rem;
-  color: var(--bone);
-  background: var(--ink-800);
+  color: var(--ivory);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-card);
   box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 1);
@@ -88,5 +88,5 @@
   margin: 0.2rem;
   font-size: 0.88rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }

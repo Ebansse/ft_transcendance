@@ -7,7 +7,7 @@
   font-size: 0.7rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--bone);
+  color: var(--ivory);
   background: transparent;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
@@ -19,12 +19,12 @@
 }
 
 .status:hover {
-  background: rgba(245, 241, 234, 0.05);
-  border-color: rgba(245, 241, 234, 0.28);
+  background: rgba(239, 230, 210, 0.05);
+  border-color: rgba(239, 230, 210, 0.28);
 }
 
 .status:focus-visible {
-  outline: 2px solid var(--red-hot);
+  outline: 2px solid var(--accent-hot);
   outline-offset: 2px;
 }
 
@@ -35,7 +35,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--live);
-  box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.16);
+  box-shadow: 0 0 0 3px rgba(143, 191, 106, 0.16);
 }
 
 .text {

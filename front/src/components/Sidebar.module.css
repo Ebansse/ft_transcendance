@@ -1,12 +1,18 @@
+/* Panneau de commande de la borne : bois clair, tranche éclairée. */
 .sidebar {
-  flex: 0 0 244px;
-  padding: 1.5rem 0.85rem;
-  background: var(--ink-900);
-  border-right: 1px solid var(--line);
+  flex: 0 0 236px;
+  position: sticky;
+  top: 12px;
+  padding: 1.25rem 0.75rem;
+  background: linear-gradient(180deg, var(--wood-light), var(--wood));
+  border-radius: 10px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 230, 190, 0.08),
+    0 6px 0 var(--wood-dark);
 }
 
 .group {
-  animation: slide-in 520ms var(--ease) both;
+  animation: slide-in 500ms var(--ease) both;
 }
 
 .group:nth-child(1) {
@@ -26,19 +32,15 @@
 }
 
 .group + .group {
-  margin-top: 1.6rem;
-  padding-top: 1.6rem;
-  border-top: 1px solid var(--line);
+  margin-top: 1.25rem;
 }
 
 .groupTitle {
-  margin: 0 0 0.6rem 0.8rem;
+  margin: 0 0 0.4rem 0.7rem;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--red-bright);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--accent);
 }
 
 .list {
@@ -57,48 +59,66 @@
   transition: background-color 160ms ease;
 }
 
+/* Le curseur ▶ d'un menu de sélection de borne. Le bouton se décale pour
+   lui laisser la place. */
+.item {
+  --btn-padding: 0.5rem 0.8rem 0.5rem 1.6rem;
+}
+
 .item::before {
-  content: '';
+  content: '▶';
   position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 2px;
-  border-radius: 2px;
-  background: var(--red-bright);
-  transform: scaleY(0);
-  transition: transform 220ms var(--ease);
+  z-index: 1;
+  left: 0.55rem;
+  top: 50%;
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0;
+  transform: translate(-6px, -50%);
+  transition:
+    opacity 160ms ease,
+    transform 200ms var(--ease);
+  pointer-events: none;
 }
 
 .item:hover::before,
 .item:focus-within::before {
-  transform: scaleY(1);
+  opacity: 1;
+  transform: translate(0, -50%);
 }
 
 .item:hover {
-  background: rgba(245, 241, 234, 0.05);
+  background: rgba(239, 230, 210, 0.07);
 }
 
 .itemActive {
-  background: rgba(200, 22, 29, 0.12);
+  background: var(--bordeaux);
+  box-shadow: inset 3px 0 0 var(--accent);
 
-  --btn-nav-color: var(--bone);
+  --btn-nav-color: var(--ivory);
   --btn-nav-weight: 500;
 }
 
+.itemActive:hover {
+  background: var(--bordeaux);
+}
+
 .itemActive::before {
-  transform: scaleY(1);
+  opacity: 1;
+  transform: translate(0, -50%);
+  animation: blink 1s steps(1) infinite;
 }
 
 .icon {
   width: 1.3rem;
   text-align: center;
   font-size: 0.95rem;
-  transition: transform 220ms var(--ease);
+  transition: transform 260ms var(--ease-snap);
 }
 
 .item:hover .icon {
-  transform: translateX(2px) scale(1.12);
+  transform: scale(1.2) rotate(-8deg);
 }
 
 .label {
@@ -112,11 +132,13 @@
   padding: 0.05rem 0.4rem;
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.5;
-  color: #fff;
-  background: var(--red);
+  text-align: center;
+  color: var(--wood-dark);
+  background: var(--accent);
   border-radius: 999px;
+  animation: badge-pop 2.4s var(--ease-snap) 1.6s infinite;
 }
 
 .badge::after {
@@ -124,7 +146,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--red);
+  background: var(--accent);
   animation: badge-ring 3s ease-out infinite;
   pointer-events: none;
 }
@@ -150,7 +172,7 @@
   font-size: 0.82rem;
   font-weight: 300;
   text-align: left;
-  color: var(--mute);
+  color: var(--ivory-dim);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius);
@@ -162,13 +184,13 @@
 }
 
 .subItem:hover {
-  color: var(--bone);
-  background: rgba(245, 241, 234, 0.05);
+  color: var(--ivory);
+  background: rgba(239, 230, 210, 0.05);
   border-color: var(--line-strong);
 }
 
 .subItem:focus-visible {
-  outline: 2px solid var(--red-hot);
+  outline: 2px solid var(--accent-hot);
   outline-offset: 1px;
 }
 
@@ -188,15 +210,32 @@
   font-size: 0.65rem;
   line-height: 1.1rem;
   text-align: center;
-  color: #fff;
-  background: var(--red);
+  color: var(--wood-dark);
+  background: var(--accent);
   border-radius: 999px;
 }
 
 @keyframes slide-in {
   from {
     opacity: 0;
-    transform: translateX(-14px);
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes badge-pop {
+  0%,
+  20%,
+  100% {
+    transform: scale(1);
+  }
+  8% {
+    transform: scale(1.25);
   }
 }
 
@@ -227,7 +266,15 @@
     z-index: 10;
     width: 260px;
     overflow-y: auto;
+    border-radius: 0 10px 10px 0;
+    animation: drawer-in 320ms var(--ease) both;
     box-shadow: 24px 0 48px -24px rgba(0, 0, 0, 1);
+  }
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
   }
 }
 

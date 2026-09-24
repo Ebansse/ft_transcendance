@@ -4,7 +4,7 @@
   max-width: 46ch;
   font-size: 1.05rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 480ms;
 }
 
@@ -27,7 +27,7 @@
   width: 96px;
   height: 96px;
   object-fit: cover;
-  background: var(--ink-800);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-card);
 }
@@ -48,18 +48,18 @@
   padding: 0.5rem 0.85rem;
   overflow: hidden;
   font-size: 0.85rem;
-  color: var(--bone);
+  color: var(--ivory);
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  background: var(--ink-800);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   transition: border-color 160ms ease;
 }
 
 .fileLabel:hover {
-  border-color: rgba(245, 241, 234, 0.28);
+  border-color: rgba(239, 230, 210, 0.28);
 }
 
 .fileInput {
@@ -75,7 +75,7 @@
 }
 
 .fileInput:focus-visible + * {
-  outline: 2px solid var(--red-hot);
+  outline: 2px solid var(--accent-hot);
   outline-offset: 2px;
 }
 
@@ -105,8 +105,8 @@
   padding: 0.6rem 0.75rem;
   font-family: inherit;
   font-size: 0.92rem;
-  color: var(--bone);
-  background: var(--ink-800);
+  color: var(--ivory);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   transition:
@@ -115,17 +115,17 @@
 }
 
 .input:hover {
-  border-color: rgba(245, 241, 234, 0.28);
+  border-color: rgba(239, 230, 210, 0.28);
 }
 
 .input:focus {
   outline: none;
-  background: var(--ink-700);
-  border-color: var(--red-hot);
+  background: var(--panel-hi);
+  border-color: var(--accent-hot);
 }
 
 .inputError {
-  border-color: var(--red-bright);
+  border-color: var(--danger);
 }
 
 .actions {
@@ -161,13 +161,13 @@
   margin: 0;
   font-size: 0.8rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 .error {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .notice {

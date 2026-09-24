@@ -1,45 +1,60 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Chivo:wght@300;400;500;700&display=swap');
 
+/* Borne 1984 : un cabinet d'arcade en bois, une enseigne à ampoules et un
+   écran cathodique. Pas de néon : de la lumière d'ampoule chaude et des
+   ombres dures. */
 :root {
-  /* Noir de table, du plus profond au plus éclairé */
-  --void: #0a0a0b;
-  --ink-900: #111114;
-  --ink-800: #17171b;
-  --ink-700: #202027;
+  /* Bois du cabinet, du plus sombre au plus clair */
+  --wood-dark: #22160e;
+  --wood: #3a2618;
+  --wood-light: #4d3321;
 
-  /* Rouge : rempli pour les surfaces, éclairci pour le texte (contraste) */
-  --red: #c8161d;
-  --red-hot: #e42a31;
-  --red-bright: #f04a50;
-  --red-deep: #6d0c11;
+  /* Intérieur de l'écran et surfaces posées dessus (champs, encarts) */
+  --screen: #1b1512;
+  --panel: #2a1f19;
+  --panel-hi: #34271f;
 
-  /* Seule couleur non rouge du jeu de jetons : réservée à ce qui confirme
-     (accepter une invitation, une demande d'ami, un statut « en ligne »). */
-  --green: #1f9d55;
-  --green-bright: #2fbb6a;
+  /* Bordeaux de la façade : enseigne, cartes, élément actif */
+  --bordeaux: #5b1a24;
+  --bordeaux-deep: #3e1018;
 
-  /* Ivoire du texte, gris foncé de la carte et son texte inversé */
-  --bone: #f5f1ea;
-  --mute: #8e8e99;
-  --card: #2e2e34;
-  --card-ink: #f5f1ea;
-  --card-ink-dim: #a8a8b2;
+  /* Moutarde : l'accent, la lumière des ampoules. Rempli pour les boutons,
+     éclairci pour le texte. */
+  --accent: #d9a441;
+  --accent-hot: #e4b152;
+  --accent-bright: #ebc073;
+  --accent-deep: #a87a24;
 
-  --line: rgba(245, 241, 234, 0.09);
-  --line-strong: rgba(245, 241, 234, 0.18);
-  --card-line: rgba(245, 241, 234, 0.16);
+  /* Réservé à ce qui refuse ou échoue : erreurs, refus, défaites. */
+  --danger: #e0796b;
 
-  /* Vert de présence : la pastille « quelqu'un est là » */
-  --live: #3ddc84;
+  /* Réservé à ce qui confirme : accepter, être en ligne, victoire. */
+  --green: #6f9a4f;
+  --green-bright: #8fbf6a;
+  --live: #8fbf6a;
 
-  --font-display: 'Anton', 'Impact', sans-serif;
-  --font-body: 'Jost', system-ui, sans-serif;
-  --font-mono: 'DM Mono', ui-monospace, monospace;
+  /* Ivoire du texte, et sa version atténuée */
+  --ivory: #efe6d2;
+  --ivory-dim: #b9ae98;
 
-  --radius: 8px;
-  --radius-card: 14px;
+  /* Carte = façade bordeaux d'une mini-borne */
+  --card: var(--bordeaux);
+  --card-ink: #efe6d2;
+  --card-ink-dim: #cdbfa6;
 
-  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --line: rgba(239, 230, 210, 0.09);
+  --line-strong: rgba(239, 230, 210, 0.18);
+  --card-line: rgba(239, 230, 210, 0.16);
+
+  --font-display: 'Silkscreen', 'Courier New', monospace;
+  --font-body: 'Chivo', system-ui, sans-serif;
+  --font-mono: 'Silkscreen', 'Courier New', monospace;
+
+  --radius: 6px;
+  --radius-card: 12px;
+
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-snap: cubic-bezier(0.5, 1.6, 0.4, 1);
 
   font-family: var(--font-body);
   font-weight: 400;

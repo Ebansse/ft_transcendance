@@ -4,7 +4,7 @@
   max-width: 46ch;
   font-size: 1.05rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 480ms;
 }
 
@@ -14,7 +14,7 @@
   margin: 0;
   font-size: 0.95rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
   animation-delay: 640ms;
 }
 
@@ -22,7 +22,7 @@
   margin: 0 0 0.9rem;
   font-size: 0.85rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 .section {
@@ -55,8 +55,8 @@
   padding: 0.6rem 0.75rem;
   font-family: inherit;
   font-size: 0.92rem;
-  color: var(--bone);
-  background: var(--ink-800);
+  color: var(--ivory);
+  background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   transition:
@@ -65,25 +65,25 @@
 }
 
 .input:hover {
-  border-color: rgba(245, 241, 234, 0.28);
+  border-color: rgba(239, 230, 210, 0.28);
 }
 
 .input:focus {
   outline: none;
-  background: var(--ink-700);
-  border-color: var(--red-hot);
+  background: var(--panel-hi);
+  border-color: var(--accent-hot);
 }
 
 .error {
   margin: 0.4rem 0 0;
   font-size: 0.85rem;
-  color: var(--red-bright);
+  color: var(--danger);
 }
 
 .notice {
   margin: 0.4rem 0 0;
   font-size: 0.85rem;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 .rowActions {

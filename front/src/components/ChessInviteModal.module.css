@@ -46,7 +46,7 @@
   margin: 0;
   font-size: 0.88rem;
   font-weight: 300;
-  color: var(--mute);
+  color: var(--ivory-dim);
 }
 
 /* La modale ne doit pas dépasser l'écran quand on a beaucoup d'amis : au-delà,
