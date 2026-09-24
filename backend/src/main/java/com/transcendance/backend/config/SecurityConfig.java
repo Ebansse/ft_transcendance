@@ -97,6 +97,28 @@ public class SecurityConfig {
                                                                 "/api/chess/historique/me",
                                                                 "/api/chess/historique/{userId}")
                                                 .hasAnyRole("USER", "ADMIN")
+                                                // --- UNDERCOVER ---
+                                                .requestMatchers(HttpMethod.POST,
+                                                                "/api/undercover/rooms",
+                                                                "/api/undercover/rooms/join",
+                                                                "/api/undercover/rooms/leave",
+                                                                "/api/undercover/rooms/start",
+                                                                "/api/undercover/matches/{matchId}/clues",
+                                                                "/api/undercover/matches/{matchId}/votes",
+                                                                "/api/undercover/matches/{matchId}/guess",
+                                                                "/api/undercover/matches/{matchId}/leave",
+                                                                "/api/undercover/matches/{matchId}/chat")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.PUT,
+                                                                "/api/undercover/rooms/settings",
+                                                                "/api/undercover/rooms/words")
+                                                .hasAnyRole("USER", "ADMIN")
+                                                .requestMatchers(HttpMethod.GET,
+                                                                "/api/undercover/rooms/me",
+                                                                "/api/undercover/rooms/categories",
+                                                                "/api/undercover/matches/me",
+                                                                "/api/undercover/stats/me")
+                                                .hasAnyRole("USER", "ADMIN")
                                                 // --- CHAT ---
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/chat/{userId}")

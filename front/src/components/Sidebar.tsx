@@ -24,7 +24,10 @@ const GROUPS: NavGroup[] = [
   },
   {
     title: 'Jeux',
-    items: [{ action: 'nav:chess', label: 'Échecs', icon: '♟️' }],
+    items: [
+      { action: 'nav:chess', label: 'Échecs', icon: '♟️' },
+      { action: 'nav:undercover', label: 'Undercover', icon: '🕵️' },
+    ],
   },
   {
     title: 'Social',

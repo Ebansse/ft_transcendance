@@ -13,6 +13,13 @@ const GAMES = [
     description: 'Le grand classique. Parties classées, historique complet de tes coups.',
     playersOnline: 0,
   },
+  {
+    action: 'nav:undercover',
+    name: 'Undercover',
+    icon: '🕵️',
+    description: 'Un mot pour tous, un autre pour l’undercover. Donne tes indices sans te trahir.',
+    playersOnline: 0,
+  },
 ]
 
 type HomePageProps = {
@@ -30,7 +37,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <PageHeader
         className={s.heroDecor}
         title={title}
-        subtitle="Échecs : contre des bots ou en ligne, avec tes amis."
+        subtitle="Échecs contre des bots ou en ligne, Undercover entre amis."
       />
 
       <section aria-labelledby="games-title">
