@@ -11,8 +11,10 @@ import { ProfilePage } from './pages/ProfilePage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
 import { StatsPage } from './pages/StatsPage.tsx'
 import { TermsPage } from './pages/TermsPage.tsx'
+import { UndercoverPage } from './pages/UndercoverPage.tsx'
 import { NotificationCenter } from './ws/NotificationCenter.tsx'
 import { useChessMatchStart } from './ws/useChessMatchStart.ts'
+import { useUndercoverMatchStart } from './ws/useUndercoverMatchStart.ts'
 
 const PAGES = {
   'nav:home': { path: '/', Component: HomePage },
@@ -21,6 +23,7 @@ const PAGES = {
   'nav:admin': { path: '/admin', Component: AdminPage },
   'nav:chat': { path: '/chat', Component: ChatPage },
   'nav:chess': { path: '/chess', Component: ChessPage },
+  'nav:undercover': { path: '/undercover', Component: UndercoverPage },
   'nav:stats': { path: '/stats', Component: StatsPage },
   'nav:settings': { path: '/settings', Component: SettingsPage },
   'nav:privacy': { path: '/privacy', Component: PrivacyPolicyPage },
@@ -32,6 +35,10 @@ const CHAT_WITH = 'nav:chat:'
 function App() {
   const navigate = useNavigate()
   useChessMatchStart()
+
+  /* Même principe pour Undercover : les membres d'une salle rejoignent la table
+     quand l'hôte lance la partie, où qu'ils soient. */
+  useUndercoverMatchStart()
 
   const onNavigate = (action: string) => {
     if (action.startsWith(CHAT_WITH)) {

@@ -352,7 +352,7 @@ public class UserController {
 
         ResponseCookie expiredAccessCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .sameSite("strict")
                 .path("/")
                 .maxAge(0)
@@ -360,7 +360,7 @@ public class UserController {
 
         ResponseCookie expiredRefreshCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .sameSite("strict")
                 .path("/api/auth")
                 .maxAge(0)
