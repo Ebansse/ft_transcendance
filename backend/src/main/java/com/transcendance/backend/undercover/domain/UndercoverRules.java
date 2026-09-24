@@ -25,9 +25,9 @@ public class UndercoverRules {
      */
     public static final int MAX_PLAYERS = 20;
 
-    public static final int DEFAULT_DESCRIPTION_SECONDS = 45;
-    public static final int DEFAULT_VOTE_SECONDS = 120;
-    public static final int DEFAULT_MRWHITE_VOTE_SECONDS = 60;
+    public static final int DEFAULT_DESCRIPTION_SECONDS = 120;
+    public static final int DEFAULT_VOTE_SECONDS = 150;
+    public static final int DEFAULT_MRWHITE_VOTE_SECONDS = 90;
 
     private static final int MIN_PHASE_SECONDS = 15;
 

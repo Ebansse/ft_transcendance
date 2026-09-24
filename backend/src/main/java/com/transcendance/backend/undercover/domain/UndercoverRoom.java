@@ -119,6 +119,14 @@ public class UndercoverRoom {
     }
 
     /**
+     * Keeps the room out of reach of the idle sweeper although nothing is being
+     * configured in it - while its match is being played, for one.
+     */
+    public void touch(Instant now) {
+        lastActivity = now;
+    }
+
+    /**
      * A copy safe to hand out of the lock.
      */
     public View view() {

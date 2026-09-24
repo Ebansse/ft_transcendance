@@ -231,14 +231,19 @@ public class UndercoverRoomService {
     }
 
     /**
-     * Starts the match with every member of the room, then closes the room.
+     * Starts the match with every member of the room. The room stays open
+     * behind it: its members come back to it once the match is over, and the
+     * host may start another one without sharing the code again.
      *
      * A refused start - rules that do not fit the table, a member who joined a
-     * match meanwhile - leaves the room as it was.
+     * match meanwhile, a match of this room still being played - leaves the
+     * room as it was.
      *
      * @throws UndercoverException.NotInRoom        the user is in no room
      * @throws UndercoverException.NotRoomHost      the user is not the host
      * @throws UndercoverException.NotEnoughPlayers fewer members than a match needs
+     * @throws UndercoverException.AlreadyInMatch   a member still sits at a match,
+     *                                              this room's own one included
      */
     public synchronized UndercoverMatchEntity startMatch(UUID userId) {
         UndercoverRoom room = hostedRoom(userId);
@@ -250,8 +255,9 @@ public class UndercoverRoomService {
                 room.getMode() == UndercoverGameMode.CUSTOM ? room.effectiveRules() : null,
                 room.getCategories(), room.getCustomWordPairs());
 
-        roomsByCode.remove(room.getCode());
-        room.getMembers().forEach(roomCodeByUser::remove);
+        // The room outlives the match, so the idle sweeper must not carry it
+        // off while the table is busy playing.
+        room.touch(clock.instant());
         playerChannel.matchUpdated(match.getUndercoverMatchId());
         return match;
     }

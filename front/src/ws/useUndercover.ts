@@ -78,8 +78,17 @@ export function useUndercover() {
         ? current
         : next,
     )
-    // Une partie qui démarre ferme la salle d'où elle vient.
-    setRoom(null)
+  }, [])
+
+  /** Relit la salle. Elle survit désormais à la partie : la fin d'une table y
+   *  ramène ses joueurs, prêts à en relancer une. Un 404 veut dire qu'elle a
+   *  été fermée entre-temps. */
+  const refreshRoom = useCallback(async () => {
+    try {
+      setRoom(await getMyUndercoverRoom())
+    } catch (err: unknown) {
+      if (isQuiet(err)) setRoom(null)
+    }
   }, [])
 
   const refreshStats = useCallback(() => {
@@ -104,9 +113,11 @@ export function useUndercover() {
         else if (isQuiet(matchResult.reason)) setMatch(null)
         else setError(messageOf(matchResult.reason, 'Partie en cours introuvable.'))
 
-        if (roomResult.status === 'fulfilled' && matchResult.status !== 'fulfilled') {
+        /* Gardée même pendant la partie, sinon un rechargement de page en
+           cours de table perdrait la salle où l'écran de fin doit ramener. */
+        if (roomResult.status === 'fulfilled') {
           setRoom(roomResult.value)
-        } else if (roomResult.status === 'rejected' && !isQuiet(roomResult.reason)) {
+        } else if (!isQuiet(roomResult.reason)) {
           setError(messageOf(roomResult.reason, 'Salle introuvable.'))
         }
 
@@ -256,7 +267,7 @@ export function useUndercover() {
   )
 
   /** Quitte la table : le serveur élimine le joueur s'il était encore en jeu.
-   *  Rien n'est à afficher ensuite — on revient au lobby. */
+   *  On revient dans la salle, qui a survécu à la partie. */
   const leaveMatch = useCallback(async () => {
     if (match === null) return false
     const matchId = match.matchId
@@ -269,18 +280,20 @@ export function useUndercover() {
       setMatch(null)
       setChat([])
       refreshStats()
+      void refreshRoom()
     }
     return left === true
-  }, [run, match, refreshStats])
+  }, [run, match, refreshStats, refreshRoom])
 
   /** Referme l'écran de fin : la partie est terminée côté serveur, il n'y a
-   *  plus rien à lui dire. */
+   *  plus rien à lui dire. La salle est relue pour retrouver ses joueurs. */
   const closeFinished = useCallback(() => {
     if (match !== null) dismissedRef.current.add(match.matchId)
     setMatch(null)
     setChat([])
     setError(null)
-  }, [match])
+    void refreshRoom()
+  }, [match, refreshRoom])
 
   const matchChat = match === null ? [] : chat.filter((message) => message.matchId === match.matchId)
 

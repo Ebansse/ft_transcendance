@@ -56,7 +56,17 @@ public class RefreshTokenController {
                     .body("Token refreshed");
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+            // Dead cookie: clear it, otherwise /login keeps rejecting with "Refresh token found"
+            ResponseCookie clearRefresh = ResponseCookie.from("refresh_token", "")
+                    .httpOnly(true)
+                    .secure(true)
+                    .sameSite("strict")
+                    .path("/api/auth")
+                    .maxAge(0)
+                    .build();
+            return ResponseEntity.status(401)
+                    .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())
+                    .body(Map.of("error", "Invalid refresh token"));
         }
     }
 
