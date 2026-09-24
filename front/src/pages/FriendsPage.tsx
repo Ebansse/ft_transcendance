@@ -17,18 +17,9 @@ import {
   sendFriendRequest,
   type FriendListDto,
 } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
+import { formatDateTime } from '../lib/format.ts'
 import s from './FriendsPage.module.css'
-
-function formatDate(value: string | null) {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
-}
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
 
 function split(rows: FriendListDto[]) {
   const pending = rows.filter((row) => row.status === 'PENDING')
@@ -67,7 +58,7 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
       await action(row.idUser)
       await refresh()
     } catch (err) {
-      setActionError(messageOf(err, fallback))
+      setActionError(errorMessage(err, fallback))
     } finally {
       setBusy(null)
     }
@@ -87,7 +78,7 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
       setFormNotice(`Demande envoyée à ${target}.`)
       await refresh()
     } catch (err) {
-      setFormError(messageOf(err, 'Envoi de la demande impossible.'))
+      setFormError(errorMessage(err, 'Envoi de la demande impossible.'))
     } finally {
       setSending(false)
     }
@@ -109,7 +100,7 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
   const dateColumn = (header: string): Colonne<FriendListDto> => ({
     key: 'createAt',
     header,
-    render: (row) => formatDate(row.createAt),
+    render: (row) => formatDateTime(row.createAt),
   })
 
   const friendColumns: Colonne<FriendListDto>[] = [

@@ -9,19 +9,15 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
 type ChessBotModalProps = {
   open: boolean
-  /** Création en cours : verrouille le formulaire le temps de l'aller-retour. */
+  /** Création en cours : verrouille le formulaire. */
   pending?: boolean
-  /** Refus du back (déjà une partie en cours…) ; la modale reste ouverte pour
-   *  que le message se lise là où on vient de cliquer. */
+  /** Refus du back ; la modale reste ouverte pour que le message se lise. */
   error?: string | null
   onClose: () => void
   onStart: (side: ChessSide, botLvl: number) => void
 }
 
-/** Choix du camp et du niveau avant une partie contre le bot.
- *
- *  Le camp compte vraiment : en prenant les noirs, c'est le bot qui ouvre, et la
- *  partie revient du back avec son premier coup déjà joué. */
+/** Choix du camp et du niveau avant une partie contre le bot. */
 export function ChessBotModal({
   open,
   pending = false,
@@ -29,7 +25,6 @@ export function ChessBotModal({
   onClose,
   onStart,
 }: ChessBotModalProps) {
-  // Le focus part sur le premier bouton de la modale, la croix de fermeture.
   const dialog = useDialog(open, 'button', onClose)
 
   const [side, setSide] = useState<ChessSide>('WHITE')
@@ -48,8 +43,6 @@ export function ChessBotModal({
 
       <div className={s.form}>
         <div className={s.field}>
-          {/* Un groupe de deux boutons plutôt qu'une liste déroulante : le choix
-              est binaire et doit rester visible sans ouvrir quoi que ce soit. */}
           <span className={s.label} id="chess-bot-side">
             Votre camp
           </span>

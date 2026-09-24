@@ -1,10 +1,5 @@
-/** Pont entre chess.js et l'affichage de l'échiquier.
- *
- *  chess.js tient les *règles* (déplacements légaux, roque, prise en passant,
- *  clouage, mat, pat, nulles) — c'est le même jeu de règles que chesslib côté
- *  back, et le même FEN de part et d'autre. Ce module ne fait que traduire une
- *  partie chess.js en ce que la vue sait dessiner (64 cases, glyphes Unicode,
- *  libellés français) et n'ouvre aucune connexion. */
+/** Traduit une partie chess.js en ce que la vue sait dessiner : 64 cases,
+ *  glyphes Unicode, libellés français. Aucune règle ici, aucune connexion. */
 
 import type { Chess } from 'chess.js'
 
@@ -37,26 +32,11 @@ const NAMES: Record<string, string> = {
   p: 'pion',
 }
 
-export function glyphOf(piece: string) {
-  return GLYPHS[piece.toLowerCase()] ?? ''
-}
-
 /** Pièces dont le nom est féminin : leur couleur s'accorde (« tour noire »). */
 const FEMININE = new Set(['q', 'r'])
 
-/** Libellé lisible pour les lecteurs d'écran : « pion blanc », « tour noire ». */
-export function nameOf(piece: string) {
-  const type = piece.toLowerCase()
-  const feminine = FEMININE.has(type)
-  const color = isWhitePiece(piece)
-    ? feminine
-      ? 'blanche'
-      : 'blanc'
-    : feminine
-      ? 'noire'
-      : 'noir'
-
-  return `${NAMES[type] ?? 'pièce'} ${color}`
+export function glyphOf(piece: string) {
+  return GLYPHS[piece.toLowerCase()] ?? ''
 }
 
 /** Une case vide vaut `null` ; sinon la lettre FEN de la pièce, majuscule pour
@@ -65,8 +45,16 @@ export function isWhitePiece(piece: string) {
   return piece === piece.toUpperCase()
 }
 
-export function indexOfSquare(square: string) {
-  return SQUARE_NAMES.indexOf(square)
+/** Libellé lisible pour les lecteurs d'écran : « pion blanc », « tour noire ». */
+export function nameOf(piece: string) {
+  const type = piece.toLowerCase()
+  const white = isWhitePiece(piece)
+
+  let color: string
+  if (FEMININE.has(type)) color = white ? 'blanche' : 'noire'
+  else color = white ? 'blanc' : 'noir'
+
+  return `${NAMES[type] ?? 'pièce'} ${color}`
 }
 
 /** Aplatit `chess.board()` (8 rangées, la 8ᵉ d'abord) en 64 lettres FEN :
@@ -86,7 +74,6 @@ export function squaresOf(chess: Chess): (string | null)[] {
 const INITIAL: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 }
 const VALUES: Record<string, number> = { q: 9, r: 5, b: 3, n: 3, p: 1 }
 
-/** Pièces prises, vues de chaque côté, et l'écart de matériel qui en découle. */
 export type Captures = {
   /** Pièces noires disparues — les prises des blancs. */
   byWhite: string[]
@@ -111,8 +98,7 @@ function materialOf(squares: (string | null)[], white: boolean) {
 
 /** Les pièces d'un camp qui ne sont plus sur l'échiquier, de la plus forte à la
  *  plus faible. Une promotion fait disparaître un pion sans qu'il ait été pris :
- *  chaque pièce en surnombre en rend donc un à son camp, sans quoi un pion
- *  fantôme s'ajouterait aux prises de l'adversaire. */
+ *  chaque pièce en surnombre en rend donc un à son camp. */
 function missingOf(counts: Record<string, number>, white: boolean) {
   let promoted = 0
   for (const type of ['q', 'r', 'b', 'n']) {
@@ -128,14 +114,12 @@ function missingOf(counts: Record<string, number>, white: boolean) {
   return missing
 }
 
-/** Additionne la valeur des pièces d'un camp encore en jeu. */
 function scoreOf(counts: Record<string, number>) {
   return Object.entries(counts).reduce((total, [type, count]) => total + VALUES[type] * count, 0)
 }
 
-/** Déduit les prises de la seule position affichée, sans toucher à l'historique :
- *  une partie reprise depuis un FEN (rechargement de page) arrive sans coups, et
- *  doit tout de même montrer ce qui a été pris. */
+/** Déduit les prises de la seule position affichée : une partie reprise depuis
+ *  un FEN arrive sans coups, et doit tout de même montrer ce qui a été pris. */
 export function capturesOf(squares: (string | null)[]): Captures {
   const white = materialOf(squares, true)
   const black = materialOf(squares, false)
@@ -145,22 +129,4 @@ export function capturesOf(squares: (string | null)[]): Captures {
     byBlack: missingOf(white, true),
     advantage: scoreOf(white) - scoreOf(black),
   }
-}
-
-/** Motif de fin de partie en français, ou `null` tant qu'elle continue.
- *  L'ordre compte : `isGameOver()` dit *que* c'est fini, jamais *pourquoi*, et
- *  un mat est aussi une position sans coup légal. */
-export function outcomeOf(chess: Chess): string | null {
-  if (chess.isCheckmate()) {
-    // Le camp au trait est celui qui subit le mat.
-    const winner = chess.turn() === 'w' ? 'les noirs' : 'les blancs'
-    return `Échec et mat — ${winner} gagnent`
-  }
-  if (chess.isStalemate()) return 'Pat — partie nulle'
-  if (chess.isInsufficientMaterial()) return 'Nulle — matériel insuffisant'
-  if (chess.isThreefoldRepetition()) return 'Nulle — triple répétition'
-  if (chess.isDrawByFiftyMoves()) return 'Nulle — règle des 50 coups'
-  if (chess.isDraw()) return 'Partie nulle'
-
-  return null
 }

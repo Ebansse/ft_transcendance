@@ -178,7 +178,7 @@ public class TwoFactorController {
 
         ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtService.generateAccessToken(user))
                 .httpOnly(true)
-                .secure(false) //TODO: Change to true in production
+                .secure(true)
                 .sameSite("strict")
                 .path("/")
                 .maxAge(15 * 60)
@@ -186,7 +186,7 @@ public class TwoFactorController {
 
         ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshTokenService.generateRefreshToken(user))
                 .httpOnly(true)
-                .secure(false) //TODO: Change to true in production
+                .secure(true)
                 .sameSite("strict")
                 .path("/api/auth")
                 .maxAge(7 * 24 * 60 * 60)
@@ -194,7 +194,7 @@ public class TwoFactorController {
 
         ResponseCookie clearTwoFactorCookie = ResponseCookie.from("two_factor_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .sameSite("strict")
                 .path("/api/auth/2fa")
                 .maxAge(0)

@@ -5,20 +5,22 @@ import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
 import { TwoFactorModal } from '../components/TwoFactorModal.tsx'
 import { getMyProfile, loginWith42 } from '../lib/actions.ts'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
-import { api, ApiError } from '../lib/apiClient.ts'
+import { api, ApiError, errorMessage } from '../lib/apiClient.ts'
 import { AuthModalContext } from './authModalContext.ts'
 import type { AuthMode } from './authModalContext.ts'
 
 /** /auth/login répond "Login successful" (texte), ou ce JSON si le compte attend un code A2F. */
 type LoginResponse = string | { twoFactorRequired: true }
 
+const QUERY = new URLSearchParams(window.location.search)
+
 /** Retour d'OAuth 42 sur un compte A2F : le back redirige avec `?twoFactor=required`. */
-const OAUTH_TWO_FACTOR = new URLSearchParams(window.location.search).get('twoFactor') === 'required'
+const OAUTH_TWO_FACTOR = QUERY.get('twoFactor') === 'required'
 
 /** Retour d'OAuth 42 en échec. Le back refuse de rattacher un compte 42 à un compte
  *  local de même e-mail : l'e-mail du register n'étant pas vérifié, la fusion
  *  automatique offrirait le compte au premier inscrit. */
-const OAUTH_ERROR = new URLSearchParams(window.location.search).get('error')
+const OAUTH_ERROR = QUERY.get('error')
 
 const OAUTH_ERRORS: Record<string, string> = {
   email_already_registered:
@@ -124,8 +126,8 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       setUser(await getMyProfile())
       closeTwoFactor()
     } catch (err) {
-      const message = err instanceof ApiError ? (err.fieldErrors.code ?? err.message) : null
-      setTwoFactorError(message ?? 'Vérification impossible.')
+      const fieldError = err instanceof ApiError ? err.fieldErrors.code : null
+      setTwoFactorError(fieldError ?? errorMessage(err, 'Vérification impossible.'))
     } finally {
       setTwoFactorPending(false)
     }

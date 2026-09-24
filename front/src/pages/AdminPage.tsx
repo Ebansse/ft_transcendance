@@ -14,18 +14,9 @@ import {
   type UpdateUserPayload,
   type UserPublicProfileDto,
 } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
+import { formatDateTime } from '../lib/format.ts'
 import s from './AdminPage.module.css'
-
-function formatDate(value: string | null) {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
-}
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
 
 type AdminPageProps = {
   onNavigate: (action: string) => void
@@ -55,7 +46,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         if (alive) setUsers(list)
       })
       .catch((err: unknown) => {
-        if (alive) setError(messageOf(err, 'Chargement des comptes impossible.'))
+        if (alive) setError(errorMessage(err, 'Chargement des comptes impossible.'))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -84,7 +75,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       setUsers((list) => list.map((row) => (row.id === updated.id ? updated : row)))
       setEditing(null)
     } catch (err) {
-      setModalError(messageOf(err, 'Mise à jour impossible.'))
+      setModalError(errorMessage(err, 'Mise à jour impossible.'))
     } finally {
       setPending(false)
     }
@@ -101,7 +92,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       setUsers((list) => list.filter((row) => row.id !== idUser))
       setDeleting(null)
     } catch (err) {
-      setModalError(messageOf(err, 'Suppression impossible.'))
+      setModalError(errorMessage(err, 'Suppression impossible.'))
     } finally {
       setPending(false)
     }
@@ -111,7 +102,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
     { key: 'userName', header: 'Utilisateur', render: (u) => u.userName },
     { key: 'email', header: 'E-mail', render: (u) => u.email },
     { key: 'role', header: 'Rôle', render: (u) => u.role ?? '—' },
-    { key: 'online', header: 'Vu à', render: (u) => formatDate(u.online) },
+    { key: 'online', header: 'Vu à', render: (u) => formatDateTime(u.online) },
     { key: 'id', header: 'Identifiant', render: (u) => u.id },
     {
       key: 'actions',

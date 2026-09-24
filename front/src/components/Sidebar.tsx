@@ -1,9 +1,7 @@
-import { useMemo } from 'react'
 import { Button } from './Button.tsx'
 import { UserAvatar } from './UserAvatar.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { useChat } from '../chat/chatContext.ts'
-import { handleAction } from '../lib/actions.ts'
 import s from './Sidebar.module.css'
 
 const RECENT_LIMIT = 5
@@ -60,17 +58,22 @@ const BADGE_LABELS: Record<string, string> = {
 
 type SidebarProps = {
   open: boolean
-  current?: string
-  onNavigate?: (action: string) => void
+  current: string
+  onNavigate: (action: string) => void
 }
 
-export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction }: SidebarProps) {
+export function Sidebar({ open, current, onNavigate }: SidebarProps) {
   const { user } = useAuthModal()
-  const { recentIds, unread, nameOf, avatarOf, openQuickChat } = useChat()
+  const { rows, recentIds, unread, nameOf, avatarOf, openQuickChat } = useChat()
 
   const groups = user?.role === 'ADMIN' ? [...GROUPS, ADMIN_GROUP] : GROUPS
-  const badges = useBadges()
   const recent = recentIds.slice(0, RECENT_LIMIT)
+
+  const badges: Record<string, number> = {
+    'nav:friends': rows.filter((row) => row.status === 'PENDING' && row.senderId === row.idUser)
+      .length,
+    'nav:chat': Object.values(unread).reduce((total, count) => total + count, 0),
+  }
 
   return (
     <aside
@@ -129,17 +132,4 @@ export function Sidebar({ open, current = 'nav:home', onNavigate = handleAction 
       ))}
     </aside>
   )
-}
-
-function useBadges() {
-  const { rows, unread } = useChat()
-
-  return useMemo(() => {
-    const requests = rows.filter(
-      (row) => row.status === 'PENDING' && row.senderId === row.idUser,
-    ).length
-    const messages = Object.values(unread).reduce((total, count) => total + count, 0)
-
-    return { 'nav:friends': requests, 'nav:chat': messages } as Record<string, number>
-  }, [rows, unread])
 }

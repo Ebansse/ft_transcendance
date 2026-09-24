@@ -11,7 +11,6 @@ type ConfirmModalProps = {
   confirmLabel: string
   /** Ce que dit le bouton pendant la requête. */
   pendingLabel: string
-  /** Requête en cours : on verrouille les deux boutons. */
   pending?: boolean
   error?: string | null
   onConfirm: () => void
@@ -30,7 +29,7 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
-  // Le focus part sur le premier bouton, « Annuler » : rien de destructif sous Entrée.
+  // Focus sur « Annuler » : rien de destructif sous Entrée.
   const dialog = useDialog(open, 'button', onCancel)
 
   return (

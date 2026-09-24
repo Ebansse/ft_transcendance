@@ -1,31 +1,36 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import type { ToastItem } from '../components/Toast.tsx'
+import { useAuthModal } from '../auth/authModalContext.ts'
 import { useChat } from '../chat/chatContext.ts'
 import { CHAT_NOTIFICATIONS, type ChatNotificationDto } from '../lib/notificationClient.ts'
+import type { Notification } from './notificationContext.ts'
 import { useSocket } from './socketContext.ts'
 
 export const CHAT_TOAST_PREFIX = 'chat:'
 
-/** Ce qu'on garde par conversation : le toast affiché et le nombre de messages
- *  qu'il résume. */
-type ChatToast = { item: ToastItem; count: number }
+/** Le toast affiché pour une conversation, et le nombre de messages qu'il résume. */
+type ChatToast = { item: Notification; count: number }
 
-/** Écoute les notifications de chat : un seul toast par expéditeur, réécrit à
- *  chaque message avec le dernier aperçu et le compteur.
- *
- *  Rien ne s'affiche si la conversation est déjà sous les yeux (page
- *  `/chat/:idUser` ou quick chat ouvert), et le toast disparaît dès qu'on
- *  l'ouvre. Doit vivre sous `ChatProvider`. */
+/** Un seul toast par expéditeur, réécrit à chaque message. Rien ne s'affiche si
+ *  la conversation est déjà sous les yeux (page `/chat/:idUser` ou quick chat),
+ *  et le toast disparaît dès qu'on l'ouvre. Doit vivre sous `ChatProvider`. */
 export function useChatNotifications() {
   const { subscribe } = useSocket()
   const { quickChatIds, openQuickChat } = useChat()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const { user } = useAuthModal()
   const [toasts, setToasts] = useState<Record<string, ChatToast>>({})
 
-  /** Lus depuis le handler STOMP : via des refs, pour ne pas désinscrire et
-   *  réinscrire la file à chaque navigation. */
+  /** Changement de compte : rien de l'ancien ne doit rester affiché. */
+  const [owner, setOwner] = useState(user?.id)
+  if (owner !== user?.id) {
+    setOwner(user?.id)
+    setToasts({})
+  }
+
+  /** Lus depuis le handler STOMP via des refs, pour ne pas réinscrire la file
+   *  à chaque navigation. */
   const pathnameRef = useRef(pathname)
   const quickChatIdsRef = useRef(quickChatIds)
 
@@ -39,9 +44,8 @@ export function useChatNotifications() {
     })
   }, [])
 
-  /** Retire le toast d'une conversation qu'on vient d'ouvrir, par la page ou
-   *  par le quick chat. Fait pendant le rendu, en comparant à la navigation
-   *  précédente, plutôt que dans un effet : pas de rendu en cascade. */
+  /** Retire le toast d'une conversation qu'on vient d'ouvrir. Fait pendant le
+   *  rendu plutôt que dans un effet : sinon le toast clignoterait. */
   const [seen, setSeen] = useState({ pathname, quickChatIds })
   if (seen.pathname !== pathname || seen.quickChatIds !== quickChatIds) {
     setSeen({ pathname, quickChatIds })
@@ -68,8 +72,9 @@ export function useChatNotifications() {
         const id = `${CHAT_TOAST_PREFIX}${senderId}`
         setToasts((previous) => {
           const count = (previous[senderId]?.count ?? 0) + 1
-          const item: ToastItem = {
+          const item: Notification = {
             id,
+            popup: true,
             title: notification.senderUserName,
             body: count > 1 ? `${count} nouveaux messages — ${notification.preview}` : notification.preview,
             actions: [
@@ -83,8 +88,7 @@ export function useChatNotifications() {
     [subscribe, openQuickChat, navigate],
   )
 
-  /** Les deux actions ouvrent la conversation : le toast est alors retiré au
-   *  rendu suivant. */
+  // Les deux actions ouvrent la conversation : le toast part au rendu suivant.
   const items = Object.values(toasts).map((toast) => toast.item)
 
   return { items, dismiss }

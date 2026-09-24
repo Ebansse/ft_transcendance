@@ -44,7 +44,7 @@ public class LogoutController {
         }
        ResponseCookie expiredAccessCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
-                .secure(false) //TODO: Change to true in production
+                .secure(true)
                 .sameSite("strict")
                 .path("/")
                 .maxAge(0)
@@ -52,7 +52,7 @@ public class LogoutController {
 
         ResponseCookie expiredRefreshCookie = ResponseCookie.from("refresh_token", "")
                 .httpOnly(true)
-                .secure(false) //TODO: Change to true in production
+                .secure(true)
                 .sameSite("strict")
                 .path("/api/auth")
                 .maxAge(0)

@@ -11,7 +11,8 @@ import {
   type ChessPlayerStatDto,
   type ChessResult,
 } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
+import { formatDateTime } from '../lib/format.ts'
 import s from './StatsPage.module.css'
 
 const RESULT_LABELS: Record<ChessResult, string> = {
@@ -26,12 +27,6 @@ const RESULT_CLASSES: Record<ChessResult, string> = {
   DRAW: s.draw,
 }
 
-function formatDate(value: string | null) {
-  if (!value) return '—'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString('fr-FR')
-}
-
 /** Durée d'une partie en « 12 min 05 s » ; « — » si une borne manque. */
 function formatDuration(start: string, end: string | null) {
   if (!end) return '—'
@@ -41,10 +36,6 @@ function formatDuration(start: string, end: string | null) {
   const minutes = Math.floor(total / 60)
   const seconds = String(total % 60).padStart(2, '0')
   return minutes > 0 ? `${minutes} min ${seconds} s` : `${total} s`
-}
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
 }
 
 /** Plus récente d'abord ; une partie sans `endedAt` retombe sur `createdAt`. */
@@ -68,7 +59,6 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
   useEffect(() => {
     if (!isLoggedIn) return
 
-    // Le composant peut être démonté avant la réponse : on ignore alors le résultat.
     let alive = true
 
     Promise.all([getMyChessStats(), getMyChessHistory()])
@@ -79,7 +69,7 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
         setError(null)
       })
       .catch((err: unknown) => {
-        if (alive) setError(messageOf(err, 'Chargement des statistiques impossible.'))
+        if (alive) setError(errorMessage(err, 'Chargement des statistiques impossible.'))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -104,7 +94,7 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
     : []
 
   const historyColumns: Colonne<ChessHistoryDto>[] = [
-    { key: 'endedAt', header: 'Date', render: (row) => formatDate(row.endedAt) },
+    { key: 'endedAt', header: 'Date', render: (row) => formatDateTime(row.endedAt) },
     { key: 'white', header: 'Blancs', render: (row) => row.player1 },
     { key: 'black', header: 'Noirs', render: (row) => row.player2 },
     {

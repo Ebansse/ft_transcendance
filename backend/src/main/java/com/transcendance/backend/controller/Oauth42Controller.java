@@ -166,7 +166,7 @@ public class Oauth42Controller {
                 ResponseCookie twoFactorCookie = ResponseCookie.from("two_factor_token",
                         twoFactorService.createPendingLogin(localUser))
                   .httpOnly(true)
-                  .secure(false)
+                  .secure(true)
                   .sameSite("strict")
                   .path("/api/auth/2fa")
                   .maxAge(5 * 60)
@@ -184,7 +184,7 @@ public class Oauth42Controller {
     
             ResponseCookie accessCookie = ResponseCookie.from("access_token", accessToken42)
               .httpOnly(true)
-              .secure(false)
+              .secure(true)
               .sameSite("strict")
               .path("/")
               .maxAge(15 * 60)
@@ -192,7 +192,7 @@ public class Oauth42Controller {
       
               ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshToken42)
               .httpOnly(true)
-              .secure(false)
+              .secure(true)
               .sameSite("strict")
               .path("/api/auth")
               .maxAge(7 * 24 * 60 * 60)

@@ -15,12 +15,10 @@ type TableauProps<T> = {
   rows: T[]
   /** Clé React stable d'une ligne (un id, pas l'index). */
   rowKey: (row: T) => string
-  /** Affiché à la place du corps quand `rows` est vide. */
-  emptyText?: string
+  emptyText: string
 }
 
-/** Tableau de données générique : la page fournit les colonnes et les lignes. */
-export function Tableau<T>({ caption, columns, rows, rowKey, emptyText = 'Aucune donnée.' }: TableauProps<T>) {
+export function Tableau<T>({ caption, columns, rows, rowKey, emptyText }: TableauProps<T>) {
   return (
     <div className={s.scroller}>
       <table className={s.table}>

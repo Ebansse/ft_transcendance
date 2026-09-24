@@ -7,7 +7,7 @@ import s from './HomePage.module.css'
 
 const GAMES = [
   {
-    slug: 'chess',
+    action: 'nav:chess',
     name: 'Échecs',
     icon: '♟️',
     description: 'Le grand classique. Parties classées, historique complet de tes coups.',
@@ -36,8 +36,8 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <section aria-labelledby="games-title">
         <SectionTitle id="games-title">Les jeux</SectionTitle>
         <div className={s.gameGrid}>
-          {GAMES.map((game) => (
-            <GameCard key={game.slug} {...game} onPlay={() => onNavigate(`nav:${game.slug}`)} />
+          {GAMES.map(({ action, ...game }) => (
+            <GameCard key={action} {...game} onPlay={() => onNavigate(action)} />
           ))}
         </div>
       </section>

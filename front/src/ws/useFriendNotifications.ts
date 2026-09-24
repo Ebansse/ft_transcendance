@@ -1,35 +1,37 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { ToastItem } from '../components/Toast.tsx'
+import { useAuthModal } from '../auth/authModalContext.ts'
 import { useChat } from '../chat/chatContext.ts'
-import { acceptFriendRequest, declineFriendRequest } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { acceptFriendRequest, declineFriendRequest, getFriendList } from '../lib/actions.ts'
+import { errorMessage } from '../lib/apiClient.ts'
 import { FRIEND_NOTIFICATIONS, type FriendNotificationDto } from '../lib/notificationClient.ts'
+import type { Notification } from './notificationContext.ts'
 import { useSocket } from './socketContext.ts'
 
 /** Préfixe des ids de toast : `NotificationCenter` s'en sert pour savoir à quel
  *  hook rendre la fermeture. */
 export const FRIEND_TOAST_PREFIX = 'friend:'
 
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
-
-/** Écoute les notifications d'amis et les tient en pile pour `<Toast>`, sur le
- *  modèle de `useChessInvitations`. Chaque notification relance aussi la liste
- *  d'amis : la page Amis se met à jour sans rechargement.
- *
- *  Doit vivre sous `ChatProvider`, qui porte la liste d'amis. */
+/** Pile des notifications d'amis, sur le modèle de `useChessInvitations`.
+ *  Chaque notification relance la liste d'amis, d'où le besoin de vivre sous
+ *  `ChatProvider`. */
 export function useFriendNotifications() {
-  const { subscribe } = useSocket()
+  const { subscribe, status } = useSocket()
   const { refresh } = useChat()
-  const [items, setItems] = useState<ToastItem[]>([])
+  const { user } = useAuthModal()
+  const [items, setItems] = useState<Notification[]>([])
+
+  /** Changement de compte : rien de l'ancien ne doit rester affiché. */
+  const [owner, setOwner] = useState(user?.id)
+  if (owner !== user?.id) {
+    setOwner(user?.id)
+    setItems([])
+  }
 
   const dismiss = useCallback((id: string) => {
     setItems((previous) => previous.filter((item) => item.id !== id))
   }, [])
 
-  /** Même contrat que pour les échecs : succès = toast retiré, échec = toast
-   *  gardé sans boutons, avec la raison. */
+  /** Succès = toast retiré ; échec = toast gardé sans boutons, avec la raison. */
   const respond = useCallback(
     async (id: string, idUser: string, accept: boolean) => {
       try {
@@ -41,7 +43,7 @@ export function useFriendNotifications() {
         setItems((previous) =>
           previous.map((item) =>
             item.id === id
-              ? { ...item, body: messageOf(err, 'Action impossible.'), actions: undefined }
+              ? { ...item, body: errorMessage(err, 'Action impossible.'), actions: undefined }
               : item,
           ),
         )
@@ -54,7 +56,7 @@ export function useFriendNotifications() {
     () =>
       subscribe(FRIEND_NOTIFICATIONS, (body) => {
         const notification = JSON.parse(body) as FriendNotificationDto
-        const toast = toToast(notification, respond)
+        const toast = toNotification(notification, respond, true)
         // Une nouvelle demande du même compte remplace l'ancienne.
         setItems((previous) => [...previous.filter((item) => item.id !== toast.id), toast])
         void refresh().catch(() => {})
@@ -62,18 +64,48 @@ export function useFriendNotifications() {
     [subscribe, respond, refresh],
   )
 
+  /** À chaque (re)connexion, refresh de la page compris : les demandes reçues
+   *  encore en attente sont les lignes PENDING dont l'autre est l'expéditeur. */
+  useEffect(() => {
+    if (status !== 'connected') return
+    let cancelled = false
+    getFriendList()
+      .then((rows) => {
+        if (cancelled) return
+        const received = rows
+          .filter((row) => row.status === 'PENDING' && row.senderId === row.idUser)
+          .map((row) =>
+            toNotification(
+              { type: 'REQUEST_RECEIVED', fromUserId: row.idUser, fromUserName: row.userName },
+              respond,
+              false,
+            ),
+          )
+        setItems((previous) => [
+          ...previous,
+          ...received.filter((item) => !previous.some((known) => known.id === item.id)),
+        ])
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [status, respond])
+
   return { items, dismiss }
 }
 
-function toToast(
+function toNotification(
   notification: FriendNotificationDto,
   respond: (id: string, idUser: string, accept: boolean) => Promise<void>,
-): ToastItem {
+  popup: boolean,
+): Notification {
   const id = `${FRIEND_TOAST_PREFIX}${notification.type}:${notification.fromUserId}`
 
   if (notification.type === 'REQUEST_ACCEPTED') {
     return {
       id,
+      popup,
       title: 'Demande acceptée',
       body: `${notification.fromUserName} a accepté ta demande d’ami.`,
     }
@@ -81,6 +113,7 @@ function toToast(
 
   return {
     id,
+    popup,
     title: 'Demande d’ami',
     body: `${notification.fromUserName} veut t’ajouter en ami.`,
     actions: [

@@ -12,7 +12,6 @@ import { SettingsPage } from './pages/SettingsPage.tsx'
 import { StatsPage } from './pages/StatsPage.tsx'
 import { TermsPage } from './pages/TermsPage.tsx'
 import { UndercoverPage } from './pages/UndercoverPage.tsx'
-import { handleAction } from './lib/actions.ts'
 import { NotificationCenter } from './ws/NotificationCenter.tsx'
 import { useChessMatchStart } from './ws/useChessMatchStart.ts'
 import { useUndercoverMatchStart } from './ws/useUndercoverMatchStart.ts'
@@ -47,20 +46,19 @@ function App() {
       navigate(idUser ? `/chat/${idUser}` : '/chat')
       return
     }
-    if (action in PAGES) navigate(PAGES[action as keyof typeof PAGES].path)
-    else handleAction(action)
+    navigate(PAGES[action as keyof typeof PAGES].path)
   }
 
   return (
     <ChatProvider>
-      <NotificationCenter />
-
-      <Routes>
-        {Object.values(PAGES).map(({ path, Component }) => (
-          <Route key={path} path={path} element={<Component onNavigate={onNavigate} />} />
-        ))}
-        <Route path="/chat/:idUser" element={<ChatPage onNavigate={onNavigate} />} />
-      </Routes>
+      <NotificationCenter>
+        <Routes>
+          {Object.values(PAGES).map(({ path, Component }) => (
+            <Route key={path} path={path} element={<Component onNavigate={onNavigate} />} />
+          ))}
+          <Route path="/chat/:idUser" element={<ChatPage onNavigate={onNavigate} />} />
+        </Routes>
+      </NotificationCenter>
 
       <QuickChatDock />
     </ChatProvider>

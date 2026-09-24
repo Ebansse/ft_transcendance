@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Button } from './Button.tsx'
 import s from './Toast.module.css'
 
-/** Un bouton d'action au pied d'une notification. `tone` ne sert qu'à la
- *  couleur : `accept` en vert, `decline` en rouge, rien = neutre. */
+/** `tone` ne sert qu'à la couleur : `accept` en vert, `decline` en rouge. */
 export type ToastAction = {
   label: string
   /** Le toast attend la promesse pour bloquer les boutons pendant l'appel. */
@@ -11,10 +10,8 @@ export type ToastAction = {
   tone?: 'accept' | 'decline'
 }
 
-/** Une notification, quelle qu'en soit l'origine. `id` sert de clé de rendu et
- *  de poignée de fermeture : c'est à l'appelant de le rendre unique (l'UUID de
- *  l'invitation, l'id du message…). `actions` est optionnel : sans lui, le
- *  toast se contente d'informer. */
+/** `id` sert de clé de rendu et de poignée de fermeture : à l'appelant de le
+ *  rendre unique. Sans `actions`, le toast se contente d'informer. */
 export type ToastItem = {
   id: string
   title: string
@@ -27,11 +24,8 @@ type ToastProps = {
   onDismiss: (id: string) => void
 }
 
-/** Pile de notifications, ancrée en haut à droite : chacune entre en glissant
- *  depuis le bord droit et ne repart que sur sa croix, jamais toute seule.
- *
- *  Le composant ne connaît rien du métier — invitation d'échecs, message reçu,
- *  ami ajouté passeront tous par la même liste d'`items`. */
+/** Pile de notifications : chacune ne repart que sur sa croix, jamais seule.
+ *  Le composant ne connaît rien du métier. */
 export function Toast({ items, onDismiss }: ToastProps) {
   if (items.length === 0) return null
 
@@ -44,20 +38,16 @@ export function Toast({ items, onDismiss }: ToastProps) {
   )
 }
 
-/** Un rectangle. Composant à part pour qu'il porte son propre « appel en
- *  cours » : deux notifications empilées ne se bloquent pas l'une l'autre.
- *
- *  `role="status"` et `aria-live="polite"` plutôt que `alert`/`assertive` : une
- *  notification n'est pas une urgence, elle attend la fin de la phrase en cours
- *  du lecteur d'écran au lieu de la couper. */
-function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: string) => void }) {
-  /** Verrouille les deux boutons le temps de l'aller-retour : un double clic
-   *  sur « Accepter » partirait sinon deux fois. */
+/** Composant à part pour qu'il porte son propre « appel en cours » : deux
+ *  notifications empilées ne se bloquent pas l'une l'autre. Exporté pour la
+ *  cloche, qui liste les mêmes cartes. */
+export function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: string) => void }) {
+  /** Un double clic sur « Accepter » partirait sinon deux fois. */
   const [busy, setBusy] = useState(false)
 
   const run = (action: ToastAction) => {
     setBusy(true)
-    /* `Promise.resolve` : l'action peut être synchrone, on la traite pareil. */
+    // L'action peut être synchrone : Promise.resolve les traite pareil.
     void Promise.resolve(action.onClick()).finally(() => setBusy(false))
   }
 
@@ -75,8 +65,8 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: strin
       {item.actions !== undefined && item.actions.length > 0 && (
         <div className={s.actions}>
           {item.actions.map((action) => (
-            /* `Button` n'accepte pas de className : c'est le parent qui pose
-               les variables de couleur (contrat de Button.module.css). */
+            /* Button n'accepte pas de className : le parent pose les variables
+               de couleur (contrat de Button.module.css). */
             <span key={action.label} className={action.tone ? s[action.tone] : undefined}>
               <Button variant="secondary" fullWidth disabled={busy} onClick={() => run(action)}>
                 {action.label}

@@ -1,87 +1,123 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { ToastItem } from '../components/Toast.tsx'
-import { acceptChessInvitation, declineChessInvitation } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { useAuthModal } from '../auth/authModalContext.ts'
+import { acceptChessInvitation, declineChessInvitation, getPendingChessInvitations } from '../lib/actions.ts'
+import { errorMessage } from '../lib/apiClient.ts'
 import { CHESS_INVITATIONS, type ChessInvitationDto } from '../lib/chessClient.ts'
+import type { Notification } from './notificationContext.ts'
 import { useSocket } from './socketContext.ts'
 
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
-}
+/** Même durée que `ChessInvitation.TTL` côté back : passé ce délai, accepter
+ *  échouerait de toute façon. Le DTO ne porte pas `createdAt`, donc une
+ *  invitation rechargée repart pour 2 minutes pleines. */
+const INVITATION_TTL_MS = 2 * 60 * 1000
 
-/** Écoute les invitations d'échecs et les tient en pile, prêtes à être passées
- *  à `<Toast>`. Rien ne se ferme tout seul : le retrait vient de la croix, ou
- *  d'une réponse (accepter / refuser) partie sans erreur.
- *
- *  Une seule queue sert les deux sens de la conversation, l'état les sépare :
- *  `PENDING` arrive chez l'invité — avec ses deux boutons — et `DECLINED` chez
- *  l'inviteur, en simple information.
- *
- *  Appelé une seule fois, dans App : la socket vit au-dessus des routes, donc
- *  l'invitation arrive quelle que soit la page ouverte. */
+/** Pile des invitations d'échecs, prête pour `<Toast>` et la cloche. Une
+ *  invitation part sur la croix, sur une réponse sans erreur, ou au bout de
+ *  2 minutes. */
 export function useChessInvitations() {
-  const { subscribe } = useSocket()
+  const { subscribe, status } = useSocket()
+  const { user } = useAuthModal()
   const navigate = useNavigate()
-  const [invitations, setInvitations] = useState<ToastItem[]>([])
+  const [invitations, setInvitations] = useState<Notification[]>([])
+  const timers = useRef(new Map<string, number>())
+
+  /** Changement de compte : rien de l'ancien ne doit rester affiché. */
+  const [owner, setOwner] = useState(user?.id)
+  if (owner !== user?.id) {
+    setOwner(user?.id)
+    setInvitations([])
+  }
 
   const dismiss = useCallback((id: string) => {
+    window.clearTimeout(timers.current.get(id))
+    timers.current.delete(id)
     setInvitations((previous) => previous.filter((item) => item.id !== id))
   }, [])
 
-  /** Répond au back puis retire le toast. En cas de refus (invitation expirée,
-   *  déjà traitée, adversaire déconnecté…) le toast reste affiché mais perd ses
-   *  boutons : il n'y a plus rien à retenter, seulement une raison à lire. */
+  /** Ajoute une invitation (sans doublon) et arme son expiration. */
+  const add = useCallback(
+    (item: Notification) => {
+      if (timers.current.has(item.id)) return
+      timers.current.set(item.id, window.setTimeout(() => dismiss(item.id), INVITATION_TTL_MS))
+      setInvitations((previous) => [...previous, item])
+    },
+    [dismiss],
+  )
+
+  /** Répond au back puis retire le toast. En cas de refus, le toast reste mais
+   *  perd ses boutons : il n'y a plus rien à retenter, juste une raison à lire. */
   const respond = useCallback(
     async (id: string, opponent: string, accept: boolean) => {
       try {
         if (accept) {
           await acceptChessInvitation(opponent)
-          // La partie existe maintenant côté back : la page Échecs la retrouve
-          // toute seule avec GET /chess/matches/me.
+          // La page Échecs retrouve la partie avec GET /chess/matches/me.
           navigate('/chess')
         } else {
           await declineChessInvitation(opponent)
         }
-        setInvitations((previous) => previous.filter((item) => item.id !== id))
+        dismiss(id)
       } catch (err: unknown) {
         setInvitations((previous) =>
           previous.map((item) =>
             item.id === id
-              ? { ...item, body: messageOf(err, 'Action impossible.'), actions: undefined }
+              ? { ...item, body: errorMessage(err, 'Action impossible.'), actions: undefined }
               : item,
           ),
         )
       }
     },
-    [navigate],
+    [navigate, dismiss],
   )
 
-  /** `subscribe` renvoie déjà sa fonction de désinscription, et sa référence est
-   *  stable (useCallback sans dépendance dans SocketProvider) : l'effet ne se
-   *  rejoue pas à chaque rendu, et le registre du provider replace la
-   *  souscription à chaque reconnexion — rien à refaire ici. */
+  /** `subscribe` renvoie sa fonction de désinscription et sa référence est
+   *  stable : le provider replace la souscription à chaque reconnexion. */
   useEffect(
     () =>
       subscribe(CHESS_INVITATIONS, (body) => {
         const invitation = JSON.parse(body) as ChessInvitationDto
-        setInvitations((previous) => [...previous, toToast(invitation, respond)])
+        add(toNotification(invitation, respond, true))
       }),
-    [subscribe, respond],
+    [subscribe, respond, add],
   )
+
+  /** À chaque (re)connexion : ce qui est arrivé pendant qu'on n'écoutait pas,
+   *  refresh de la page compris. */
+  useEffect(() => {
+    if (status !== 'connected') return
+    let cancelled = false
+    getPendingChessInvitations()
+      .then((pending) => {
+        if (!cancelled) for (const invitation of pending) add(toNotification(invitation, respond, false))
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [status, add, respond])
+
+  useEffect(() => {
+    const pending = timers.current
+    return () => {
+      for (const timer of pending.values()) window.clearTimeout(timer)
+      pending.clear()
+    }
+  }, [])
 
   return { invitations, dismiss }
 }
 
-/** Traduit une invitation en notification : refus reçu = information sèche,
- *  invitation reçue = deux boutons. */
-function toToast(
+/** Refus reçu = information sèche, invitation reçue = deux boutons. */
+function toNotification(
   invitation: ChessInvitationDto,
   respond: (id: string, opponent: string, accept: boolean) => Promise<void>,
-): ToastItem {
+  popup: boolean,
+): Notification {
   if (invitation.state === 'DECLINED') {
     return {
       id: invitation.invitationId,
+      popup,
       title: 'Invitation refusée',
       body: `${invitation.fromUsername} a refusé ta partie d’échecs.`,
     }
@@ -89,6 +125,7 @@ function toToast(
 
   return {
     id: invitation.invitationId,
+    popup,
     title: 'Invitation aux échecs',
     body: `${invitation.fromUsername} t’invite à une partie d’échecs : tu joueras les ${
       invitation.fromSide === 'BLACK' ? 'blancs' : 'noirs'

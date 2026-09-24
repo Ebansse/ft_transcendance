@@ -36,7 +36,7 @@ public class RefreshTokenController {
 
             ResponseCookie accessCookie = ResponseCookie.from("access_token", loginResponse.getAccessToken())
                     .httpOnly(true)
-                    .secure(false) //TODO: Change to true in production
+                    .secure(true)
                     .sameSite("strict")
                     .path("/")
                     .maxAge(15 * 60)
@@ -44,7 +44,7 @@ public class RefreshTokenController {
             
             ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", loginResponse.getRefreshToken())
                     .httpOnly(true)
-                    .secure(false) //TODO: Change to true in production
+                    .secure(true)
                     .sameSite("strict")
                     .path("/api/auth")
                     .maxAge(7 * 24 * 60 * 60)
