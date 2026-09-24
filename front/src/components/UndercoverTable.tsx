@@ -114,21 +114,10 @@ export function UndercoverTable({
 
       {!over && (
         <section className={s.secret} aria-label="Votre mot">
-          {match.iAmMrWhite ? (
-            <>
-              <p className={s.secretLabel}>Vous êtes</p>
-              <SecretWord word="Mr White" />
-              <p className={s.hint}>Vous n’avez pas de mot : écoutez les indices et fondez-vous dans la masse.</p>
-            </>
-          ) : (
-            <>
-              <p className={s.secretLabel}>Votre mot</p>
-              <SecretWord word={match.myWord ?? ''} />
-              <p className={s.hint}>
-                Agent ou undercover ? Vous ne le savez pas : comparez votre mot aux indices des autres.
-              </p>
-            </>
-          )}
+          {/* Libellé et aide identiques pour tous les rôles : rien ne doit trahir Mr White à l'écran. */}
+          <p className={s.secretLabel}>Votre mot</p>
+          <SecretWord word={match.iAmMrWhite ? 'Mr White' : (match.myWord ?? '')} />
+          <p className={s.hint}>Écoutez les indices des autres et fondez-vous dans la masse.</p>
           {match.iAmEliminated && <p className={s.eliminatedBanner}>Vous êtes éliminé·e — vous suivez la partie.</p>}
         </section>
       )}
