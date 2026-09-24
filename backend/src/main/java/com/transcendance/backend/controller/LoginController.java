@@ -19,8 +19,6 @@ import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.LoginService;
 import com.transcendance.backend.services.TwoFactorLockedException;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -44,13 +42,10 @@ public class LoginController {
      *         {"twoFactorRequired": true} if a 2FA code is missing, or an error message if failed
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(HttpServletRequest request, @Valid @RequestBody LoginRequestDto loginRequest,
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto loginRequest,
                                     BindingResult bindingResult) {
 
-        String refreshToken = extractRefreshTokenFromCookies(request);
-        if (refreshToken != null) {
-            return ResponseEntity.status(401).body("Refresh token found");
-        }
+        // A leftover refresh_token cookie is simply overwritten by the new one below
         log.info("Processing login for email: {}", loginRequest.getEmail());
         
         if (bindingResult.hasErrors()) {
@@ -100,15 +95,5 @@ public class LoginController {
         log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
         return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
     }
-    }
-
-    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
-        if (request.getCookies() == null) return null;
-        for (Cookie cookie : request.getCookies()) {
-            if ("refresh_token".equals(cookie.getName())) {
-                return cookie.getValue();
-            }
-        }
-        return null;
     }
 }
