@@ -79,10 +79,6 @@
   animation: knight-hop 2.8s var(--ease) 2.4s infinite;
 }
 
-.card:hover .icon {
-  animation-duration: 1.2s;
-}
-
 .title {
   margin: 1rem 0 0.4rem;
   font-family: var(--font-display);
