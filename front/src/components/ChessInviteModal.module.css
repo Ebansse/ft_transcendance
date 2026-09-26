@@ -66,6 +66,19 @@
   --btn-font-size: 0.9rem;
 }
 
+/* Ami hors ligne : le back refuserait l'invitation, on le montre sans le proposer. */
+.offline {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.offlineTag {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: var(--ivory-dim);
+}
+
 .globalError {
   composes: globalError from '../style/dialog.module.css';
 

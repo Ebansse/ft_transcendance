@@ -4,6 +4,8 @@ import { useDialog } from './useDialog.ts'
 import { getFriendList, type FriendListDto } from '../lib/actions.ts'
 import { errorMessage } from '../lib/apiClient.ts'
 import type { ChessSide } from '../lib/chessClient.ts'
+import { PRESENCE, type PresenceDto } from '../lib/presenceClient.ts'
+import { useSocket } from '../ws/socketContext.ts'
 import s from './ChessInviteModal.module.css'
 
 type ChessInviteModalProps = {
@@ -28,6 +30,7 @@ export function ChessInviteModal({
   onInvite,
 }: ChessInviteModalProps) {
   const dialog = useDialog(open, 'button', onClose)
+  const { subscribe } = useSocket()
 
   const [side, setSide] = useState<ChessSide | null>('WHITE')
   const [friends, setFriends] = useState<FriendListDto[]>([])
@@ -57,6 +60,25 @@ export function ChessInviteModal({
       alive = false
     }
   }, [open])
+
+  // Le back refuse d'inviter un absent : la liste suit la présence en direct
+  // tant que la modale est ouverte.
+  useEffect(() => {
+    if (!open) return
+    return subscribe(PRESENCE, (body) => {
+      const presence = JSON.parse(body) as PresenceDto
+      setFriends((previous) =>
+        previous.map((friend) =>
+          friend.idUser === presence.idUser ? { ...friend, online: presence.online } : friend,
+        ),
+      )
+    })
+  }, [open, subscribe])
+
+  // En ligne d'abord, puis par pseudo.
+  const sorted = [...friends].sort(
+    (a, b) => Number(b.online) - Number(a.online) || a.userName.localeCompare(b.userName),
+  )
 
   return (
     <dialog {...dialog} className={s.dialog} aria-labelledby="chess-invite-title">
@@ -116,15 +138,17 @@ export function ChessInviteModal({
 
       {!loading && !loadError && friends.length > 0 && (
         <ul className={s.friendList}>
-          {friends.map((friend) => (
-            <li key={friend.idUser}>
+          {sorted.map((friend) => (
+            <li key={friend.idUser} className={friend.online ? undefined : s.offline}>
               <Button
                 variant="secondary"
                 fullWidth
-                disabled={pending !== null}
+                disabled={pending !== null || !friend.online}
+                ariaLabel={friend.online ? undefined : `${friend.userName}, hors ligne`}
                 onClick={() => onInvite(friend.userName, side)}
               >
                 {pending === friend.userName ? 'Envoi…' : friend.userName}
+                {!friend.online && <span className={s.offlineTag}>hors ligne</span>}
               </Button>
             </li>
           ))}

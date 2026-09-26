@@ -107,6 +107,9 @@ export type FriendListDto = {
   createAt: string | null
   status: FriendshipStatus
   senderId: string
+  /** Présence au moment de la requête ; toujours `false` hors amitié acceptée. */
+  online: boolean
+  lastSeen: string | null
   blockerId: string | null
 }
 
