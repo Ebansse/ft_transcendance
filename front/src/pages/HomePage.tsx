@@ -11,14 +11,12 @@ const GAMES = [
     name: 'Échecs',
     icon: '♟️',
     description: 'Le grand classique. Parties classées, historique complet de tes coups.',
-    playersOnline: 0,
   },
   {
     action: 'nav:undercover',
     name: 'Undercover',
     icon: '🕵️',
     description: 'Un mot pour tous, un autre pour l’undercover. Donne tes indices sans te trahir.',
-    playersOnline: 0,
   },
 ]
 

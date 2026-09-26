@@ -15,6 +15,7 @@ import {
   declineFriendRequest,
   deleteFriend,
   sendFriendRequest,
+  unblockUser,
   type FriendListDto,
 } from '../lib/actions.ts'
 import { errorMessage } from '../lib/apiClient.ts'
@@ -197,7 +198,26 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
     },
   ]
 
-  const blockedColumns: Colonne<FriendListDto>[] = [nameColumn, dateColumn('Bloqué le')]
+  const blockedColumns: Colonne<FriendListDto>[] = [
+    nameColumn,
+    dateColumn('Bloqué le'),
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => (
+        <div className={s.rowActions}>
+          <Button
+            variant="ghost"
+            disabled={busy === row.idUser}
+            onClick={() => run(row, unblockUser, 'Déblocage impossible.')}
+            ariaLabel={`Débloquer ${row.userName}`}
+          >
+            Débloquer
+          </Button>
+        </div>
+      ),
+    },
+  ]
 
   return (
     <AppLayout current="nav:friends" onNavigate={onNavigate}>
