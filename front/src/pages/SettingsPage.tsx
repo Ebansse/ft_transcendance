@@ -5,12 +5,8 @@ import { Button } from '../components/Button.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { errorMessage } from '../lib/apiClient.ts'
-import { deleteMyAccount, downloadJson, exportMyData } from '../lib/gdpr.ts'
+import { deleteMyAccount } from '../lib/gdpr.ts'
 import s from './SettingsPage.module.css'
-
-function fileStamp() {
-  return new Date().toISOString().slice(0, 10)
-}
 
 type Busy = 'export' | 'delete' | null
 
@@ -34,20 +30,6 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
   const reset = () => {
     setError(null)
     setNotice(null)
-  }
-
-  const handleExport = async () => {
-    reset()
-    setBusy('export')
-    try {
-      const data = await exportMyData()
-      downloadJson(data, `transcendence-donnees-${userName || 'compte'}-${fileStamp()}.json`)
-      setNotice('Export téléchargé.')
-    } catch (err) {
-      setError(errorMessage(err, 'Export impossible pour le moment.'))
-    } finally {
-      setBusy(null)
-    }
   }
 
   const handleDelete = async () => {
@@ -75,22 +57,6 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
         <>
           {error && <p className={s.error}>{error}</p>}
           {notice && <p className={s.notice}>{notice}</p>}
-
-          <section className={s.section} aria-labelledby="settings-export-title">
-            <SectionTitle id="settings-export-title">Exporter mes données</SectionTitle>
-            <div className={s.card}>
-              <p className={s.text}>
-                Télécharge un fichier JSON contenant ton profil, ta liste d’amis, tes messages et
-                tes parties d’échecs. C’est ton droit à la portabilité : le fichier est lisible et
-                réutilisable ailleurs.
-              </p>
-              <div className={s.actions}>
-                <Button variant="primary" disabled={busy !== null} onClick={handleExport}>
-                  {busy === 'export' ? 'Préparation…' : 'Télécharger mes données'}
-                </Button>
-              </div>
-            </div>
-          </section>
 
           <section className={s.section} aria-labelledby="settings-delete-title">
             <SectionTitle id="settings-delete-title">Supprimer mon compte</SectionTitle>
