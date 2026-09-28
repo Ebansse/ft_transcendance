@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from './Button.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { NotificationBell } from './NotificationBell.tsx'
@@ -14,11 +15,14 @@ type NavbarProps = {
 
 export function Navbar({ title, leading, action }: NavbarProps) {
   const { isLoggedIn, logout } = useAuthModal()
+  const navigate = useNavigate()
 
   return (
     <nav className={s.navbar}>
       <div className={s.side}>{leading}</div>
-      <h1 className={s.title}>{title}</h1>
+      <button type="button" className={s.title} onClick={() => navigate('/')}>
+        {title}
+      </button>
       <div className={`${s.side} ${s.sideEnd}`}>
         {action}
         {isLoggedIn && <NotificationBell />}

@@ -16,36 +16,13 @@
   animation: drop-in 700ms var(--ease-snap) both;
 }
 
-/* Deux rangées d'ampoules : une couche éteinte, une couche allumée qui avance
-   d'une ampoule à chaque pas (chenillard). La rangée du bas tourne à l'envers. */
-.navbar::before,
-.navbar::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  height: 12px;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 6px 50%, var(--accent) 3.5px, rgba(217, 164, 65, 0.35) 5px, transparent 6px),
-    radial-gradient(circle at 6px 50%, #5e4128 3.5px, transparent 4.5px);
-  background-size: 36px 12px, 12px 12px;
-  background-repeat: repeat-x;
-  animation: bulb-chase 900ms steps(3) infinite;
-}
-
-.navbar::before {
-  top: 4px;
-}
-
-.navbar::after {
-  bottom: 4px;
-  animation-direction: reverse;
-}
-
 /* Enseigne du salon : centrée, en relief à ombres pleines. */
 .title {
   margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
   font-family: var(--font-display);
   font-size: clamp(1.05rem, 2.4vw, 1.5rem);
   font-weight: 700;

@@ -12,6 +12,8 @@ services:
     build: ./backend
     container_name: backend
     env_file: .env
+    ports:
+      - "127.0.0.1:8080:8080" # dev : acces direct au back pour le proxy Vite (make dev)
     environment:
       # Dans le reseau Docker, la base est joignable par son nom de service
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}

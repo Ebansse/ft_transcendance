@@ -22,4 +22,8 @@ fclean:
 
 re: down up
 
-.PHONY: all up down logs ps clean fclean re
+dev:
+	@$(COMPOSE) up -d --build db backend
+	@cd front && npm run dev
+
+.PHONY: all up down logs ps clean fclean re dev
