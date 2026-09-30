@@ -44,7 +44,6 @@ public class SecurityConfig {
                                                                 "/api/auth/2fa/login")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
-                                                                "/api/hello",
                                                                 "/api/default-avatar.png",
                                                                 "/api/avatars/**",
                                                                 "/api/auth/42/login",

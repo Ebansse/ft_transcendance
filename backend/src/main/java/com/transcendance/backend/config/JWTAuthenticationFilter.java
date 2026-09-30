@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.transcendance.backend.repository.UserRepository;
 import com.transcendance.backend.services.JWTService;
+import com.transcendance.backend.services.RefreshTokenService;
 import com.transcendance.backend.services.UserRoleService;
 
 import jakarta.servlet.FilterChain;
@@ -31,6 +32,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter{
     private JWTService jwtService;
     private UserRepository userRepository;
     private UserRoleService userRoleService;
+    private RefreshTokenService refreshTokenService;
 
     /**
      * Filters the HTTP request to authenticate the user based on the JWT token.
@@ -48,7 +50,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter{
 
         if (token != null) {
             try{
-                if (jwtService.isTokenValid(token)) {
+                if (jwtService.isTokenValid(token)
+                        && refreshTokenService.isSessionActive(jwtService.extractSessionId(token))) {
                     // Extract the user ID from the token
                     String userId =jwtService.extractUserId(token);
 

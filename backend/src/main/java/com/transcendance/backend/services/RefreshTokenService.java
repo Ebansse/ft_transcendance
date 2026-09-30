@@ -41,13 +41,13 @@ public class RefreshTokenService {
     private int refreshTokenValidityDays;
 
     /**
-     * Generates a new refresh token for the given user.
+     * Opens a new session: revokes the previous ones, then issues both tokens.
      *
-     * @param user the user for whom to generate a refresh token
-     * @return the generated refresh token
+     * @param user the user for whom to open a session
+     * @return the access token and the raw refresh token
      */
     @Transactional
-    public String generateRefreshToken(User user) {
+    public LoginResponseTokenDto openSession(User user) {
 
         log.info("Generating refresh token for user: {}", user.getEmail());
 
@@ -63,10 +63,26 @@ public class RefreshTokenService {
         refreshToken.setRevoked(false);
         refreshToken.setCreatedAt(Instant.now());
 
-        refreshTokenRepository.save(refreshToken);
+        RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
 
         log.info("Refresh token generated for user: {}", user.getEmail());
-        return rawToken;
+        return new LoginResponseTokenDto(
+                jwtService.generateAccessToken(user, savedToken.getIdToken()), rawToken);
+    }
+
+    /**
+     * @param sessionId the session id read from the access token, may be null
+     * @return true if the matching refresh token is not revoked
+     */
+    public boolean isSessionActive(String sessionId) {
+        if (sessionId == null) {
+            return false;
+        }
+        try {
+            return refreshTokenRepository.existsByIdTokenAndRevokedFalse(Long.parseLong(sessionId));
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /**
@@ -124,9 +140,6 @@ public class RefreshTokenService {
 
         User user = rotationService.validateAndRevoke(hashedToken);
 
-        String newRefreshToken = generateRefreshToken(user);
-        String newAccessToken = jwtService.generateAccessToken(user);
-
-        return new LoginResponseTokenDto(newAccessToken, newRefreshToken);
+        return openSession(user);
     }
 }

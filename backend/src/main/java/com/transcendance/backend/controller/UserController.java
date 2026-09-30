@@ -61,18 +61,19 @@ public class UserController {
         this.deleteUserService = deleteUserService;
     }
 
-    /**
-     * Maps a user entity to its public profile representation.
-     *
-     * @param user the user to map
-     * @return the corresponding {@link UserPublicProfileDto}
-     */
-    private UserPublicProfileDto toDto(User user) {
+    /** Maps a user to what other users may see: no email, no role. */
+    private UserPublicProfileDto toPublicDto(User user) {
         UserPublicProfileDto dto = new UserPublicProfileDto();
         dto.setAvatarUrl(user.getAvatarUrl());
         dto.setId(user.getIdUser());
         dto.setOnline(user.getOnline());
         dto.setUserName(user.getUserName());
+        return dto;
+    }
+
+    /** Maps a user to its full profile, for its owner and for administrators. */
+    private UserPublicProfileDto toDto(User user) {
+        UserPublicProfileDto dto = toPublicDto(user);
         dto.setEmail(user.getEmail());
         dto.setRole(userRoleService.getRoleName(user));
         return dto;
@@ -137,7 +138,7 @@ public class UserController {
         }
 
         User user = userOpt.get();
-        UserPublicProfileDto dto = toDto(user);
+        UserPublicProfileDto dto = toPublicDto(user);
 
         return ResponseEntity.ok(dto);
     }

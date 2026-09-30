@@ -20,4 +20,6 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
 
     //Methode to find all refresh token active from user
     List<RefreshToken> findByUserAndRevokedFalse(User user);
+
+    boolean existsByIdTokenAndRevokedFalse(long idToken);
 }

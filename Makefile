@@ -1,4 +1,5 @@
 COMPOSE = docker compose
+COMPOSE_DEV = $(COMPOSE) -f compose.yaml -f compose.dev.yaml
 
 all: up
 
@@ -23,7 +24,7 @@ fclean:
 re: down up
 
 dev:
-	@$(COMPOSE) up -d --build db backend
+	@$(COMPOSE_DEV) up -d --build db backend
 	@cd front && npm run dev
 
 .PHONY: all up down logs ps clean fclean re dev

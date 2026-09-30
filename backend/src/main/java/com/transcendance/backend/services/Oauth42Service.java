@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.transcendance.backend.config.Oauth42Properties;
@@ -34,9 +35,6 @@ public class Oauth42Service {
         this.userRoleService = userRoleService;
     }
 
-    public String buildAuthorizationUrl() {
-        return buildAuthorizationUrl(null);
-    }
 
     /**
      * Same URL, with an opaque state carried through the whole round trip.
@@ -87,6 +85,9 @@ public class Oauth42Service {
             .retrieve()
             .body(Oauth42TokenResponseDto.class);
 
+        if (response == null || response.getAccessToken() == null) {
+            throw new RestClientException("42 answered the token exchange without an access token");
+        }
         return response.getAccessToken();
     }
 
@@ -99,6 +100,9 @@ public class Oauth42Service {
             .retrieve()
             .body(Oauth42UserInfoDto.class);
 
+        if (response == null) {
+            throw new RestClientException("42 answered the profile request with an empty body");
+        }
         return response;
     }
 

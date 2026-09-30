@@ -26,19 +26,23 @@ public class JWTService {
     // Marks a token as a 42 linking state, and nothing else.
     private static final String LINK_42_PURPOSE = "link42";
 
+    private static final String SESSION_CLAIM = "sid";
+
     /**
-     * Generates a JWT token for the given user.
+     * Generates a JWT token for the given user, tied to one session.
      *
      * @param user the user for whom the token is generated
+     * @param sessionId the id of the refresh token opened alongside this token
      * @return a JWT token as a String
      */
-    public String generateAccessToken(User user) {  
+    public String generateAccessToken(User user, long sessionId) {  
 
         // Create a signing key from the secret
         Key key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); 
         // Generate the JWT token with the user's ID as the subject, current time as issuedAt, and expiration time set to 15 minutes from now
         return Jwts.builder()
                 .subject(String.valueOf(user.getIdUser()))
+                .claim(SESSION_CLAIM, String.valueOf(sessionId))
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + 15 * 60 * 1000))
                 .signWith(key)
@@ -124,5 +128,21 @@ public class JWTService {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getSubject();
+    }
+
+    /**
+     * Extracts the session id from the given JWT token.
+     *
+     * @param token the JWT token from which to extract the session id
+     * @return the session id, or null if the token carries none
+     */
+    public String extractSessionId(String token) {
+        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get(SESSION_CLAIM, String.class);
     }
 }

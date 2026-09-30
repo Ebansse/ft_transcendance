@@ -31,6 +31,7 @@ const LINK_MESSAGES: Record<string, string> = {
   already_linked: 'Ce compte 42 est déjà rattaché à un compte.',
   link_failed: 'La liaison a échoué : relance-la depuis cette page.',
   oauth_failed: 'L’intra 42 n’a pas répondu. Réessaie dans un instant.',
+  oauth_denied: 'Liaison avec 42 annulée.',
 }
 
 function messageOf(err: unknown, fallback: string) {
@@ -75,7 +76,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
   useEffect(() => {
     if (user) {
       setUserName(user.userName)
-      setEmail(user.email)
+      setEmail(user.email ?? '')
     }
   }, [user])
 
