@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Toast } from '../components/Toast.tsx'
 import { NotificationContext, type Notification } from './notificationContext.ts'
 import { CHAT_TOAST_PREFIX, useChatNotifications } from './useChatNotifications.ts'
@@ -19,26 +19,13 @@ export function NotificationCenter({ children }: { children: ReactNode }) {
    *  réécrite (nouveau message, erreur) ressorte en toast. */
   const [hidden, setHidden] = useState<ReadonlySet<Notification>>(new Set())
 
-  const items = useMemo(
-    () => [...chess.invitations, ...friends.items, ...chat.items],
-    [chess.invitations, friends.items, chat.items],
-  )
+  const items = [...chess.invitations, ...friends.items, ...chat.items]
 
-  const { dismiss: dismissChess } = chess
-  const { dismiss: dismissFriend } = friends
-  const { dismiss: dismissChat } = chat
-
-  const value = useMemo(
-    () => ({
-      items,
-      dismiss: (id: string) => {
-        if (id.startsWith(FRIEND_TOAST_PREFIX)) dismissFriend(id)
-        else if (id.startsWith(CHAT_TOAST_PREFIX)) dismissChat(id)
-        else dismissChess(id)
-      },
-    }),
-    [items, dismissFriend, dismissChat, dismissChess],
-  )
+  const dismiss = (id: string) => {
+    if (id.startsWith(FRIEND_TOAST_PREFIX)) friends.dismiss(id)
+    else if (id.startsWith(CHAT_TOAST_PREFIX)) chat.dismiss(id)
+    else chess.dismiss(id)
+  }
 
   const hide = (id: string) => {
     const item = items.find((candidate) => candidate.id === id)
@@ -46,7 +33,7 @@ export function NotificationCenter({ children }: { children: ReactNode }) {
   }
 
   return (
-    <NotificationContext.Provider value={value}>
+    <NotificationContext.Provider value={{ items, dismiss }}>
       <Toast items={items.filter((item) => item.popup && !hidden.has(item))} onDismiss={hide} />
       {children}
     </NotificationContext.Provider>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AuthModal } from '../components/AuthModal.tsx'
 import type { LoginForm, SignupForm } from '../components/AuthModal.tsx'
@@ -73,29 +73,29 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const openModal = useCallback((next: AuthMode = 'login') => {
+  const openModal = (next: AuthMode = 'login') => {
     setOauthNotice(null)
     setMode(next)
     setIsOpen(true)
-  }, [])
+  }
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setIsOpen(false)
     setOauthNotice(null)
-  }, [])
+  }
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       await api.post<string>('/auth/logout')
     } finally {
       setUser(null)
     }
-  }, [])
+  }
 
   /** Après une édition de profil : on relit la source de vérité côté back. */
-  const refreshUser = useCallback(async () => {
+  const refreshUser = async () => {
     setUser(await getMyProfile())
-  }, [])
+  }
 
   /** Ouvre la session : le back pose les cookies, on lit le profil dans la foulée.
    *  Si le compte a l'A2F, pas de cookie : on passe à la modale du code. */
@@ -139,20 +139,17 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     await login({ email: values.email, password: values.password })
   }
 
-  const value = useMemo(
-    () => ({
-      isOpen,
-      mode,
-      isLoggedIn: user !== null,
-      user,
-      authChecked,
-      openModal,
-      closeModal,
-      logout,
-      refreshUser,
-    }),
-    [isOpen, mode, user, authChecked, openModal, closeModal, logout, refreshUser],
-  )
+  const value = {
+    isOpen,
+    mode,
+    isLoggedIn: user !== null,
+    user,
+    authChecked,
+    openModal,
+    closeModal,
+    logout,
+    refreshUser,
+  }
 
   return (
     <AuthModalContext.Provider value={value}>

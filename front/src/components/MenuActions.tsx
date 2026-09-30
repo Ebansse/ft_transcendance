@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import s from './MenuActions.module.css'
 
@@ -24,8 +24,6 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  const close = useCallback(() => setOpen(false), [])
-
   const toggle = () => {
     const rect = triggerRef.current?.getBoundingClientRect()
     if (rect) {
@@ -40,6 +38,7 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
   useEffect(() => {
     if (!open) return
 
+    const close = () => setOpen(false)
     const onPointerDown = (event: MouseEvent) => {
       const target = event.target as Node
       if (menuRef.current?.contains(target) || triggerRef.current?.contains(target)) return
@@ -65,7 +64,7 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
       window.removeEventListener('scroll', close, true)
       window.removeEventListener('resize', close)
     }
-  }, [open, close])
+  }, [open])
 
   return (
     <>
@@ -96,7 +95,7 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
                 className={s.item}
                 role="menuitem"
                 onClick={() => {
-                  close()
+                  setOpen(false)
                   item.onSelect()
                 }}
               >

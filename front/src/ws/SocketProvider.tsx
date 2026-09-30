@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Client, StompSubscription } from '@stomp/stompjs'
 import { useAuthModal } from '../auth/authModalContext.ts'
@@ -99,17 +99,14 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const publish = useCallback((destination: string, body: unknown) => {
+  const publish = (destination: string, body: unknown) => {
     const client = clientRef.current
     if (!client?.connected) return false
     client.publish({ destination, body: JSON.stringify(body) })
     return true
-  }, [])
+  }
 
-  const value = useMemo<SocketValue>(
-    () => ({ status, error, subscribe, publish }),
-    [status, error, subscribe, publish],
-  )
+  const value: SocketValue = { status, error, subscribe, publish }
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
 }

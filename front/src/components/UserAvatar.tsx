@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { avatarSrc } from '../lib/avatar.ts'
 import s from './UserAvatar.module.css'
 
@@ -14,12 +14,10 @@ type UserAvatarProps = {
 }
 
 export function UserAvatar({ userName, avatarUrl, size = 28 }: UserAvatarProps) {
-  const [failed, setFailed] = useState(false)
   const src = avatarSrc(avatarUrl)
-
-  useEffect(() => {
-    setFailed(false)
-  }, [src])
+  /* On retient l'image qui a échoué : une nouvelle `src` retente d'elle-même. */
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const failed = failedSrc === src
 
   const style = {
     width: `${size}px`,
@@ -43,7 +41,7 @@ export function UserAvatar({ userName, avatarUrl, size = 28 }: UserAvatarProps) 
       alt=""
       width={size}
       height={size}
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
     />
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
@@ -18,7 +18,7 @@ import {
   uploadMyAvatar,
 } from '../lib/actions.ts'
 import type { TwoFactorSetupDto } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { ApiError, errorMessage } from '../lib/apiClient.ts'
 import s from './ProfilePage.module.css'
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/
@@ -31,10 +31,6 @@ const LINK_MESSAGES: Record<string, string> = {
   already_linked: 'Ce compte 42 est déjà rattaché à un compte.',
   link_failed: 'La liaison a échoué : relance-la depuis cette page.',
   oauth_failed: 'L’intra 42 n’a pas répondu. Réessaie dans un instant.',
-}
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
 }
 
 function codeErrorOf(err: unknown, fallback: string) {
@@ -101,10 +97,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  const dirty = useMemo(
-    () => user !== null && (userName !== user.userName || email !== user.email),
-    [user, userName, email],
-  )
+  const dirty = user !== null && (userName !== user.userName || email !== user.email)
 
   const pickAvatar = (event: ChangeEvent<HTMLInputElement>) => {
     setAvatarError(null)
@@ -141,7 +134,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       setFile(null)
       setAvatarNotice('Photo de profil mise à jour.')
     } catch (err) {
-      setAvatarError(messageOf(err, 'Envoi de l’image impossible.'))
+      setAvatarError(errorMessage(err, 'Envoi de l’image impossible.'))
     } finally {
       setUploading(false)
     }
@@ -171,7 +164,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
         setIdErrors(err.fieldErrors)
       } else {
-        setIdError(messageOf(err, 'Enregistrement impossible.'))
+        setIdError(errorMessage(err, 'Enregistrement impossible.'))
       }
     } finally {
       setSavingId(false)
@@ -186,7 +179,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       setTwoFactorSetup(await setupTwoFactor())
       setTwoFactorMode('enable')
     } catch (err) {
-      setTwoFactorError(messageOf(err, 'Impossible de générer le QR code.'))
+      setTwoFactorError(errorMessage(err, 'Impossible de générer le QR code.'))
     } finally {
       setTwoFactorPending(false)
     }
@@ -237,7 +230,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       await refreshUser()
       setLinkNotice('Compte 42 détaché.')
     } catch (err) {
-      setLinkError(messageOf(err, 'Impossible de détacher le compte 42.'))
+      setLinkError(errorMessage(err, 'Impossible de détacher le compte 42.'))
     } finally {
       setLinkPending(false)
     }

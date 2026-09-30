@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { getFriendList, getUserProfile } from '../lib/actions.ts'
 import type { FriendListDto, UserPublicProfileDto } from '../lib/actions.ts'
-import { ApiError } from '../lib/apiClient.ts'
+import { errorMessage } from '../lib/apiClient.ts'
 import {
   CHAT_ERRORS,
   CHAT_MESSAGES,
@@ -39,10 +39,6 @@ function writeStoredQuickChats(ids: string[]) {
   } catch {
     return
   }
-}
-
-function messageOf(err: unknown, fallback: string) {
-  return err instanceof ApiError ? err.message : fallback
 }
 
 function conversationKey(message: ChatMessageDto, myId: string) {
@@ -126,7 +122,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         if (alive) setRows(list)
       })
       .catch((err: unknown) => {
-        if (alive) setError(messageOf(err, 'Chargement de la liste d’amis impossible.'))
+        if (alive) setError(errorMessage(err, 'Chargement de la liste d’amis impossible.'))
       })
       .finally(() => {
         if (alive) setLoading(false)
@@ -226,7 +222,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
         [idUser]: {
           ...(prev[idUser] ?? EMPTY_HISTORY),
           loading: false,
-          error: messageOf(err, 'Chargement de l’historique impossible.'),
+          error: errorMessage(err, 'Chargement de l’historique impossible.'),
         },
       }))
     }
@@ -250,33 +246,25 @@ export function ChatProvider({ children }: ChatProviderProps) {
     [fetchPage],
   )
 
-  const historyOf = useCallback((idUser: string) => history[idUser] ?? EMPTY_HISTORY, [history])
+  const historyOf = (idUser: string) => history[idUser] ?? EMPTY_HISTORY
 
-  const friends = useMemo(() => rows.filter((row) => row.status === 'ACCEPTED'), [rows])
+  const friends = rows.filter((row) => row.status === 'ACCEPTED')
 
-  const nameOf = useCallback(
-    (idUser: string) =>
-      rows.find((row) => row.idUser === idUser)?.userName ??
-      profiles[idUser]?.userName ??
-      'Utilisateur',
-    [rows, profiles],
-  )
+  const nameOf = (idUser: string) =>
+    rows.find((row) => row.idUser === idUser)?.userName ??
+    profiles[idUser]?.userName ??
+    'Utilisateur'
 
-  const avatarOf = useCallback(
-    (idUser: string) => profiles[idUser]?.avatarUrl ?? null,
-    [profiles],
-  )
+  const avatarOf = (idUser: string) => profiles[idUser]?.avatarUrl ?? null
 
-  const recentIds = useMemo(() => {
-    return Object.entries(threads)
-      .filter(([, messages]) => messages.length > 0)
-      .map(([idUser, messages]) => ({
-        idUser,
-        at: new Date(messages[messages.length - 1].sentAt).getTime(),
-      }))
-      .sort((a, b) => b.at - a.at)
-      .map((entry) => entry.idUser)
-  }, [threads])
+  const recentIds = Object.entries(threads)
+    .filter(([, messages]) => messages.length > 0)
+    .map(([idUser, messages]) => ({
+      idUser,
+      at: new Date(messages[messages.length - 1].sentAt).getTime(),
+    }))
+    .sort((a, b) => b.at - a.at)
+    .map((entry) => entry.idUser)
 
   const markRead = useCallback((idUser: string) => {
     if (unreadRef.current[idUser]) {
@@ -302,14 +290,11 @@ export function ChatProvider({ children }: ChatProviderProps) {
 
   const clearChatError = useCallback(() => setChatError(null), [])
 
-  const send = useCallback(
-    (receiverId: string, content: string) => {
-      const sent = sendChatMessage(publish, receiverId, content)
-      setChatError(sent ? null : 'Message non envoyé : connexion au chat indisponible.')
-      return sent
-    },
-    [publish],
-  )
+  const send = (receiverId: string, content: string) => {
+    const sent = sendChatMessage(publish, receiverId, content)
+    setChatError(sent ? null : 'Message non envoyé : connexion au chat indisponible.')
+    return sent
+  }
 
   const openQuickChat = useCallback((idUser: string) => {
     setQuickChatIds((prev) => {
@@ -320,9 +305,9 @@ export function ChatProvider({ children }: ChatProviderProps) {
     setUnread((prev) => (prev[idUser] ? { ...prev, [idUser]: 0 } : prev))
   }, [])
 
-  const closeQuickChat = useCallback((idUser: string) => {
+  const closeQuickChat = (idUser: string) => {
     setQuickChatIds((prev) => prev.filter((id) => id !== idUser))
-  }, [])
+  }
 
   const value: ChatValue = {
     myId,

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { useChat } from '../chat/chatContext.ts'
@@ -20,16 +19,11 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
   const { idUser } = useParams()
   const navigate = useNavigate()
 
-  const [selectedId, setSelectedId] = useState<string | null>(idUser ?? null)
+  /* L'URL fait foi : /chat et /chat/:idUser sont deux routes, passer de l'une
+     à l'autre remonte la page. */
+  const selectedId = idUser ?? null
 
-  useEffect(() => {
-    if (idUser) setSelectedId(idUser)
-  }, [idUser])
-
-  const select = (id: string) => {
-    setSelectedId(id)
-    navigate(`/chat/${id}`)
-  }
+  const select = (id: string) => navigate(`/chat/${id}`)
 
   const recent = recentIds.slice(0, RECENT_LIMIT)
   const selectedFriend = friends.find((friend) => friend.idUser === selectedId) ?? null

@@ -27,9 +27,9 @@ export function useFriendNotifications() {
     setItems([])
   }
 
-  const dismiss = useCallback((id: string) => {
+  const dismiss = (id: string) => {
     setItems((previous) => previous.filter((item) => item.id !== id))
-  }, [])
+  }
 
   /** Succès = toast retiré ; échec = toast gardé sans boutons, avec la raison. */
   const respond = useCallback(

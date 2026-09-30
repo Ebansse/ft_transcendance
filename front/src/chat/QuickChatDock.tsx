@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { ChatConversation } from '../components/ChatConversation.tsx'
@@ -29,12 +29,10 @@ export function QuickChatDock() {
   const [minimized, setMinimized] = useState<Record<string, boolean>>(readStoredMinimized)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    writeStoredMinimized(minimized)
-  }, [minimized])
-
   const toggle = (idUser: string) => {
-    setMinimized((prev) => ({ ...prev, [idUser]: prev[idUser] !== true }))
+    const next = { ...minimized, [idUser]: minimized[idUser] !== true }
+    setMinimized(next)
+    writeStoredMinimized(next)
   }
 
   if (quickChatIds.length === 0) return null

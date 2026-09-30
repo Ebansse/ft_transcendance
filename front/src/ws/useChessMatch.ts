@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { createBotMatch, getMyChessMatch, playChessMove, resignChessMatch } from '../lib/actions.ts'
@@ -76,7 +76,7 @@ export function useChessMatch() {
 
   /** Envoie un coup en UCI. Un refus laisse `match` sur la position serveur, ce
    *  qui suffit à la page pour annuler son coup optimiste. */
-  const play = useCallback(async (matchId: number, move: string) => {
+  const play = async (matchId: number, move: string) => {
     setError(null)
     try {
       setMatch(await playChessMove(matchId, move))
@@ -86,11 +86,11 @@ export function useChessMatch() {
       // la resynchronisation de la page, qui reprend le FEN du serveur.
       setMatch((previous) => (previous === null ? null : { ...previous }))
     }
-  }, [])
+  }
 
   /** Ne rattrape pas l'erreur : l'appelant tient la modale ouverte et y affiche
    *  le refus, là où l'utilisateur vient de cliquer. */
-  const startBot = useCallback(async (side: ChessSide, botLvl: number) => {
+  const startBot = async (side: ChessSide, botLvl: number) => {
     setError(null)
     const created = await createBotMatch(side, botLvl)
 
@@ -98,23 +98,23 @@ export function useChessMatch() {
        précédente serait rejoué sur celle-ci. */
     setServerMove(null)
     setMatch(created)
-  }, [])
+  }
 
-  const resign = useCallback(async (matchId: number) => {
+  const resign = async (matchId: number) => {
     setError(null)
     try {
       setMatch(await resignChessMatch(matchId))
     } catch (err: unknown) {
       setError(errorMessage(err, 'Abandon impossible.'))
     }
-  }, [])
+  }
 
   /** Referme une partie terminée pour rendre la page à son mode local. */
-  const leave = useCallback(() => {
+  const leave = () => {
     setMatch(null)
     setServerMove(null)
     setError(null)
-  }, [])
+  }
 
   const mySide: ChessSide | null =
     match === null || user === null ? null : match.whitePlayerId === user.id ? 'WHITE' : 'BLACK'
