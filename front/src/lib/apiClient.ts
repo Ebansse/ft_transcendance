@@ -20,6 +20,13 @@ export function errorMessage(err: unknown, fallback: string) {
 /** Un ObjectError Spring sérialisé (le body de `bindingResult.getAllErrors()`). */
 type SpringError = { field?: string; defaultMessage?: string }
 
+/** Le back pose `logged_in=1` (lisible en JS, sans secret) avec les jetons httpOnly et
+ *  l'efface quand la session meurt. Absent : aucune session à restaurer, donc inutile
+ *  d'appeler une route protégée (son 401 s'afficherait en rouge dans la console). */
+export function hasSessionHint() {
+  return document.cookie.split('; ').includes('logged_in=1')
+}
+
 /** Un seul refresh à la fois : les requêtes qui se croisent attendent la même promesse. */
 let refreshing: Promise<unknown> | null = null
 
@@ -83,6 +90,13 @@ async function request<T>(path: string, method: string, body?: unknown, retried 
   // Content-Type (avec le boundary), on ne sérialise pas et on ne force rien.
   const isForm = body instanceof FormData
 
+  // Les routes /auth/* sont publiques (login, refresh…), sauf /auth/2fa/* qui exigent
+  // une session comme n'importe quelle page (hors /auth/2fa/login, qui sert justement
+  // à en ouvrir une). Toutes les autres routes sont protégées.
+  const needsSession = path.startsWith('/auth/2fa/') && path !== '/auth/2fa/login'
+  const isAuthRoute = path.startsWith('/auth/') && !needsSession
+  if (!isAuthRoute && !hasSessionHint()) throw new ApiError(401, 'Non connecté.')
+
   const headers = new Headers()
   if (body !== undefined && !isForm) headers.set('Content-Type', 'application/json')
 
@@ -99,11 +113,7 @@ async function request<T>(path: string, method: string, body?: unknown, retried 
   }
 
   // Si l'access_token est expiré, on le rafraîchit avec le refresh_token (7 jours),
-  // puis on rejoue la requête une fois. Les routes /auth/* en sont exclues (login,
-  // refresh…), sauf /auth/2fa/* qui exigent une session comme n'importe quelle page
-  // (hors /auth/2fa/login, qui sert justement à en ouvrir une).
-  const needsSession = path.startsWith('/auth/2fa/') && path !== '/auth/2fa/login'
-  const isAuthRoute = path.startsWith('/auth/') && !needsSession
+  // puis on rejoue la requête une fois (pas pour les routes publiques de /auth/*).
   if ((res.status === 401 || res.status === 403) && !retried && !isAuthRoute) {
     refreshing ??= request('/auth/refresh-token', 'POST').finally(() => {
       refreshing = null

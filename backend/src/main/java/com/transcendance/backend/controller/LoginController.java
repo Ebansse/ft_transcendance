@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.LoginRequestDto;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.LoginAttemptService;
@@ -101,6 +102,7 @@ public class LoginController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
                     .body("Login successful");
         
         } catch (TwoFactorLockedException e) {

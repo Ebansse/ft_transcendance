@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.services.LogoutService;
 
 import jakarta.servlet.http.Cookie;
@@ -66,6 +67,7 @@ public class LogoutController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
                 .body("Logged out");
     }
 

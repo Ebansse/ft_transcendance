@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.transcendance.backend.config.AvatarProperties;
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.UpdateProfileRequestDto;
 import com.transcendance.backend.dto.UpdateUserRequestDto;
 import com.transcendance.backend.dto.UserPublicProfileDto;
@@ -372,6 +373,7 @@ public class UserController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
                 .body("User deleted their own account");
     }
 }

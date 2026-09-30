@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 
 import com.transcendance.backend.config.Oauth42Properties;
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.dto.Oauth42UserInfoDto;
 import com.transcendance.backend.model.User;
@@ -256,7 +257,7 @@ public class Oauth42Controller {
               .maxAge(7 * 24 * 60 * 60)
               .build();
 
-            return backToFrontend("", accessCookie, refreshCookie);
+            return backToFrontend("", accessCookie, refreshCookie, SessionHintCookie.set());
 
         } catch (IllegalStateException e) {
             log.warn("42 OAuth callback refused: {}", e.getMessage());
