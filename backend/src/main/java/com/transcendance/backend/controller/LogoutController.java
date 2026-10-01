@@ -1,7 +1,5 @@
 package com.transcendance.backend.controller;
 
-import java.util.Map;
-
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 
@@ -11,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.services.LogoutService;
 
 import jakarta.servlet.http.Cookie;
@@ -25,24 +24,29 @@ public class LogoutController {
     private final static Logger log = org.apache.logging.log4j.LogManager.getLogger(LogoutController.class);
 
     private final LogoutService logoutService;
-    
+
+    /**
+     * Revokes the session and clears both cookies, whatever the refresh token is worth.
+     *
+     * @param request the HTTP request carrying the refresh token cookie
+     * @return 200 with both cookies expired
+     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
-    
+
         String refreshToken = extractRefreshTokenFromCookies(request);
 
         if (refreshToken != null) {
             try {
                 logoutService.revokeRefreshToken(refreshToken);
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid refresh token provided");
-                return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+                log.warn("Logout with an unknown refresh token: nothing to revoke");
             }
-        }else{
-            log.warn("Invalid refresh token provided");
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+        } else {
+            log.info("Logout without a refresh token: nothing to revoke");
         }
-       ResponseCookie expiredAccessCookie = ResponseCookie.from("access_token", "")
+
+        ResponseCookie expiredAccessCookie = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("strict")
@@ -63,6 +67,7 @@ public class LogoutController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
                 .body("Logged out");
     }
 

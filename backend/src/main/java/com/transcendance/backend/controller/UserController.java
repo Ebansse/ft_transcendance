@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.transcendance.backend.config.AvatarProperties;
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.UpdateProfileRequestDto;
 import com.transcendance.backend.dto.UpdateUserRequestDto;
 import com.transcendance.backend.dto.UserPublicProfileDto;
@@ -61,18 +62,19 @@ public class UserController {
         this.deleteUserService = deleteUserService;
     }
 
-    /**
-     * Maps a user entity to its public profile representation.
-     *
-     * @param user the user to map
-     * @return the corresponding {@link UserPublicProfileDto}
-     */
-    private UserPublicProfileDto toDto(User user) {
+    /** Maps a user to what other users may see: no email, no role. */
+    private UserPublicProfileDto toPublicDto(User user) {
         UserPublicProfileDto dto = new UserPublicProfileDto();
         dto.setAvatarUrl(user.getAvatarUrl());
         dto.setId(user.getIdUser());
         dto.setOnline(user.getOnline());
         dto.setUserName(user.getUserName());
+        return dto;
+    }
+
+    /** Maps a user to its full profile, for its owner and for administrators. */
+    private UserPublicProfileDto toDto(User user) {
+        UserPublicProfileDto dto = toPublicDto(user);
         dto.setEmail(user.getEmail());
         dto.setRole(userRoleService.getRoleName(user));
         return dto;
@@ -137,7 +139,7 @@ public class UserController {
         }
 
         User user = userOpt.get();
-        UserPublicProfileDto dto = toDto(user);
+        UserPublicProfileDto dto = toPublicDto(user);
 
         return ResponseEntity.ok(dto);
     }
@@ -371,6 +373,7 @@ public class UserController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
                 .body("User deleted their own account");
     }
 }

@@ -11,11 +11,12 @@ import type {
 
 /** Miroir du `UserPublicProfileDto` du back. `online` est une date ISO, `null`
  *  tant que le compte ne s'est jamais connecté. `twoFactorEnabled` et
- *  `oauth42Linked` ne sont renseignés que par `/users/me`. */
+ *  `oauth42Linked` ne sont renseignés que par `/users/me`. `email` et `role` sont
+ *  `null` sur le profil d'un autre utilisateur. */
 export type UserPublicProfileDto = {
   id: string
   userName: string
-  email: string
+  email: string | null
   online: string | null
   avatarUrl: string | null
   role: string | null

@@ -65,9 +65,7 @@ public class LoginService {
         }
 
         // Generate the access and refresh tokens
-        LoginResponseTokenDto loginResponse = new LoginResponseTokenDto(
-            jwtService.generateAccessToken(user),
-            refreshTokenService.generateRefreshToken(user));
+        LoginResponseTokenDto loginResponse = refreshTokenService.openSession(user);
 
         return Optional.of(loginResponse);
     }

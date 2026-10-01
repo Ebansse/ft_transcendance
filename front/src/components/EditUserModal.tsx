@@ -30,7 +30,7 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
   // Repartir des valeurs du compte, sinon la modale rouvrirait sur les saisies
   // abandonnées du compte précédent.
   useEffect(() => {
-    if (user) setForm({ userName: user.userName, email: user.email, role: user.role ?? 'USER' })
+    if (user) setForm({ userName: user.userName, email: user.email ?? '', role: user.role ?? 'USER' })
   }, [user])
 
   const update = (field: keyof UpdateUserPayload, value: string) => {

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
+import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.dto.TwoFactorCodeRequestDto;
 import com.transcendance.backend.model.User;
 import com.transcendance.backend.services.JWTService;
@@ -176,7 +178,9 @@ public class TwoFactorController {
         twoFactorService.removePendingLogin(twoFactorToken);
         log.info("2FA login successful for user id: {}", user.getIdUser());
 
-        ResponseCookie accessCookie = ResponseCookie.from("access_token", jwtService.generateAccessToken(user))
+        LoginResponseTokenDto tokens = refreshTokenService.openSession(user);
+
+        ResponseCookie accessCookie = ResponseCookie.from("access_token", tokens.getAccessToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("strict")
@@ -184,7 +188,7 @@ public class TwoFactorController {
                 .maxAge(15 * 60)
                 .build();
 
-        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", refreshTokenService.generateRefreshToken(user))
+        ResponseCookie refreshCookie = ResponseCookie.from("refresh_token", tokens.getRefreshToken())
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("strict")
@@ -204,6 +208,7 @@ public class TwoFactorController {
                 .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, clearTwoFactorCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
                 .body(Map.of("message", "Login successful"));
     }
 }

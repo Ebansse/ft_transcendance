@@ -26,6 +26,7 @@ const OAUTH_ERRORS: Record<string, string> = {
   email_already_registered:
     'Un compte existe déjà avec cet e-mail. Connecte-toi avec ton mot de passe, puis lie ton compte 42 depuis ton profil.',
   oauth_failed: 'L’intra 42 n’a pas répondu. Réessaie dans un instant.',
+  oauth_denied: 'Connexion avec 42 annulée.',
 }
 
 const OAUTH_NOTICE = OAUTH_ERROR ? (OAUTH_ERRORS[OAUTH_ERROR] ?? null) : null

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
 import com.transcendance.backend.services.RefreshTokenService;
 
@@ -29,7 +30,9 @@ public class RefreshTokenController {
     public ResponseEntity<?> refresh(HttpServletRequest request) {
         String refreshToken = extractRefreshTokenFromCookies(request);
         if (refreshToken == null) {
-            return ResponseEntity.status(401).body("Refresh token not found");
+            return ResponseEntity.status(401)
+                    .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
+                    .body("Refresh token not found");
         }
         try {
             LoginResponseTokenDto loginResponse = refreshService.refreshAccessToken(refreshToken);
@@ -53,6 +56,7 @@ public class RefreshTokenController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
                     .body("Token refreshed");
 
         } catch (IllegalArgumentException e) {
@@ -66,6 +70,7 @@ public class RefreshTokenController {
                     .build();
             return ResponseEntity.status(401)
                     .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())
+                    .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
                     .body(Map.of("error", "Invalid refresh token"));
         }
     }

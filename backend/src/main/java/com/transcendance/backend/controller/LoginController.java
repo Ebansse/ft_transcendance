@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.transcendance.backend.config.SessionHintCookie;
 import com.transcendance.backend.dto.LoginRequestDto;
 import com.transcendance.backend.dto.LoginResponseTokenDto;
+import com.transcendance.backend.services.LoginAttemptService;
 import com.transcendance.backend.services.LoginService;
 import com.transcendance.backend.services.TwoFactorLockedException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @RestController
@@ -28,9 +31,11 @@ public class LoginController {
     private static final Logger log = org.apache.logging.log4j.LogManager.getLogger(LoginController.class);
 
     private final LoginService loginService;
+    private final LoginAttemptService loginAttemptService;
 
-    public LoginController(LoginService loginService) {
+    public LoginController(LoginService loginService, LoginAttemptService loginAttemptService) {
         this.loginService = loginService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     /**
@@ -38,12 +43,14 @@ public class LoginController {
      *
      * @param loginRequest the login request containing email, password and the optional 2FA code
      * @param bindingResult the result of validation checks on the request
+     * @param request the HTTP request, read for the address of the client
      * @return a ResponseEntity containing the JWT token in a cookie if successful,
-     *         {"twoFactorRequired": true} if a 2FA code is missing, or an error message if failed
+     *         {"twoFactorRequired": true} if a 2FA code is missing, 429 after too
+     *         many failed attempts, or an error message if failed
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDto loginRequest,
-                                    BindingResult bindingResult) {
+                                    BindingResult bindingResult, HttpServletRequest request) {
 
         // A leftover refresh_token cookie is simply overwritten by the new one below
         log.info("Processing login for email: {}", loginRequest.getEmail());
@@ -57,6 +64,13 @@ public class LoginController {
         return ResponseEntity.badRequest().body(errors);
     }
 
+        String attemptKey = loginAttemptService.keyOf(loginRequest.getEmail(), clientAddress(request));
+        if (loginAttemptService.isLocked(attemptKey)) {
+            log.warn("Login refused for email: {}. Too many failed attempts", loginRequest.getEmail());
+            return ResponseEntity.status(429)
+                    .body(Map.of("error", "Too many failed login attempts. Try again later."));
+        }
+
         try {
             Optional<LoginResponseTokenDto> tokens = loginService.authenticate(
                     loginRequest.getEmail(), loginRequest.getPassword(), loginRequest.getCode());
@@ -66,6 +80,7 @@ public class LoginController {
                 return ResponseEntity.ok(Map.of("twoFactorRequired", true));
             }
             LoginResponseTokenDto loginResponse = tokens.get();
+            loginAttemptService.reset(attemptKey);
             log.info("Login successful for email: {}", loginRequest.getEmail());
             
             ResponseCookie accessCookie = ResponseCookie.from("access_token", loginResponse.getAccessToken())
@@ -87,19 +102,21 @@ public class LoginController {
             return ResponseEntity.ok()
                     .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
                     .body("Login successful");
         
         } catch (TwoFactorLockedException e) {
             return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
         log.error("Login failed for email: {}. Error: {}", loginRequest.getEmail(), e.getMessage());
-        // Slow down brute force: every failed attempt waits 2 seconds
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
+        loginAttemptService.recordFailure(attemptKey);
         return ResponseEntity.status(401).body(Map.of("error", e.getMessage()));
     }
+    }
+
+    /** The client address: nginx passes the real one in {@code X-Real-IP}. */
+    private String clientAddress(HttpServletRequest request) {
+        String realIp = request.getHeader("X-Real-IP");
+        return realIp == null || realIp.isBlank() ? request.getRemoteAddr() : realIp;
     }
 }

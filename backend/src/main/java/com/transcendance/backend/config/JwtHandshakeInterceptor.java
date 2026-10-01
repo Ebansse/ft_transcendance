@@ -14,6 +14,7 @@ import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import com.transcendance.backend.services.JWTService;
+import com.transcendance.backend.services.RefreshTokenService;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,9 +30,11 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
     public static final String PRINCIPAL_ATTRIBUTE = "principal";
 
     private final JWTService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public JwtHandshakeInterceptor(JWTService jwtService) {
+    public JwtHandshakeInterceptor(JWTService jwtService, RefreshTokenService refreshTokenService) {
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     /**
@@ -54,7 +57,8 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
         String token = extractAccessTokenFromCookies(servletRequest.getServletRequest());
 
-        if (token == null || !jwtService.isTokenValid(token)) {
+        if (token == null || !jwtService.isTokenValid(token)
+                || !refreshTokenService.isSessionActive(jwtService.extractSessionId(token))) {
             log.warn("WebSocket handshake refused: missing or invalid access token");
             response.setStatusCode(HttpStatus.UNAUTHORIZED);
             return false;
