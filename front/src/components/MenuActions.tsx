@@ -16,8 +16,7 @@ type MenuActionsProps = {
 const MENU_MIN_WIDTH = 176
 const EDGE_GAP = 8
 
-/** Bouton « … » ouvrant un menu d'actions, rendu en portail sur `document.body`
- *  pour échapper au `overflow` du tableau qui le contient. */
+/** Bouton « … » ouvrant un menu d'actions, rendu en portail sur `document.body` pour échapper à l'`overflow` du tableau. */
 export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState({ top: 0, left: 0 })
@@ -51,8 +50,7 @@ export function MenuActions({ ariaLabel, items }: MenuActionsProps) {
       }
     }
 
-    // Le menu est positionné en absolu : un scroll ou un resize le détacherait
-    // de son bouton, on le referme.
+    // Menu en position absolue : un scroll ou un resize le détacherait du bouton, on le referme.
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
     window.addEventListener('scroll', close, true)

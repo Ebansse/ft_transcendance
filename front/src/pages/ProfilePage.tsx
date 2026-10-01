@@ -76,8 +76,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
     }
   }, [user])
 
-  // Le back nous renvoie ici avec le resultat du liage : on l'affiche une fois,
-  // puis on nettoie l'URL pour qu'un rechargement ne le ressorte pas.
+  // Retour du liage 42 : on affiche le résultat une fois, puis on nettoie l'URL.
   useEffect(() => {
     const linked = searchParams.get('linked')
     const error = searchParams.get('error')

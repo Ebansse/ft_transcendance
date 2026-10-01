@@ -1,5 +1,4 @@
-/* Ce qui est propre à la modale d'édition : sa largeur et le champ UUID en
-   lecture seule. Tout le reste vient de la coquille partagée. */
+/* Propre à la modale d'édition : sa largeur et le champ UUID en lecture seule. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';
@@ -35,8 +34,7 @@
   composes: label from '../style/dialog.module.css';
 }
 
-/* L'UUID : même gabarit qu'un champ, mais sans bordure vive ni curseur texte,
-   pour qu'on lise tout de suite qu'il n'y a rien à saisir là. */
+/* UUID : gabarit d'un champ sans bordure vive ni curseur texte, pour montrer qu'il n'est pas saisissable. */
 .readonly {
   margin: 0;
   padding: 0.6rem 0.75rem;

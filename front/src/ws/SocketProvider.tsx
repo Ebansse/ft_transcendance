@@ -5,21 +5,17 @@ import { useAuthModal } from '../auth/authModalContext.ts'
 import { createStompClient } from '../lib/socketClient.ts'
 import { SocketContext, type SocketStatus, type SocketValue } from './socketContext.ts'
 
-/** Au-delà de ce nombre d'échecs consécutifs on cesse de retenter : le cas
- *  typique est une session expirée, et marteler le serveur ne sert à rien. */
+/** Au-delà de ce nombre d'échecs consécutifs on abandonne (souvent une session expirée). */
 const MAX_CONSECUTIVE_FAILURES = 5
 
 type Registration = {
   destination: string
   handler: (body: string) => void
-  /** `null` tant que la socket n'est pas ouverte : la souscription STOMP n'est
-   *  posée qu'au `onConnect`. */
+  /** `null` tant que la socket n'est pas ouverte : la souscription STOMP n'est posée qu'au `onConnect`. */
   sub: StompSubscription | null
 }
 
-/** Possède l'unique connexion STOMP. Placé au-dessus des routes (main.tsx) :
- *  la socket survit à la navigation et n'est fermée qu'à la déconnexion. Les
- *  pages appellent seulement `subscribe` / `publish`. */
+/** Possède l'unique connexion STOMP, au-dessus des routes : elle survit à la navigation et ne ferme qu'à la déconnexion. */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { authChecked, isLoggedIn, user } = useAuthModal()
   const userId = user?.id ?? null
@@ -44,14 +40,12 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     const client = createStompClient({
       onConnect: () => {
-        // Un client remplacé par un remontage (StrictMode, changement de
-        // compte) ne doit plus toucher à l'état partagé.
+        // Un client remplacé par un remontage (StrictMode, changement de compte) ne touche plus l'état partagé.
         if (clientRef.current !== client) return
         failuresRef.current = 0
         setStatus('connected')
         setError(null)
-        // stompjs reconnecte tout seul mais ne restaure pas les souscriptions :
-        // on rejoue le registre à chaque connexion.
+        // stompjs ne restaure pas les souscriptions à la reconnexion : on rejoue le registre.
         for (const entry of registry.values()) {
           entry.sub = client.subscribe(entry.destination, (frame) => entry.handler(frame.body))
         }
@@ -80,8 +74,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     }
   }, [authChecked, isLoggedIn, userId])
 
-  /** Référence stable : les effets des pages ne se relancent pas à chaque
-   *  rendu du provider. */
+  /** Référence stable pour que les effets des pages ne se relancent pas à chaque rendu. */
   const subscribe = useCallback((destination: string, handler: (body: string) => void) => {
     const id = nextIdRef.current++
     const entry: Registration = { destination, handler, sub: null }

@@ -47,8 +47,7 @@
   pointer-events: none;
 }
 
-/* Un popover est centré par défaut : on le recale là où tombent les toasts,
-   sous la navbar et contre le bord droit. */
+/* Un popover est centré par défaut : on le recale sous la navbar, contre le bord droit, comme les toasts. */
 .panel {
   position: fixed;
   inset: auto;
@@ -68,8 +67,7 @@
   box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 1);
 }
 
-/* `display` seulement une fois ouvert : sinon il écraserait le `display: none`
-   du navigateur et le panneau resterait visible. */
+/* `display` seulement une fois ouvert, sinon il écraserait le `display: none` du navigateur. */
 .panel:popover-open {
   display: flex;
 }

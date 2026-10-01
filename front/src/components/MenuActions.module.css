@@ -28,10 +28,7 @@
   background: rgba(239, 230, 210, 0.06);
 }
 
-/* Rendu dans un portail sur <body> : `top`/`left` sont des coordonnées fenêtre
-   posées en inline style, et `translateX(-100%)` aligne le bord droit du menu
-   sur celui du bouton. L'ouverture n'anime donc que l'opacité — une keyframe
-   avec `transform` écraserait cet alignement. */
+/* Rendu en portail sur <body> : top/left en inline style, translateX(-100%) aligne le bord droit ; on n'anime que l'opacité. */
 .menu {
   position: fixed;
   z-index: 50;

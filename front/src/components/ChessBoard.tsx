@@ -17,8 +17,7 @@ type ChessBoardProps = {
   onSquareClick: (square: string) => void
 }
 
-/** Vue pure : elle dessine la position qu'on lui passe et remonte les clics.
- *  Chaque case est un vrai bouton, donc l'échiquier se joue au clavier. */
+/** Vue pure : dessine la position reçue et remonte les clics ; chaque case est un bouton, jouable au clavier. */
 export function ChessBoard({
   squares,
   orientation,
@@ -42,8 +41,7 @@ export function ChessBoard({
         const classes = [s.square, isLight ? s.light : s.dark]
         if (square === selected) classes.push(s.selected)
         if (isLastMove) classes.push(s.lastMove)
-        /* Deux marques distinctes : une pastille sur le vide, un anneau autour
-           d'une pièce à prendre — la pièce doit rester visible dessous. */
+        /* Pastille sur case vide, anneau sur pièce à prendre : la pièce reste visible. */
         if (isTarget) classes.push(piece === null ? s.target : s.capture)
 
         const pieceLabel = piece === null ? 'case vide' : nameOf(piece)
@@ -67,8 +65,7 @@ export function ChessBoard({
               </span>
             )}
 
-            {/* Coordonnées dans les marges : colonne de gauche pour les
-                rangées, dernière ligne pour les colonnes. */}
+            {/* Coordonnées dans les marges : rangées à gauche, colonnes en bas. */}
             {position % 8 === 0 ? (
               <span className={s.rankLabel} aria-hidden="true">
                 {square[1]}

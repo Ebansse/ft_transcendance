@@ -17,8 +17,7 @@ type ChessPromotionModalProps = {
   onSelect: (piece: PromotionPiece) => void
 }
 
-/** Choix de la pièce quand un pion atteint la dernière rangée. Refermer annule
- *  le coup : le pion reste où il est et on peut en jouer un autre. */
+/** Choix de la pièce de promotion ; refermer annule le coup et le pion reste en place. */
 export function ChessPromotionModal({
   open,
   white,

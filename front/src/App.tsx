@@ -36,8 +36,7 @@ function App() {
   const navigate = useNavigate()
   useChessMatchStart()
 
-  /* Même principe pour Undercover : les membres d'une salle rejoignent la table
-     quand l'hôte lance la partie, où qu'ils soient. */
+  /* Même principe pour Undercover : les membres d'une salle rejoignent la table au lancement. */
   useUndercoverMatchStart()
 
   const onNavigate = (action: string) => {

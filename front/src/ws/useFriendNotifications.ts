@@ -7,13 +7,10 @@ import { FRIEND_NOTIFICATIONS, type FriendNotificationDto } from '../lib/notific
 import type { Notification } from './notificationContext.ts'
 import { useSocket } from './socketContext.ts'
 
-/** Préfixe des ids de toast : `NotificationCenter` s'en sert pour savoir à quel
- *  hook rendre la fermeture. */
+/** Préfixe des ids de toast, pour que `NotificationCenter` sache à quel hook rendre la fermeture. */
 export const FRIEND_TOAST_PREFIX = 'friend:'
 
-/** Pile des notifications d'amis, sur le modèle de `useChessInvitations`.
- *  Chaque notification relance la liste d'amis, d'où le besoin de vivre sous
- *  `ChatProvider`. */
+/** Pile des notifications d'amis, sur le modèle de `useChessInvitations` ; relance la liste d'amis, donc sous `ChatProvider`. */
 export function useFriendNotifications() {
   const { subscribe, status } = useSocket()
   const { refresh } = useChat()
@@ -64,8 +61,7 @@ export function useFriendNotifications() {
     [subscribe, respond, refresh],
   )
 
-  /** À chaque (re)connexion, refresh de la page compris : les demandes reçues
-   *  encore en attente sont les lignes PENDING dont l'autre est l'expéditeur. */
+  /** À chaque (re)connexion : les demandes en attente sont les lignes PENDING dont l'autre est l'expéditeur. */
   useEffect(() => {
     if (status !== 'connected') return
     let cancelled = false

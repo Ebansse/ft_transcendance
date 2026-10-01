@@ -27,8 +27,7 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
   const dialog = useDialog(user !== null, '#edit-user-name', onClose)
   const [form, setForm] = useState<UpdateUserPayload>(EMPTY_FORM)
 
-  // Repartir des valeurs du compte, sinon la modale rouvrirait sur les saisies
-  // abandonnées du compte précédent.
+  // Repartir des valeurs du compte, sinon la modale rouvrirait sur les saisies du compte précédent.
   useEffect(() => {
     if (user) setForm({ userName: user.userName, email: user.email ?? '', role: user.role ?? 'USER' })
   }, [user])

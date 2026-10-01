@@ -37,8 +37,7 @@
   width: 100%;
 }
 
-/* Soulignement qui se trace de gauche à droite. Inerte par défaut : seul un
-   parent qui pose --btn-underline: 1 le fait apparaître (voir le footer). */
+/* Soulignement tracé de gauche à droite, inerte sauf si un parent pose --btn-underline: 1. */
 .btn::after {
   content: '';
   position: absolute;

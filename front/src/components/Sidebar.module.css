@@ -59,8 +59,7 @@
   transition: background-color 160ms ease;
 }
 
-/* Le curseur ▶ d'un menu de sélection de borne. Le bouton se décale pour
-   lui laisser la place. */
+/* Curseur ▶ d'un menu de borne ; le bouton se décale pour lui laisser la place. */
 .item {
   --btn-padding: 0.5rem 0.8rem 0.5rem 1.6rem;
 }

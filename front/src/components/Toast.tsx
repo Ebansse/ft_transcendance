@@ -10,8 +10,7 @@ export type ToastAction = {
   tone?: 'accept' | 'decline'
 }
 
-/** `id` sert de clé de rendu et de poignée de fermeture : à l'appelant de le
- *  rendre unique. Sans `actions`, le toast se contente d'informer. */
+/** `id` sert de clé et de poignée de fermeture (à rendre unique) ; sans `actions`, le toast informe seulement. */
 export type ToastItem = {
   id: string
   title: string
@@ -24,8 +23,7 @@ type ToastProps = {
   onDismiss: (id: string) => void
 }
 
-/** Pile de notifications : chacune ne repart que sur sa croix, jamais seule.
- *  Le composant ne connaît rien du métier. */
+/** Pile de notifications : chacune ne repart que sur sa croix ; le composant ignore le métier. */
 export function Toast({ items, onDismiss }: ToastProps) {
   if (items.length === 0) return null
 
@@ -38,9 +36,7 @@ export function Toast({ items, onDismiss }: ToastProps) {
   )
 }
 
-/** Composant à part pour qu'il porte son propre « appel en cours » : deux
- *  notifications empilées ne se bloquent pas l'une l'autre. Exporté pour la
- *  cloche, qui liste les mêmes cartes. */
+/** Composant à part pour porter son propre « appel en cours » ; exporté pour la cloche. */
 export function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: string) => void }) {
   /** Un double clic sur « Accepter » partirait sinon deux fois. */
   const [busy, setBusy] = useState(false)
@@ -65,8 +61,7 @@ export function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id
       {item.actions !== undefined && item.actions.length > 0 && (
         <div className={s.actions}>
           {item.actions.map((action) => (
-            /* Button n'accepte pas de className : le parent pose les variables
-               de couleur (contrat de Button.module.css). */
+            /* Button n'accepte pas de className : le parent pose les variables de couleur (contrat Button.module.css). */
             <span key={action.label} className={action.tone ? s[action.tone] : undefined}>
               <Button variant="secondary" fullWidth disabled={busy} onClick={() => run(action)}>
                 {action.label}

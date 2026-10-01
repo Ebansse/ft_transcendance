@@ -1,10 +1,8 @@
-/** Files STOMP des notifications. Rien n'est stocké : un compte hors ligne ne
- *  reçoit rien, il retrouve l'état sur la page Amis ou dans l'historique. */
+/** Files STOMP des notifications, rien n'est stocké : un compte hors ligne retrouve l'état sur la page Amis. */
 export const FRIEND_NOTIFICATIONS = '/user/queue/notifications.friends'
 export const CHAT_NOTIFICATIONS = '/user/queue/notifications.chat'
 
-/** `fromUserId` désigne toujours l'autre bout de la relation : c'est l'id que
- *  prennent les routes `/friend-list`. */
+/** `fromUserId` est toujours l'autre bout de la relation, l'id des routes `/friend-list`. */
 export type FriendNotificationDto = {
   type: 'REQUEST_RECEIVED' | 'REQUEST_ACCEPTED'
   fromUserId: string

@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CHESS_MATCHES, type ChessMatchDto } from '../lib/chessClient.ts'
 import { useSocket } from './socketContext.ts'
 
-/** Emmène l'inviteur sur le plateau quand son invitation est acceptée. Celui
- *  qui accepte se redirige lui-même (il a la réponse HTTP) ; l'inviteur ne
- *  l'apprend que par la socket, d'où ce hook monté dans App. */
+/** Emmène l'inviteur sur le plateau à l'acceptation (il ne l'apprend que par la socket) ; l'invité se redirige seul. */
 export function useChessMatchStart() {
   const { subscribe } = useSocket()
   const navigate = useNavigate()
@@ -14,8 +12,7 @@ export function useChessMatchStart() {
     () =>
       subscribe(CHESS_MATCHES, (body) => {
         const match = JSON.parse(body) as ChessMatchDto
-        // La même destination sert aux fins de partie : seule une partie qui
-        // démarre mérite d'arracher l'utilisateur à la page où il est.
+        // Même destination pour les fins de partie : seul un démarrage mérite de changer l'utilisateur de page.
         if (match.status === 'IN_PROGRESS') navigate('/chess')
       }),
     [subscribe, navigate],

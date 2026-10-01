@@ -1,5 +1,4 @@
-/** Traduit une partie chess.js en ce que la vue sait dessiner : 64 cases,
- *  glyphes Unicode, libellés français. Aucune règle ici, aucune connexion. */
+/** Traduit une partie chess.js en ce que la vue dessine : 64 cases, glyphes, libellés ; aucune règle ici. */
 
 import type { Chess } from 'chess.js'
 
@@ -12,8 +11,7 @@ const RANKS = ['8', '7', '6', '5', '4', '3', '2', '1']
 /** `['a8', 'b8', …, 'h1']` — même ordre que les cases renvoyées par `squaresOf`. */
 export const SQUARE_NAMES = RANKS.flatMap((rank) => FILES.map((file) => file + rank))
 
-/** Les deux couleurs partagent les glyphes pleins : les glyphes creux (♙♔)
- *  disparaissent sur les cases claires. La couleur est portée par le CSS. */
+/** Glyphes pleins pour les deux couleurs (les creux disparaissent sur cases claires) ; la couleur vient du CSS. */
 const GLYPHS: Record<string, string> = {
   k: '♚',
   q: '♛',
@@ -39,8 +37,7 @@ export function glyphOf(piece: string) {
   return GLYPHS[piece.toLowerCase()] ?? ''
 }
 
-/** Une case vide vaut `null` ; sinon la lettre FEN de la pièce, majuscule pour
- *  les blancs (`'P'` = pion blanc, `'p'` = pion noir). */
+/** `null` pour une case vide, sinon la lettre FEN (majuscule = blancs). */
 export function isWhitePiece(piece: string) {
   return piece === piece.toUpperCase()
 }
@@ -57,8 +54,7 @@ export function nameOf(piece: string) {
   return `${NAMES[type] ?? 'pièce'} ${color}`
 }
 
-/** Aplatit `chess.board()` (8 rangées, la 8ᵉ d'abord) en 64 lettres FEN :
- *  index 0 = a8, index 63 = h1, exactement l'ordre de `SQUARE_NAMES`. */
+/** Aplatit `chess.board()` en 64 lettres FEN, index 0 = a8 à 63 = h1, dans l'ordre de `SQUARE_NAMES`. */
 export function squaresOf(chess: Chess): (string | null)[] {
   return chess
     .board()
@@ -69,8 +65,7 @@ export function squaresOf(chess: Chess): (string | null)[] {
     })
 }
 
-/** Matériel d'un camp au coup d'envoi, et valeur d'échange de chaque pièce.
- *  Le roi n'y figure pas : il ne se prend jamais et ne se compte pas. */
+/** Matériel d'un camp au départ et valeur de chaque pièce ; le roi ne se prend ni ne se compte. */
 const INITIAL: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 }
 const VALUES: Record<string, number> = { q: 9, r: 5, b: 3, n: 3, p: 1 }
 
@@ -96,9 +91,7 @@ function materialOf(squares: (string | null)[], white: boolean) {
   return counts
 }
 
-/** Les pièces d'un camp qui ne sont plus sur l'échiquier, de la plus forte à la
- *  plus faible. Une promotion fait disparaître un pion sans qu'il ait été pris :
- *  chaque pièce en surnombre en rend donc un à son camp. */
+/** Pièces d'un camp absentes de l'échiquier, de la plus forte à la plus faible ; une promotion rend une pièce en surnombre. */
 function missingOf(counts: Record<string, number>, white: boolean) {
   let promoted = 0
   for (const type of ['q', 'r', 'b', 'n']) {
@@ -118,8 +111,7 @@ function scoreOf(counts: Record<string, number>) {
   return Object.entries(counts).reduce((total, [type, count]) => total + VALUES[type] * count, 0)
 }
 
-/** Déduit les prises de la seule position affichée : une partie reprise depuis
- *  un FEN arrive sans coups, et doit tout de même montrer ce qui a été pris. */
+/** Déduit les prises de la seule position : une partie reprise depuis un FEN arrive sans coups. */
 export function capturesOf(squares: (string | null)[]): Captures {
   const white = materialOf(squares, true)
   const black = materialOf(squares, false)

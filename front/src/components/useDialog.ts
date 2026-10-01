@@ -1,12 +1,6 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
 
-/** Pilote un `<dialog>` natif, qui fournit le piège de focus, Échap et
- *  l'inertie du reste de la page. S'étale sur l'élément :
- *
- *      <dialog {...useDialog(open, '#mon-champ', onClose)}>…</dialog>
- *
- *  `focusOn` désigne le premier élément à focaliser ; sans lui `showModal()`
- *  poserait le focus sur la croix de fermeture. */
+/** Pilote un `<dialog>` natif (focus piégé, Échap) à étaler sur l'élément ; `focusOn` désigne le premier élément à focaliser. */
 export function useDialog(open: boolean, focusOn: string, onClose: () => void) {
   const ref = useRef<HTMLDialogElement>(null)
 

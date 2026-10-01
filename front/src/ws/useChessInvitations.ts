@@ -7,14 +7,10 @@ import { CHESS_INVITATIONS, type ChessInvitationDto } from '../lib/chessClient.t
 import type { Notification } from './notificationContext.ts'
 import { useSocket } from './socketContext.ts'
 
-/** Même durée que `ChessInvitation.TTL` côté back : passé ce délai, accepter
- *  échouerait de toute façon. Le DTO ne porte pas `createdAt`, donc une
- *  invitation rechargée repart pour 2 minutes pleines. */
+/** Même durée que `ChessInvitation.TTL` du back ; le DTO n'a pas `createdAt`, une invitation rechargée repart pour 2 minutes. */
 const INVITATION_TTL_MS = 2 * 60 * 1000
 
-/** Pile des invitations d'échecs, prête pour `<Toast>` et la cloche. Une
- *  invitation part sur la croix, sur une réponse sans erreur, ou au bout de
- *  2 minutes. */
+/** Pile des invitations d'échecs pour `<Toast>` et la cloche ; retirée par la croix, une réponse sans erreur ou 2 minutes. */
 export function useChessInvitations() {
   const { subscribe, status } = useSocket()
   const { user } = useAuthModal()
@@ -45,8 +41,7 @@ export function useChessInvitations() {
     [dismiss],
   )
 
-  /** Répond au back puis retire le toast. En cas de refus, le toast reste mais
-   *  perd ses boutons : il n'y a plus rien à retenter, juste une raison à lire. */
+  /** Répond au back puis retire le toast ; en cas de refus il reste sans boutons, avec la raison. */
   const respond = useCallback(
     async (id: string, opponent: string, accept: boolean) => {
       try {
@@ -71,8 +66,7 @@ export function useChessInvitations() {
     [navigate, dismiss],
   )
 
-  /** `subscribe` renvoie sa fonction de désinscription et sa référence est
-   *  stable : le provider replace la souscription à chaque reconnexion. */
+  /** `subscribe` renvoie sa désinscription, de référence stable : le provider replace la souscription à chaque reconnexion. */
   useEffect(
     () =>
       subscribe(CHESS_INVITATIONS, (body) => {
@@ -82,8 +76,7 @@ export function useChessInvitations() {
     [subscribe, respond, add],
   )
 
-  /** À chaque (re)connexion : ce qui est arrivé pendant qu'on n'écoutait pas,
-   *  refresh de la page compris. */
+  /** À chaque (re)connexion : récupère ce qui est arrivé pendant qu'on n'écoutait pas, refresh compris. */
   useEffect(() => {
     if (status !== 'connected') return
     let cancelled = false

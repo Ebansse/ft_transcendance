@@ -1,13 +1,6 @@
-/* Coquille commune aux trois modales (AuthModal, EditUserModal, ConfirmModal).
-   Chacune tire ces classes avec `composes:` et n'ajoute que ce qui lui est propre :
-   largeur, marges, taille de titre.
+/* Coquille commune des modales, tirée par `composes:` : ne jamais écrire une propriété des deux côtés (l'ordre d'injection trancherait). */
 
-   Règle à tenir : une propriété ne doit jamais être écrite des deux côtés. Les
-   deux classes finissent sur le même élément avec la même spécificité, donc
-   c'est l'ordre d'injection qui trancherait — pas ce qu'on croit lire. */
-
-/* Le <dialog> natif arrive avec ses propres marges, bordure et fond blanc :
-   on repart de zéro. La largeur et le rembourrage restent locaux. */
+/* Le <dialog> natif a ses marges, bordure et fond blanc : on repart de zéro, largeur et rembourrage restent locaux. */
 .shell {
   margin: auto;
   color: var(--ivory);
@@ -104,8 +97,7 @@
     3px 3px 0 var(--accent-deep);
 }
 
-/* Champ refusé par le back. Vit ici, juste après `.input`, pour que l'ordre du
-   fichier suffise à le faire gagner sur la bordure de `.input`. */
+/* Champ refusé par le back, placé après `.input` pour gagner sur sa bordure par l'ordre du fichier. */
 .inputError {
   border-color: var(--danger);
 }

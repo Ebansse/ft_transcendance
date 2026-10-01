@@ -31,10 +31,6 @@ const OAUTH_ERRORS: Record<string, string> = {
 
 const OAUTH_NOTICE = OAUTH_ERROR ? (OAUTH_ERRORS[OAUTH_ERROR] ?? null) : null
 
-/**
- * Détient la session et parle au back. La modale garde ses propres champs et ses
- * erreurs : elle ne reçoit d'ici que de quoi s'ouvrir et de quoi envoyer.
- */
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   // Un retour 42 en échec ouvre la modale d'emblée, sur le message du back.
   const [isOpen, setIsOpen] = useState(OAUTH_NOTICE !== null)

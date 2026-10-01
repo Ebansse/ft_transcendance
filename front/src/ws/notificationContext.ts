@@ -1,9 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { ToastItem } from '../components/Toast.tsx'
 
-/** Une entrée de la boîte de réception. `popup` à `false` pour ce qui a été
- *  rechargé depuis le back : c'est déjà vieux, ça va dans la cloche sans
- *  resurgir en toast à chaque rafraîchissement. */
+/** Entrée de la boîte de réception ; `popup: false` pour ce qui est rechargé du back (cloche seulement, pas de toast). */
 export type Notification = ToastItem & { popup: boolean }
 
 export type NotificationValue = {

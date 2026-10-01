@@ -1,5 +1,4 @@
-/** File STOMP de présence. Le back ne prévient que les amis acceptés déjà
- *  connectés : l'état initial vient de `getFriendList()`. */
+/** File STOMP de présence : seuls les amis acceptés déjà connectés sont prévenus, l'état initial vient de `getFriendList()`. */
 export const PRESENCE = '/user/queue/presence'
 
 /** Miroir du `PresenceDto` du back. `lastSeen` n'est rempli qu'au départ. */

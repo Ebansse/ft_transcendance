@@ -1,9 +1,4 @@
-/* Primitives partagées par les pages. Rien d'autoportant ici : ces classes sont
-   faites pour être tirées avec `composes:` depuis un autre module CSS.
-
-   Les animations sont exposées en longhands (name / duration / timing / fill)
-   et jamais en shorthand : chaque composant pose son propre `animation-delay`,
-   et un shorthand côté composé le remettrait à zéro selon l'ordre d'injection. */
+/* Primitives pour `composes:` ; animations en longhands uniquement, un shorthand remettrait `animation-delay` à zéro. */
 
 .riseIn {
   animation-name: rise-in;

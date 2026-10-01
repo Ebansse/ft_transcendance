@@ -1,8 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Chivo:wght@300;400;500;700&display=swap');
 
-/* Borne 1984 : un cabinet d'arcade en bois, une enseigne à ampoules et un
-   écran cathodique. Pas de néon : de la lumière d'ampoule chaude et des
-   ombres dures. */
+/* Borne 1984 : cabinet d'arcade en bois, enseigne à ampoules, écran cathodique ; lumière chaude et ombres dures, pas de néon. */
 :root {
   /* Bois du cabinet, du plus sombre au plus clair */
   --wood-dark: #22160e;
@@ -18,8 +16,7 @@
   --bordeaux: #5b1a24;
   --bordeaux-deep: #3e1018;
 
-  /* Moutarde : l'accent, la lumière des ampoules. Rempli pour les boutons,
-     éclairci pour le texte. */
+  /* Moutarde : accent et lumière des ampoules, rempli pour les boutons, éclairci pour le texte. */
   --accent: #d9a441;
   --accent-hot: #e4b152;
   --accent-bright: #ebc073;

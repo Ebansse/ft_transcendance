@@ -1,5 +1,4 @@
-/* La carte est une mini-borne : façade bordeaux, petit écran à lignes de
-   balayage, bouton moutarde. Ombre dure plutôt que floue. */
+/* Mini-borne : façade bordeaux, écran à lignes de balayage, bouton moutarde, ombre dure. */
 .card {
   /* Contrat Button : sur le bordeaux, le secondaire reste ivoire. */
   --btn-secondary-color: var(--card-ink);
@@ -65,10 +64,7 @@
   overflow: hidden;
 }
 
-/* L'emoji du pion est noir sur un écran sombre : un contour ivoire en ombres
-   pleines le détache, façon sprite. Il saute en L comme un cavalier ; c'est
-   le rembourrage qui bouge (et pas un transform), pour que l'écran reste
-   immobile autour de lui. */
+/* Contour ivoire en ombres pleines pour détacher le pion noir ; il saute via le rembourrage (pas un transform) pour garder l'écran immobile. */
 .icon {
   text-shadow:
     2px 0 0 var(--ivory),

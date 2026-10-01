@@ -3,9 +3,7 @@ import { useNotifications } from '../ws/notificationContext.ts'
 import { ToastCard } from './Toast.tsx'
 import s from './NotificationBell.module.css'
 
-/** Cloche de la navbar : tout ce qui attend encore, toasts fermés compris.
- *  Le panneau est un `popover` natif : couche du dessus, fermeture au clic
- *  extérieur et sur Échap, sans une ligne de JS. */
+/** Cloche de la navbar : tout ce qui attend encore, via un `popover` natif (fermeture au clic extérieur et Échap). */
 export function NotificationBell() {
   const { items, dismiss } = useNotifications()
   const panelId = useId()

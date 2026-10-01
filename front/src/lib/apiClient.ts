@@ -20,9 +20,7 @@ export function errorMessage(err: unknown, fallback: string) {
 /** Un ObjectError Spring sérialisé (le body de `bindingResult.getAllErrors()`). */
 type SpringError = { field?: string; defaultMessage?: string }
 
-/** Le back pose `logged_in=1` (lisible en JS, sans secret) avec les jetons httpOnly et
- *  l'efface quand la session meurt. Absent : aucune session à restaurer, donc inutile
- *  d'appeler une route protégée (son 401 s'afficherait en rouge dans la console). */
+/** Cookie `logged_in=1` (sans secret) posé par le back : absent, pas de session à restaurer, donc pas de route protégée (évite un 401 en console). */
 export function hasSessionHint() {
   return document.cookie.split('; ').includes('logged_in=1')
 }
@@ -30,8 +28,7 @@ export function hasSessionHint() {
 /** Un seul refresh à la fois : les requêtes qui se croisent attendent la même promesse. */
 let refreshing: Promise<unknown> | null = null
 
-/** Le back refuse de trois façons : un tableau d'ObjectError (`@Valid`), un
- *  `{ error }` sur IllegalArgumentException, ou une map champ → message. */
+/** Le back refuse de trois façons : tableau d'ObjectError (`@Valid`), `{ error }`, ou map champ → message. */
 function parseErrorBody(status: number, body: unknown): ApiError | null {
   const fieldErrors: Record<string, string> = {}
 
@@ -76,8 +73,7 @@ async function parseError(res: Response): Promise<ApiError> {
   )
 }
 
-/** Certaines routes répondent 204, un corps vide ou du text/plain ("Login successful") :
- *  parser en JSON d'office ferait planter une requête pourtant réussie. */
+/** Certaines routes répondent 204, vide ou text/plain : parser en JSON d'office ferait planter une requête réussie. */
 async function readBody(res: Response): Promise<unknown> {
   const text = await res.text()
   if (!text) return undefined
@@ -86,13 +82,10 @@ async function readBody(res: Response): Promise<unknown> {
 }
 
 async function request<T>(path: string, method: string, body?: unknown, retried = false): Promise<T> {
-  // Un upload de fichier passe un FormData : le navigateur pose lui-même le
-  // Content-Type (avec le boundary), on ne sérialise pas et on ne force rien.
+  // Un FormData : le navigateur pose lui-même le Content-Type (boundary), on ne force rien.
   const isForm = body instanceof FormData
 
-  // Les routes /auth/* sont publiques (login, refresh…), sauf /auth/2fa/* qui exigent
-  // une session comme n'importe quelle page (hors /auth/2fa/login, qui sert justement
-  // à en ouvrir une). Toutes les autres routes sont protégées.
+  // /auth/* est public sauf /auth/2fa/* (session requise, hors /auth/2fa/login) ; tout le reste est protégé.
   const needsSession = path.startsWith('/auth/2fa/') && path !== '/auth/2fa/login'
   const isAuthRoute = path.startsWith('/auth/') && !needsSession
   if (!isAuthRoute && !hasSessionHint()) throw new ApiError(401, 'Non connecté.')
@@ -112,8 +105,7 @@ async function request<T>(path: string, method: string, body?: unknown, retried 
     throw new ApiError(0, 'Impossible de joindre le serveur.')
   }
 
-  // Si l'access_token est expiré, on le rafraîchit avec le refresh_token (7 jours),
-  // puis on rejoue la requête une fois (pas pour les routes publiques de /auth/*).
+  // Access_token expiré : refresh avec le refresh_token (7 jours) puis rejeu unique (hors routes publiques /auth/*).
   if ((res.status === 401 || res.status === 403) && !retried && !isAuthRoute) {
     refreshing ??= request('/auth/refresh-token', 'POST').finally(() => {
       refreshing = null

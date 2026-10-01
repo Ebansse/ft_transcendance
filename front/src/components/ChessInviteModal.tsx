@@ -10,8 +10,7 @@ import s from './ChessInviteModal.module.css'
 
 type ChessInviteModalProps = {
   open: boolean
-  /** Pseudo dont l'invitation part : verrouille toute la liste le temps de la
-   *  requête, pour éviter les doubles invitations. */
+  /** Pseudo dont l'invitation part : verrouille la liste le temps de la requête (anti-doublons). */
   pending?: string | null
   /** Refus du back ; la modale reste ouverte pour que le message soit lisible. */
   error?: string | null
@@ -20,8 +19,7 @@ type ChessInviteModalProps = {
   onInvite: (userName: string, side: ChessSide | null) => void
 }
 
-/** Un bouton par ami. La liste est rechargée à chaque ouverture : une amitié
- *  acceptée entre-temps doit apparaître sans recharger la page. */
+/** Un bouton par ami, liste rechargée à chaque ouverture pour voir les amitiés acceptées entre-temps. */
 export function ChessInviteModal({
   open,
   pending = null,
@@ -61,8 +59,7 @@ export function ChessInviteModal({
     }
   }, [open])
 
-  // Le back refuse d'inviter un absent : la liste suit la présence en direct
-  // tant que la modale est ouverte.
+  // Le back refuse d'inviter un absent : la liste suit la présence en direct tant que la modale est ouverte.
   useEffect(() => {
     if (!open) return
     return subscribe(PRESENCE, (body) => {

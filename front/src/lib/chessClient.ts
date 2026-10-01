@@ -8,28 +8,23 @@ export type ChessInvitationDto = {
   fromSide: ChessSide
 }
 
-/** `ACCEPTED` n'est jamais poussé ici : une acceptation arrive sous la forme
- *  d'un match démarré. */
+/** `ACCEPTED` n'est jamais poussé ici : une acceptation arrive sous forme de match démarré. */
 export type ChessInvitationState = 'PENDING' | 'DECLINED'
 
-/** Une seule queue pour les deux sens, l'état les sépare : `PENDING` arrive chez
- *  l'invité, `DECLINED` chez l'inviteur. */
+/** Une queue pour les deux sens : `PENDING` arrive chez l'invité, `DECLINED` chez l'inviteur. */
 export const CHESS_INVITATIONS = '/user/queue/chess.invitations'
 
 /** Démarrage et fin de partie passent tous deux par là, le `status` les sépare. */
 export const CHESS_MATCHES = '/user/queue/chess.matches'
 
-/** Le back n'y pousse que le coup d'en face : le sien, on le connaît déjà par la
- *  réponse HTTP. */
+/** Le back ne pousse que le coup adverse : le sien est déjà connu par la réponse HTTP. */
 export const CHESS_MOVES = '/user/queue/chess.moves'
 
 export type ChessSide = 'WHITE' | 'BLACK'
 
 export type ChessMatchStatus = 'IN_PROGRESS' | 'CHECKMATE' | 'STALEMATE' | 'DRAW' | 'RESIGNED'
 
-/** `fen` est la seule vérité sur la position ; `sideToMove` en est relu.
- *  Un camp tenu par un bot a son `*PlayerId` à `null` et son `*BotLevel`
- *  renseigné — les deux vont toujours ensemble. */
+/** `fen` seule fait foi (`sideToMove` en est relu) ; un camp bot a son `*PlayerId` à `null` et son `*BotLevel` renseigné. */
 export type ChessMatchDto = {
   matchId: number
   fen: string

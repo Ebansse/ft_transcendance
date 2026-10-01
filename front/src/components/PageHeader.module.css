@@ -15,8 +15,7 @@
   z-index: 1;
 }
 
-/* Le titre s'écrit caractère par caractère une fois l'écran allumé, suivi
-   d'un curseur qui clignote. */
+/* Le titre s'écrit caractère par caractère après l'allumage, suivi d'un curseur clignotant. */
 .title {
   display: inline-block;
   margin: 0 0 1.1rem;

@@ -1,5 +1,4 @@
-/* Tableau de données : même matière que les cartes (fond `--card`), mais à plat.
-   Le scroller horizontal évite que la page entière déborde sur mobile. */
+/* Tableau de données : même matière que les cartes (`--card`) mais à plat, scroller horizontal pour le mobile. */
 
 .scroller {
   composes: riseIn from '../style/page.module.css';

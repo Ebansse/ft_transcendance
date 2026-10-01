@@ -1,5 +1,4 @@
-/* Ce qui est propre au choix d'un adversaire : une boîte étroite et une liste
-   de boutons qui défile. Le reste vient de la coquille partagée. */
+/* Propre au choix d'un adversaire : boîte étroite et liste de boutons qui défile ; le reste vient de la coquille partagée. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';
@@ -49,8 +48,7 @@
   color: var(--ivory-dim);
 }
 
-/* La modale ne doit pas dépasser l'écran quand on a beaucoup d'amis : au-delà,
-   c'est la liste qui défile, pas la page. */
+/* Avec beaucoup d'amis, c'est la liste qui défile, pas la page. */
 .friendList {
   display: flex;
   flex-direction: column;

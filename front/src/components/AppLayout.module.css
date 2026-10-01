@@ -15,8 +15,7 @@
   position: relative;
 }
 
-/* La zone de contenu est l'écran de la borne : tube bombé, cadre noir,
-   lignes de balayage par-dessus. */
+/* L'écran de la borne : tube bombé, cadre noir, lignes de balayage par-dessus. */
 .main {
   position: relative;
   flex: 1;
@@ -34,8 +33,7 @@
     0 0 0 12px #120c08,
     0 0 0 14px #2a1d13,
     0 10px 0 14px var(--wood-dark);
-  /* `backwards` et pas `both` : une fois allumé, l'écran ne garde ni transform
-     ni filter, sinon les menus en position fixe s'y accrocheraient. */
+  /* `backwards` et pas `both` : sinon transform/filter restent et les menus fixed s'y accrochent. */
   animation: crt-on 650ms var(--ease) backwards;
 }
 

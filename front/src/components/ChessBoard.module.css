@@ -1,9 +1,4 @@
-/* L'échiquier : une grille 8×8 carrée, dont la taille des pièces suit celle
-   des cases. Les deux teintes sont un ivoire et un bois clair, et non les
-   bruns sombres du cabinet : une pièce noire posée sur une case sombre ne se
-   distingue plus, quel que soit le liseré qu'on lui ajoute. Le plateau est donc
-   la seule surface claire de l'interface, et les deux teintes restent assez
-   écartées pour se lire en pleine page comme en 375 px. */
+/* Échiquier 8×8 en ivoire et bois clair : une pièce noire serait invisible sur les bruns du cabinet. */
 
 .board {
   composes: riseIn from '../style/page.module.css';
@@ -12,20 +7,16 @@
   position: relative;
   z-index: 6;
 
-  /* Pas de vert : `--green` et `--live` portent déjà un sens dans le design
-     system (accepter, être en ligne), qu'un plateau vert viendrait brouiller. */
+  /* Pas de vert : `--green` et `--live` ont déjà un sens (accepter, en ligne). */
   --square-light: #efe6d2;
   --square-dark: #b58a5a;
-  /* Tout part de là : une case assez grande pour une pièce, jamais déformée.
-     Le plateau fait huit fois cette taille, colonnes *et* rangées, donc les 64
-     cases sont strictement identiques quelle que soit la position. */
+  /* Taille d'une case, identique pour les 64 ; le plateau fait huit fois cette taille. */
   --square: clamp(2.4rem, 7.6vmin, 4.5rem);
 
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
-  /* Taille souhaitée, mais jamais plus large que la colonne qui l'accueille :
-     le plateau rétrécit d'un bloc plutôt que de déborder. */
+  /* Taille souhaitée, plafonnée à la colonne : le plateau rétrécit d'un bloc au lieu de déborder. */
   width: min(calc(var(--square) * 8), 100%);
   aspect-ratio: 1;
   /* Fait du plateau l'unité de mesure des pièces (unités `cq*` ci-dessous). */
@@ -65,8 +56,7 @@
   filter: brightness(1.12);
 }
 
-/* On rentre le filet de focus dans la case pour qu'il ne soit pas rogné par
-   l'`overflow` du plateau. */
+/* Filet de focus rentré dans la case pour ne pas être rogné par l'`overflow` du plateau. */
 .square:focus-visible {
   outline: 2px solid var(--accent-bright);
   outline-offset: -3px;
@@ -90,10 +80,7 @@
   animation: square-pick 320ms var(--ease) both;
 }
 
-/* Coups possibles de la pièce sélectionnée. Case vide : une pastille centrée.
-   Case occupée : un anneau sur le pourtour, pour ne pas masquer la pièce à
-   prendre. Les deux partagent le rouge du design system, lisible sur les deux
-   teintes du plateau. */
+/* Coups possibles : pastille sur case vide, anneau sur case occupée, en rouge du design system. */
 .target::after,
 .capture::after {
   content: '';
@@ -118,9 +105,7 @@
 .piece {
   position: relative;
   color: var(--wood-dark);
-  /* Une simple ombre portée. Le liseré clair d'avant servait à décoller la
-     pièce noire d'une case sombre ; sur les deux teintes actuelles il ne ferait
-     plus que manger le contour du glyphe. */
+  /* Simple ombre portée : un liseré clair mangerait le contour du glyphe sur ces teintes. */
   text-shadow: 0 2px 3px rgba(18, 12, 8, 0.35);
   pointer-events: none;
 }

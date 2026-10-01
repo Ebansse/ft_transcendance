@@ -1,5 +1,4 @@
-/* Ce qui est propre à la demande de confirmation : une boîte plus étroite, un
-   titre plus discret et un corps de texte. Le reste vient de la coquille partagée. */
+/* Propre à la confirmation : boîte plus étroite, titre discret, corps de texte ; le reste vient de la coquille partagée. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';

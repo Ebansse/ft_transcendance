@@ -15,9 +15,7 @@
   color: var(--ivory-dim);
 }
 
-/* Les liens légaux se comportent en liens, pas en boutons : pas de fond au
-   survol, mais un soulignement moutarde qui se trace. Tout passe par le contrat
-   Button — le footer ne touche jamais aux classes du bouton. */
+/* Liens légaux : pas de fond au survol, soulignement moutarde, le tout via le contrat Button. */
 .links {
   display: flex;
   flex-wrap: wrap;

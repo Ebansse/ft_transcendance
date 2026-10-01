@@ -1,5 +1,4 @@
-/* Ce qui est propre au choix de la promotion : une boîte courte, quatre pièces
-   en ligne. Le reste vient de la coquille partagée. */
+/* Propre à la promotion : boîte courte, quatre pièces en ligne ; le reste vient de la coquille partagée. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';
@@ -34,8 +33,7 @@
   gap: 0.5rem;
 }
 
-/* Bouton propre à la modale plutôt que `Button` : c'est une case de choix, haute
-   et centrée sur son glyphe, pas une action de pied de modale. */
+/* Bouton propre à la modale (case de choix haute, glyphe centré) plutôt que `Button`. */
 .choice {
   display: flex;
   flex-direction: column;

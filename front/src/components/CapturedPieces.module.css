@@ -1,5 +1,4 @@
-/* Les prises d'un camp, sur une ligne, sous son nom. Les glyphes se chevauchent
-   légèrement : une rangée de huit pions doit tenir dans les 300px du panneau. */
+/* Les prises d'un camp sur une ligne ; les glyphes se chevauchent pour tenir dans 300px. */
 
 .captures {
   display: flex;
@@ -10,8 +9,7 @@
 }
 
 .piece {
-  /* Les noirs prennent le gris du panneau plutôt que le noir du plateau, qui
-     disparaîtrait sur ce fond. */
+  /* Les noirs prennent le gris du panneau : le noir du plateau disparaîtrait sur ce fond. */
   margin-right: -0.22rem;
   font-size: 1.1rem;
   line-height: 1;

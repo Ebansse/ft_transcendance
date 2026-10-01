@@ -31,6 +31,7 @@ type Snapshot = {
 
 type Round = { number: number; white: string; black: string | null }
 
+/** Fige l'état de la partie (cases, trait, échec, FEN, historique) en un objet neuf pour React. */
 function snapshot(chess: Chess): Snapshot {
   return {
     squares: squaresOf(chess),
@@ -41,6 +42,7 @@ function snapshot(chess: Chess): Snapshot {
   }
 }
 
+/** Crée une partie vierge à la position de départ, avec son instantané d'affichage. */
 function newGame() {
   const chess = new Chess()
   return { chess, view: snapshot(chess) }
@@ -51,8 +53,7 @@ function samePosition(left: string, right: string) {
   return left.split(' ').slice(0, 3).join(' ') === right.split(' ').slice(0, 3).join(' ')
 }
 
-/** Copie une partie avec son historique ; à défaut, depuis son seul FEN (une
- *  partie reprise après rechargement n'a pas de PGN à charger). */
+/** Copie une partie avec son historique, ou depuis son seul FEN si le PGN manque (partie reprise après rechargement). */
 function cloneGame(chess: Chess) {
   const copy = new Chess()
 
@@ -81,8 +82,7 @@ function replay(chess: Chess, move: string, expectedFen: string) {
   return samePosition(copy.fen(), expectedFen) ? copy : null
 }
 
-/** Personne n'a nommé le coup, mais un seul coup légal mène à cette position :
- *  c'est celui du bot. */
+/** Personne n'a nommé le coup, mais un seul coup légal mène à cette position : celui du bot. */
 function catchUp(chess: Chess, expectedFen: string) {
   const copy = cloneGame(chess)
 
@@ -95,6 +95,7 @@ function catchUp(chess: Chess, expectedFen: string) {
   return null
 }
 
+/** Regroupe l'historique en tours numérotés (un coup blanc, un coup noir) pour la liste des coups. */
 function toRounds(history: { san: string }[]): Round[] {
   const rounds: Round[] = []
 
@@ -109,6 +110,7 @@ function toRounds(history: { san: string }[]): Round[] {
   return rounds
 }
 
+/** Traduit le statut de la partie en message de fin (mat, abandon, pat, nulle), ou null si elle continue. */
 function outcomeOfMatch(match: ChessMatchDto) {
   if (match.status === 'IN_PROGRESS') return null
 
@@ -121,6 +123,7 @@ function outcomeOfMatch(match: ChessMatchDto) {
   return 'Partie nulle'
 }
 
+/** Affiche la liste numérotée des coups joués, ou un message si aucun coup n'a été joué. */
 function MoveList({ rounds }: { rounds: Round[] }) {
   if (rounds.length === 0) return <p className={s.empty}>Aucun coup pour l'instant.</p>
 
@@ -137,10 +140,7 @@ function MoveList({ rounds }: { rounds: Round[] }) {
   )
 }
 
-/** Page Échecs. Sans partie serveur, le plateau reste dessiné à la position de
- *  départ mais n'accepte aucun clic. Avec partie, la position vient du serveur,
- *  les coups y partent en UCI et ceux de l'adversaire arrivent par la socket :
- *  chess.js applique les règles pour l'affichage, le serveur reste juge. */
+/** Page Échecs : sans partie serveur le plateau reste au départ et inerte ; avec partie, chess.js applique les règles pour l'affichage, le serveur reste juge. */
 export function ChessPage({ onNavigate }: ChessPageProps) {
   const { user } = useAuthModal()
   const online = useChessMatch()
@@ -150,8 +150,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const [selected, setSelected] = useState<string | null>(null)
   const [targets, setTargets] = useState<string[]>([])
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null)
-  /** Coup de promotion en attente de sa pièce : la modale est ouverte tant
-   *  qu'il est posé, et le coup ne part qu'une fois la pièce choisie. */
+  /** Coup de promotion en attente de sa pièce : la modale reste ouverte tant qu'il est posé. */
   const [promotion, setPromotion] = useState<{ from: string; to: string } | null>(null)
   const [orientation, setOrientation] = useState<BoardOrientation>('white')
   const [opponentName, setOpponentName] = useState<string | null>(null)
@@ -173,9 +172,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     if (mySide !== null) setOrientation(mySide === 'BLACK' ? 'black' : 'white')
   }, [mySide])
 
-  /* La position du serveur fait foi. On tente d'abord de rejouer le coup reçu
-     pour garder l'historique ; sinon on repart du FEN. Ce même effet rend le
-     plateau à sa position de départ quand on quitte une partie terminée. */
+  /* La position du serveur fait foi : on rejoue le coup reçu pour garder l'historique, sinon on repart du FEN ; sans partie, retour au départ. */
   useEffect(() => {
     if (match === null) {
       setGame((current) => (samePosition(current.view.fen, START_FEN) ? current : newGame()))
@@ -183,8 +180,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
       return
     }
 
-    /* Updater volontairement pur : il ne mute rien et ne pose aucun état, donc
-       la page reconstruit au pire une fois par message reçu — pas de boucle. */
+    /* Updater volontairement pur (ne mute rien, ne pose aucun état) : au pire une reconstruction par message, pas de boucle. */
     setGame((current) => {
       if (samePosition(current.view.fen, match.fen)) return current
 
@@ -203,8 +199,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     }
   }, [match, serverMove])
 
-  /* Le back ne donne que l'UUID des joueurs. Un camp tenu par un bot n'en a
-     pas : il s'annonce par son niveau. */
+  /* Le back ne donne que l'UUID des joueurs ; un camp tenu par un bot s'annonce par son niveau. */
   useEffect(() => {
     if (match === null || mySide === null) {
       setOpponentName(null)
@@ -234,29 +229,22 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
 
   const running = match !== null && match.status === 'IN_PROGRESS'
   const outcome = match === null ? null : outcomeOfMatch(match)
-  /* Le trait du plateau affiché, qui a déjà avancé quand on vient de jouer sans
-     que la réponse du serveur soit revenue. */
+  /* Trait du plateau affiché, déjà avancé si on vient de jouer sans réponse du serveur. */
   const localSide: ChessSide = view.turn === 'w' ? 'WHITE' : 'BLACK'
-  /* Sans adversaire, hors de son tour, ou en attendant la réponse à son propre
-     coup, le plateau ne répond pas. La dernière condition compte surtout contre
-     le bot, où l'aller-retour est si court qu'on jouerait sinon pour lui. */
+  /* Le plateau ne répond pas sans adversaire, hors de son tour, ou en attendant la réponse à son coup (surtout contre le bot). */
   const playable = running && isMyTurn && localSide === mySide
 
-  /* Sans ce filet, une partie qui s'arrête pendant que la modale est ouverte
-     (abandon adverse, déconnexion) la laisserait en travers de l'écran. */
+  /* Filet : si la partie s'arrête modale ouverte (abandon adverse, déconnexion), on la ferme. */
   useEffect(() => {
     if (!playable) setPromotion(null)
   }, [playable])
 
-  /* Le dernier coup de la position affichée, quel qu'en soit l'auteur. Le lire
-     dans l'historique couvre le coup du bot sans avoir à le nommer ; `lastMove`
-     ne sert qu'aux parties reprises depuis un FEN, qui arrivent sans historique. */
+  /* Dernier coup de la position affichée, lu dans l'historique (couvre le bot) ; `lastMove` ne sert qu'aux parties reprises depuis un FEN. */
   const played = view.history.at(-1)
   const highlighted =
     played === undefined ? lastMove : { from: played.lan.slice(0, 2), to: played.lan.slice(2, 4) }
 
-  /** Sélectionne la case si elle porte une pièce jouable, et calcule ses
-   *  arrivées légales. */
+  /** Sélectionne la case si elle porte une pièce jouable et calcule ses arrivées légales. */
   const select = (square: string) => {
     const moves = chess.moves({ square: square as Square, verbose: true })
     if (moves.length === 0) return
@@ -265,13 +253,13 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setTargets(moves.map((move) => move.to))
   }
 
+  /** Désélectionne la case courante et efface ses cases d'arrivée. */
   const clearSelection = () => {
     setSelected(null)
     setTargets([])
   }
 
-  /** Joue le coup localement et l'envoie au serveur. `piece` n'est renseigné que
-   *  pour une promotion, et devient la dernière lettre de l'UCI (`e7e8n`). */
+  /** Joue le coup localement puis l'envoie au serveur ; `piece` (promotion seulement) devient la dernière lettre de l'UCI (`e7e8n`). */
   const playMove = (from: string, to: string, piece?: PromotionPiece) => {
     if (match === null) return
 
@@ -281,11 +269,11 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setLastMove({ from, to })
     clearSelection()
 
-    /* On affiche sans attendre la réponse : chess.js a déjà vérifié que le coup
-       est légal, et un refus du back nous ramènerait sur sa position. */
+    /* Affichage immédiat : chess.js a validé le coup, et un refus du back nous ramènerait sur sa position. */
     void online.play(match.matchId, move.lan)
   }
 
+  /** Gère un clic sur une case : sélectionne une pièce, change de sélection, ou joue le coup. */
   const handleSquareClick = (square: string) => {
     if (!playable || match === null) return
 
@@ -299,15 +287,13 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
       return
     }
 
-    /* Pas une arrivée légale : soit c'est une autre pièce à nous et on change
-       de sélection, soit le clic ne veut rien dire et on l'ignore. */
+    /* Pas une arrivée légale : autre pièce à nous (on change de sélection) ou clic sans sens (ignoré). */
     if (!targets.includes(square)) {
       select(square)
       return
     }
 
-    /* Un pion qui arrive au bout doit dire en quoi il se transforme : le coup
-       reste en suspens et la modale le reprend. */
+    /* Un pion arrivé au bout doit choisir sa pièce : le coup reste en suspens, la modale le reprend. */
     const promoting = chess
       .moves({ square: selected as Square, verbose: true })
       .some((move) => move.to === square && move.promotion !== undefined)
@@ -320,6 +306,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     playMove(selected, square)
   }
 
+  /** Joue le coup de promotion en attente avec la pièce choisie, puis ferme la modale. */
   const promoteTo = (piece: PromotionPiece) => {
     if (promotion === null) return
 
@@ -327,27 +314,25 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     setPromotion(null)
   }
 
-  /** Refermer sans choisir annule le coup : rien n'est parti au serveur. On rend
-   *  la case à la sélection pour repartir du même pion. */
+  /** Refermer sans choisir annule le coup (rien n'est parti) et rend la case à la sélection. */
   const cancelPromotion = () => {
     setPromotion(null)
     if (promotion !== null) select(promotion.from)
   }
 
-  /** Sans ce `leave`, la resynchronisation ramènerait la position finale et le
-   *  back interdirait toute nouvelle invitation aux deux joueurs. */
+  /** Sans ce `leave`, la resynchronisation ramènerait la position finale et le back interdirait toute invitation. */
   const leaveMatch = () => {
     online.leave()
     clearSelection()
   }
 
+  /** Ouvre la modale de partie contre le bot, sans erreur résiduelle. */
   const openBot = () => {
     setBotError(null)
     setBotOpen(true)
   }
 
-  /** Un refus du back laisse la modale ouverte, le message se lisant à côté du
-   *  bouton qu'on vient d'actionner. */
+  /** Un refus du back laisse la modale ouverte, le message se lisant à côté du bouton actionné. */
   const startBot = async (side: ChessSide, botLvl: number) => {
     setBotPending(true)
     setBotError(null)
@@ -363,12 +348,14 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
     }
   }
 
+  /** Ouvre la modale d'invitation, sans erreur ni confirmation résiduelles. */
   const openInvite = () => {
     setInviteError(null)
     setInviteSent(null)
     setInviteOpen(true)
   }
 
+  /** Envoie une invitation de partie à un joueur et mémorise le camp que le back lui a attribué. */
   const invite = async (userName: string, side: ChessSide | null) => {
     setInvitePending(userName)
     setInviteError(null)
@@ -415,8 +402,7 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             onSquareClick={handleSquareClick}
           />
 
-          {/* Près du plateau : la modale prolonge le coup qu'on vient de jouer,
-              elle ne fait pas partie des commandes. */}
+          {/* Près du plateau : la modale prolonge le coup joué, elle ne fait pas partie des commandes. */}
           <ChessPromotionModal
             open={promotion !== null}
             white={mySide !== 'BLACK'}

@@ -8,9 +8,7 @@ type CapturedPiecesProps = {
   advantage: number
 }
 
-/** Les prises d'un camp, en glyphes. Les glyphes sont décoratifs : la ligne
- *  entière porte son libellé, « pion noir, pion noir, tour noire » se lisant
- *  mieux d'un bloc que pièce par pièce. */
+/** Les prises d'un camp en glyphes décoratifs ; la ligne entière porte le libellé. */
 export function CapturedPieces({ pieces, advantage }: CapturedPiecesProps) {
   if (pieces.length === 0 && advantage <= 0) return null
 

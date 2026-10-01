@@ -12,9 +12,7 @@
   flex-direction: column;
   gap: 0.6rem;
 
-  /* Au-dessus de tout ce que la page pose : navbar (20), sidebar mobile (10),
-     menu contextuel (50). Les modales, elles, sont dans la couche <dialog> du
-     navigateur et passent devant de toute façon. */
+  /* Au-dessus de navbar (20), sidebar mobile (10) et menu contextuel (50) ; les modales passent devant via <dialog>. */
   z-index: 100;
 }
 
@@ -31,9 +29,7 @@
   border-radius: var(--radius-card);
   box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 1);
 
-  /* Longhands et jamais le raccourci : voir l'avertissement en tête de
-     style/page.module.css. `prefers-reduced-motion` est déjà neutralisé
-     globalement par style/body.css. */
+  /* Longhands jamais le raccourci (voir style/page.module.css) ; `prefers-reduced-motion` est géré par style/body.css. */
   animation-name: slide-in-right;
   animation-duration: 420ms;
   animation-timing-function: var(--ease);
@@ -76,8 +72,7 @@
   gap: 0.5rem;
   margin-top: 0.75rem;
 
-  /* Contrat Button : des actions de notification, plus petites qu'un bouton
-     de page. */
+  /* Contrat Button : actions de notification, plus petites qu'un bouton de page. */
   --btn-padding: 0.4rem 0.7rem;
   --btn-font-size: 0.82rem;
 }
@@ -86,8 +81,7 @@
   flex: 1;
 }
 
-/* Button n'a pas de variante verte : on repeint la variante secondaire par ses
-   variables, comme le footer le fait pour son soulignement. */
+/* Button n'a pas de variante verte : on repeint la secondaire par ses variables, comme le footer. */
 .accept {
   --btn-secondary-color: var(--green-bright);
   --btn-secondary-border: var(--green);
@@ -106,8 +100,7 @@
   --btn-secondary-bg-hover: rgba(224, 121, 107, 0.16);
 }
 
-/* Le rectangle part hors de l'écran, marge du conteneur comprise, pour qu'aucun
-   bout ne dépasse avant le départ de l'animation. */
+/* Le rectangle part hors écran, marge du conteneur comprise, pour que rien ne dépasse avant l'animation. */
 @keyframes slide-in-right {
   from {
     opacity: 0;

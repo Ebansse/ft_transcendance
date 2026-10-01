@@ -12,16 +12,10 @@ import {
 } from '../lib/chessClient.ts'
 import { useSocket } from './socketContext.ts'
 
-/** Le dernier coup reçu du serveur, avec un compteur : deux fois le même coup
- *  doit rester deux événements distincts pour que la page les rejoue tous deux. */
+/** Dernier coup reçu avec un compteur : deux fois le même coup restent deux événements distincts. */
 type ServerMove = { move: string; count: number }
 
-/** Détient la partie telle que le serveur la voit, et rien d'autre : ni plateau,
- *  ni chess.js, ni sélection. La page se resynchronise sur `match.fen`.
- *
- *  Trois sources d'un même état : le chargement initial (qui restaure la partie
- *  après un rechargement), les coups adverses sur `chess.moves`, et les
- *  changements de partie sur `chess.matches`. */
+/** Détient la partie vue par le serveur (chargement initial, `chess.moves`, `chess.matches`) et rien d'autre ; la page se resynchronise sur `match.fen`. */
 export function useChessMatch() {
   const { subscribe } = useSocket()
   const { user } = useAuthModal()
@@ -31,9 +25,7 @@ export function useChessMatch() {
   const [serverMove, setServerMove] = useState<ServerMove | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  /* `location.key` et pas seulement le montage : accepter une invitation alors
-     qu'on est déjà sur la page renavigue vers /chess sans remonter le
-     composant. */
+  /* `location.key` et pas seulement le montage : accepter une invitation déjà sur /chess ne remonte pas le composant. */
   useEffect(() => {
     let alive = true
 
@@ -43,8 +35,7 @@ export function useChessMatch() {
       })
       .catch((err: unknown) => {
         if (!alive) return
-        // 404 = aucune partie en cours, cas normal. 401/403 = session expirée,
-        // dont la couche d'auth s'occupe déjà.
+        // 404 = aucune partie (normal) ; 401/403 = session expirée, déjà gérée par la couche d'auth.
         const quiet = err instanceof ApiError && [404, 403, 401].includes(err.status)
         if (quiet) setMatch(null)
         else setError(errorMessage(err, 'Partie en cours introuvable.'))
@@ -74,28 +65,24 @@ export function useChessMatch() {
     [subscribe],
   )
 
-  /** Envoie un coup en UCI. Un refus laisse `match` sur la position serveur, ce
-   *  qui suffit à la page pour annuler son coup optimiste. */
+  /** Envoie un coup en UCI ; un refus laisse `match` sur la position serveur, ce qui annule le coup optimiste. */
   const play = async (matchId: number, move: string) => {
     setError(null)
     try {
       setMatch(await playChessMove(matchId, move))
     } catch (err: unknown) {
       setError(errorMessage(err, 'Coup refusé.'))
-      // Le contenu ne change pas — c'est la référence qui compte : elle relance
-      // la resynchronisation de la page, qui reprend le FEN du serveur.
+      // C'est la référence qui compte : elle relance la resynchronisation de la page sur le FEN serveur.
       setMatch((previous) => (previous === null ? null : { ...previous }))
     }
   }
 
-  /** Ne rattrape pas l'erreur : l'appelant tient la modale ouverte et y affiche
-   *  le refus, là où l'utilisateur vient de cliquer. */
+  /** Ne rattrape pas l'erreur : l'appelant garde la modale ouverte et y affiche le refus. */
   const startBot = async (side: ChessSide, botLvl: number) => {
     setError(null)
     const created = await createBotMatch(side, botLvl)
 
-    /* Rien n'arrive par la socket contre un bot : un coup resté d'une partie
-       précédente serait rejoué sur celle-ci. */
+    /* Rien n'arrive par la socket contre un bot : un coup resté d'une partie précédente serait rejoué sur celle-ci. */
     setServerMove(null)
     setMatch(created)
   }
@@ -109,7 +96,6 @@ export function useChessMatch() {
     }
   }
 
-  /** Referme une partie terminée pour rendre la page à son mode local. */
   const leave = () => {
     setMatch(null)
     setServerMove(null)

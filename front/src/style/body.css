@@ -47,8 +47,7 @@ body::before {
   }
 }
 
-/* Utilitaire global : texte réservé aux lecteurs d'écran. Volontairement hors
-   module — réutilisable par n'importe quel composant sans import. */
+/* Utilitaire global : texte réservé aux lecteurs d'écran, hors module pour servir sans import. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -73,8 +72,7 @@ body::before {
   background: var(--accent);
 }
 
-/* Coupe-circuit global des animations. Les ajustements propres à un composant
-   restent dans son module. */
+/* Coupe-circuit global des animations ; les ajustements propres à un composant restent dans son module. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

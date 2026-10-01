@@ -1,5 +1,4 @@
-/* Ce qui est propre au lancement d'une partie contre le bot : une boîte étroite,
-   deux camps à choisir et un niveau. Le reste vient de la coquille partagée. */
+/* Propre au lancement contre le bot : boîte étroite, deux camps et un niveau ; le reste vient de la coquille partagée. */
 
 .dialog {
   composes: shell from '../style/dialog.module.css';
@@ -33,8 +32,7 @@
   composes: label from '../style/dialog.module.css';
 }
 
-/* Les deux camps côte à côte, à parts égales : le choix se lit d'un coup d'oeil
-   sans avoir à ouvrir une liste. */
+/* Les deux camps côte à côte, à parts égales. */
 .sides {
   display: grid;
   grid-template-columns: 1fr 1fr;

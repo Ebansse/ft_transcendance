@@ -9,10 +9,7 @@ import type {
   UndercoverWordPair,
 } from './undercoverClient.ts'
 
-/** Miroir du `UserPublicProfileDto` du back. `online` est une date ISO, `null`
- *  tant que le compte ne s'est jamais connecté. `twoFactorEnabled` et
- *  `oauth42Linked` ne sont renseignés que par `/users/me`. `email` et `role` sont
- *  `null` sur le profil d'un autre utilisateur. */
+/** Miroir du `UserPublicProfileDto` ; `twoFactorEnabled`/`oauth42Linked` viennent de `/users/me`, `email`/`role` sont `null` pour autrui. */
 export type UserPublicProfileDto = {
   id: string
   userName: string
@@ -30,8 +27,7 @@ export type TwoFactorSetupDto = {
   secret: string
 }
 
-/** Génère un nouveau secret TOTP. L'A2F reste inactive tant qu'`enableTwoFactor`
- *  n'a pas reçu un premier code valide. */
+/** Génère un secret TOTP ; l'A2F reste inactive jusqu'à un premier code valide via `enableTwoFactor`. */
 export function setupTwoFactor() {
   return api.post<TwoFactorSetupDto>('/auth/2fa/setup')
 }
@@ -94,14 +90,7 @@ export function deleteUser(idUser: string) {
 
 export type FriendshipStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'BLOCKED'
 
-/** Une relation vue depuis le compte connecté : `idUser` et `userName`
- *  désignent toujours *l'autre* personne.
- *
- *  `senderId` vaut soit notre propre id, soit `idUser` : c'est ce qui sépare une
- *  demande reçue (`senderId === idUser`) d'une demande envoyée.
- *
- *  `blockerId` n'est renseigné que sur une ligne BLOCKED : seul le compte qui a
- *  bloqué voit la ligne dans ses bloqués. */
+/** Relation vue du compte connecté : `idUser`/`userName` = l'autre personne, `senderId` distingue demande reçue/envoyée, `blockerId` n'existe que sur BLOCKED. */
 export type FriendListDto = {
   idUser: string
   userName: string
@@ -145,8 +134,7 @@ export function unblockUser(idUser: string) {
   return api.post<void>(`/friend-list/${idUser}/unblock`)
 }
 
-/** `side` est le camp de l'inviteur, `null` pour un tirage au sort côté back.
- *  Le camp retenu revient dans `fromSide`. */
+/** `side` = camp de l'inviteur (`null` : tirage au sort côté back), le camp retenu revient dans `fromSide`. */
 export function sendChessInvitation(opponentUsername: string, side: ChessSide | null) {
   return api.post<ChessInvitationDto>('/chess/invitations', { opponentUsername, side })
 }
@@ -164,8 +152,7 @@ export function declineChessInvitation(opponentUsername: string) {
   return api.post<void>('/chess/invitations/decline', { opponentUsername })
 }
 
-/** Si le joueur a pris les noirs, le `fen` renvoyé contient **déjà** le coup
- *  d'ouverture du bot. Refusé en 409 tant qu'une autre partie est en cours. */
+/** Si le joueur prend les noirs, le `fen` contient déjà le coup du bot ; 409 si une autre partie est en cours. */
 export function createBotMatch(side: ChessSide, botLvl: number) {
   return api.post<ChessMatchDto>('/chess/bot/createBotMatch', { side, botLvl })
 }
@@ -180,8 +167,7 @@ export function playChessMove(matchId: number, move: string) {
   return api.post<ChessMatchDto>(`/chess/matches/${matchId}/moves`, { move })
 }
 
-/** Seule sortie d'une partie en cours, et seule façon de libérer les deux
- *  joueurs pour une nouvelle invitation. */
+/** Seule sortie d'une partie en cours, et seule façon de libérer les deux joueurs. */
 export function resignChessMatch(matchId: number) {
   return api.post<ChessMatchDto>(`/chess/matches/${matchId}/resign`)
 }
@@ -279,8 +265,7 @@ export type ChessPlayerStatDto = {
 
 export type ChessResult = 'WIN' | 'LOSS' | 'DRAW'
 
-/** `player1` tenait les blancs, `player2` les noirs ; le back met « Bot » à la
- *  place du moteur. */
+/** `player1` tenait les blancs, `player2` les noirs ; « Bot » remplace le moteur. */
 export type ChessHistoryDto = {
   chessMatchId: number
   fen: string
@@ -299,21 +284,17 @@ export function getMyChessHistory() {
   return api.get<ChessHistoryDto[]>('/chess/historique/me')
 }
 
-/** `GET /auth/42/login` répond une redirection vers l'intra : il faut une vraie
- *  navigation du navigateur, pas un fetch, qui la suivrait en CORS. */
+/** Le back répond par une redirection vers l'intra : navigation du navigateur requise, pas un fetch. */
 export function loginWith42() {
   window.location.href = '/api/auth/42/login'
 }
 
-/** Même contrainte que `loginWith42`, et seul chemin pour réconcilier les deux
- *  comptes : le callback refuse de fusionner sur l'e-mail. Retour sur
- *  `/profile?linked=42` ou `?error=…`. */
+/** Même contrainte que `loginWith42` ; seul chemin pour lier les comptes, retour sur `/profile?linked=42` ou `?error=…`. */
 export function link42Account() {
   window.location.href = '/api/auth/42/link'
 }
 
-/** 409 si le compte est né du flux 42 : son mot de passe est un UUID aléatoire,
- *  le délier le rendrait inaccessible. */
+/** 409 si le compte vient du flux 42 : son mot de passe est un UUID aléatoire, le délier le rendrait inaccessible. */
 export function unlink42Account() {
   return api.post<void>('/auth/42/unlink')
 }
