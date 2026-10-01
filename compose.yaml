@@ -13,7 +13,6 @@ services:
     container_name: backend
     env_file: .env
     environment:
-      # Dans le reseau Docker, la base est joignable par son nom de service
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
     volumes:
       - ./backend/uploads/avatars:/app/uploads/avatars
