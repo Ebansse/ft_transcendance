@@ -68,7 +68,7 @@ public class LoginController {
         if (loginAttemptService.isLocked(attemptKey)) {
             log.warn("Login refused for email: {}. Too many failed attempts", loginRequest.getEmail());
             return ResponseEntity.status(429)
-                    .body(Map.of("error", "Too many failed login attempts. Try again later."));
+                    .body(Map.of("error", "Trop de tentatives de connexion échouées. Réessaie plus tard."));
         }
 
         try {
@@ -103,7 +103,7 @@ public class LoginController {
                     .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
-                    .body("Login successful");
+                    .body("Connexion réussie");
         
         } catch (TwoFactorLockedException e) {
             return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));

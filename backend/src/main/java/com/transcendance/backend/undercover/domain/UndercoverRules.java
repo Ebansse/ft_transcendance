@@ -95,7 +95,7 @@ public class UndercoverRules {
                     .mrWhiteVoteSeconds(DEFAULT_MRWHITE_VOTE_SECONDS)
                     .build();
             case CUSTOM -> throw new UndercoverException.InvalidRules(
-                    "Custom matches carry their own rules, there is no preset to fall back on");
+                    "Les parties personnalisées ont leurs propres règles, aucun préréglage ne s'applique");
         };
     }
 
@@ -140,52 +140,52 @@ public class UndercoverRules {
     public void validateFor(int playerCount) {
         if (playerCount < MIN_PLAYERS) {
             throw new UndercoverException.InvalidRules(
-                    "A match needs at least " + MIN_PLAYERS + " players, got " + playerCount);
+                    "Une partie nécessite au moins " + MIN_PLAYERS + " joueurs (actuellement " + playerCount + ")");
         }
         if (playerCount > MAX_PLAYERS) {
             throw new UndercoverException.InvalidRules(
-                    "A match seats at most " + MAX_PLAYERS + " players, got " + playerCount);
+                    "Une partie accueille au plus " + MAX_PLAYERS + " joueurs (actuellement " + playerCount + ")");
         }
         if (undercoverCount < 1) {
-            throw new UndercoverException.InvalidRules("A match needs at least one undercover");
+            throw new UndercoverException.InvalidRules("Une partie nécessite au moins un undercover");
         }
         if (mrWhiteCount < 0) {
-            throw new UndercoverException.InvalidRules("Mr White count cannot be negative");
+            throw new UndercoverException.InvalidRules("Le nombre de Mr White ne peut pas être négatif");
         }
         if (descriptionRounds < 1) {
             throw new UndercoverException.InvalidRules(
-                    "Players must describe at least once before a vote opens");
+                    "Les joueurs doivent décrire au moins une fois avant l'ouverture d'un vote");
         }
         if (maxVotes != null && maxVotes < 1) {
             throw new UndercoverException.InvalidRules(
-                    "A match with no vote at all could never be won");
+                    "Une partie sans aucun vote ne pourrait jamais être gagnée");
         }
 
         if (agentsCount(playerCount) < 1) {
             throw new UndercoverException.InvalidRules(
-                    "No room left for an agent: " + impostorsCount() + " impostors for "
-                            + playerCount + " players");
+                    "Plus de place pour un agent : " + impostorsCount() + " imposteurs pour "
+                            + playerCount + " joueurs");
         }
 
         if (tieRevotes < 0) {
-            throw new UndercoverException.InvalidRules("Tie revotes cannot be negative");
+            throw new UndercoverException.InvalidRules("Le nombre de votes de départage ne peut pas être négatif");
         }
 
         if (descriptionSeconds < MIN_PHASE_SECONDS || voteSeconds < MIN_PHASE_SECONDS
                 || mrWhiteVoteSeconds < MIN_PHASE_SECONDS) {
             throw new UndercoverException.InvalidRules(
-                    "Phases must last at least " + MIN_PHASE_SECONDS + " seconds");
+                    "Les phases doivent durer au moins " + MIN_PHASE_SECONDS + " secondes");
         }
 
         if (maxVotes != null && maxVotes < impostorsCount()) {
             throw new UndercoverException.InvalidRules(
-                    "Agents need at least one vote per impostor: " + maxVotes + " votes for " + impostorsCount()
-                            + " impostors");
+                    "Les agents doivent avoir au moins un vote par imposteur : " + maxVotes + " votes pour " + impostorsCount()
+                            + " imposteurs");
         }
         if (undercoverWinOnParity && agentsCount(playerCount) <= impostorsCount()) {
             throw new UndercoverException.InvalidRules(
-                    "Agents must outnumber the impostors at the start: "
-                            + agentsCount(playerCount) + " against " + impostorsCount());
+                    "Les agents doivent être plus nombreux que les imposteurs au départ : "
+                            + agentsCount(playerCount) + " contre " + impostorsCount());
         }
     }
 }

@@ -37,14 +37,14 @@ public class ChessBotController {
 
         if (user == null) {
             log.warn("Cannot create bot: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         if (bindingResult.hasErrors()) {
             String reason = bindingResult.getFieldErrors().stream()
                     .findFirst()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .orElse("Invalid request");
+                    .orElse("Requête invalide");
             log.warn("Cannot create bot for {}: {}", user.getUserName(), reason);
             return ResponseEntity.badRequest().body(Map.of("error", reason));
         }

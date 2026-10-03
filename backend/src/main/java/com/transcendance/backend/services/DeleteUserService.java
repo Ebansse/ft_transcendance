@@ -45,7 +45,7 @@ public class DeleteUserService {
         refreshTokenRepository.deleteByUser(user);
         userRoleRepository.deleteByUser(user);
 
-        user.setUserName("Deleted user " + user.getIdUser().toString().substring(0, 8));
+        user.setUserName("Utilisateur supprimé " + user.getIdUser().toString().substring(0, 8));
 
         user.setEmail("deleted-" + user.getIdUser() + "@deleted.local");
 

@@ -59,7 +59,7 @@ public record UndercoverRulesDto(
 
     private static <T> T required(T value, String field) {
         if (value == null) {
-            throw new UndercoverException.InvalidRules("Missing rule: " + field);
+            throw new UndercoverException.InvalidRules("Règle manquante : " + field);
         }
         return value;
     }

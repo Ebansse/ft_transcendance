@@ -44,14 +44,14 @@ public class ChessController {
 
         if (user == null) {
             log.warn("Chess move refused on match {}: no authenticated user", matchId);
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         if (bindingResult.hasErrors()) {
             String reason = bindingResult.getFieldErrors().stream()
                     .findFirst()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .orElse("Invalid request");
+                    .orElse("Requête invalide");
             log.warn("Chess move refused for {} on match {}: {}", user.getUserName(), matchId, reason);
             return ResponseEntity.badRequest().body(Map.of("error", reason));
         }
@@ -75,7 +75,7 @@ public class ChessController {
     public ResponseEntity<?> resignMatch(@AuthenticationPrincipal User user, @PathVariable long matchId) {
         if (user == null) {
             log.warn("Chess resignation refused on match {}: no authenticated user", matchId);
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         ChessMatchEntity match = chessGameService.resignMatch(matchId, user.getIdUser());
@@ -95,7 +95,7 @@ public class ChessController {
     public ResponseEntity<?> getMyActiveMatch(@AuthenticationPrincipal User user) {
         if (user == null) {
             log.warn("Chess match retrieval refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         try {

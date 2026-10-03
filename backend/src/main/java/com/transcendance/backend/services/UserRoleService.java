@@ -72,7 +72,7 @@ public class UserRoleService {
     public UserRole setRole(User user, String roleName) {
         Role role = roleRepository.findByRoleName(roleName)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("The role provided is invalid: " + roleName));
+                        new IllegalArgumentException("Le rôle est invalide : " + roleName));
 
         UserRole userRole = userRoleRepository.findByUser(user)
                 .orElseGet(() -> {

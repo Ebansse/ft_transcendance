@@ -56,7 +56,7 @@ public class UndercoverMatchController {
         return queryService.activeSnapshot(user.getIdUser())
                 .flatMap(snapshot -> views.matchFor(snapshot, user.getIdUser()))
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "No Undercover match in progress")));
+                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "Aucune partie d'Undercover en cours")));
     }
 
     @PostMapping("/matches/{matchId}/clues")
@@ -76,7 +76,7 @@ public class UndercoverMatchController {
             return unauthenticated("vote");
         }
         if (request.targetSeat() == null) {
-            throw new UndercoverException.InvalidVoteTarget("A vote needs a target seat");
+            throw new UndercoverException.InvalidVoteTarget("Un vote doit viser une place");
         }
         undercoverService.submitVote(matchId, user.getIdUser(), request.targetSeat());
         return afterAction(matchId, user.getIdUser());
@@ -137,6 +137,6 @@ public class UndercoverMatchController {
 
     private ResponseEntity<?> unauthenticated(String action) {
         log.warn("Undercover {} refused: no authenticated user", action);
-        return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
     }
 }

@@ -192,7 +192,7 @@ public class Oauth42Service {
         log.info("Unlinking 42 account from local user {}", user.getIdUser());
 
         if (!user.isPasswordSet()) {
-            throw new IllegalStateException("account created through 42, no password set");
+            throw new IllegalStateException("Compte créé via 42 sans mot de passe : impossible de le délier");
         }
 
         user.setOauth42Id(null);

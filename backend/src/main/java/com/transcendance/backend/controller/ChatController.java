@@ -91,7 +91,7 @@ public class ChatController {
     @MessageExceptionHandler(IllegalArgumentException.class)
     @SendToUser(ERROR_DESTINATION)
     public Map<String, String> handleRejectedMessage(IllegalArgumentException exception) {
-        String reason = exception.getMessage() == null ? "Message rejected" : exception.getMessage();
+        String reason = exception.getMessage() == null ? "Message refusé" : exception.getMessage();
         log.warn("chat.send rejected: {}", reason);
         return Map.of("error", reason);
     }
@@ -117,16 +117,16 @@ public class ChatController {
     @SendToUser(ERROR_DESTINATION)
     public Map<String, String> handleUnreadablePayload(MessageConversionException exception) {
         log.warn("chat.send rejected: unreadable payload ({})", exception.getMessage());
-        return Map.of("error", "Malformed message payload");
+        return Map.of("error", "Message mal formé");
     }
 
     private String firstFieldError(BindingResult bindingResult) {
         if (bindingResult == null) {
-            return "Invalid message";
+            return "Message invalide";
         }
         return bindingResult.getFieldErrors().stream()
                 .findFirst()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .orElse("Invalid message");
+                .orElse("Message invalide");
     }
 }

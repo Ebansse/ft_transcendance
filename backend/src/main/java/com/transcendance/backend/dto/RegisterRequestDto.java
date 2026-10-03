@@ -12,18 +12,18 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RegisterRequestDto {
 
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = "Le nom d'utilisateur est obligatoire")
     private String userName;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "Format d'email invalide")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Le mot de passe est obligatoire")
+    @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
     private String password;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Le mot de passe est obligatoire")
+    @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
     private String confirmedPassword;
 }

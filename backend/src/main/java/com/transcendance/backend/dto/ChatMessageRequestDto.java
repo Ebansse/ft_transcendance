@@ -17,7 +17,7 @@ import lombok.Setter;
 public class ChatMessageRequestDto {
 
     @NotBlank
-    @Size(max = 1000, message = "Content must be less than 1000 characters")
+    @Size(max = 1000, message = "Le message doit faire moins de 1000 caractères")
     private String content;
 
     @NotNull

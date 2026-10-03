@@ -86,7 +86,7 @@ public class UndercoverExceptionHandler {
     public ResponseEntity<?> busy(PessimisticLockingFailureException e) {
         log.warn("Undercover request could not lock its match: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "The match is busy, try again"));
+                .body(Map.of("error", "La partie est occupée, réessaie"));
     }
 
     private ResponseEntity<?> refuse(HttpStatus status, UndercoverException e) {

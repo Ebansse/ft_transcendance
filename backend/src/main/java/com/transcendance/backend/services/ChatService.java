@@ -51,18 +51,18 @@ public class ChatService {
         @Transactional
         public ChatMessageDto sendMessage(UUID senderId, ChatMessageRequestDto message) {
                 User sender = userService.getUserById(senderId)
-                                .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
+                                .orElseThrow(() -> new IllegalArgumentException("Expéditeur introuvable"));
                 User receiver = userService.getUserById(message.getReceiverId())
-                                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
+                                .orElseThrow(() -> new IllegalArgumentException("Destinataire introuvable"));
 
                 if (sender.getDeletedAt() != null || receiver.getDeletedAt() != null) {
-                        throw new IllegalArgumentException("User is no longer available");
+                        throw new IllegalArgumentException("Cet utilisateur n'est plus disponible");
                 }
 
                 if (!friendListService.checkFriendship(sender, receiver)) {
                         log.warn("Users {} and {} are not friends. Message not sent.", sender.getUserName(),
                                         receiver.getUserName());
-                        throw new IllegalArgumentException("Users are not friends");
+                        throw new IllegalArgumentException("Vous n'êtes pas amis");
                 }
                 ChatMessage chatMessage = new ChatMessage(message.getContent(), sender, receiver);
                 chatMessageRepository.save(chatMessage);
@@ -86,10 +86,10 @@ public class ChatService {
         public ChatHistoryDto getHistory(User me, UUID otherId, Long before, int limit) {
 
                 User other = userService.getUserById(otherId)
-                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
                 if (!friendListService.checkFriendship(me, other)) {
-                        throw new IllegalArgumentException("Users are not friends");
+                        throw new IllegalArgumentException("Vous n'êtes pas amis");
                 }
 
                 Slice<ChatMessage> slice = chatMessageRepository.findConversation(
@@ -124,10 +124,10 @@ public class ChatService {
         public int markAsRead(User me, UUID otherId) {
 
                 User other = userService.getUserById(otherId)
-                                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
                 if (!friendListService.checkFriendship(me, other)) {
-                        throw new IllegalArgumentException("Users are not friends");
+                        throw new IllegalArgumentException("Vous n'êtes pas amis");
                 }
 
                 int updated = chatMessageRepository.markConversationAsRead(me.getIdUser(), otherId);

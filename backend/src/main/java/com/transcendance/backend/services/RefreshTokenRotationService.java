@@ -36,17 +36,17 @@ public class RefreshTokenRotationService {
         RefreshToken existingToken = refreshTokenRepository.findByTokenHash(hashedToken)
                 .orElseThrow(() -> {
                     log.warn("Invalid refresh token");
-                    throw new IllegalArgumentException("Invalid refresh token");
+                    throw new IllegalArgumentException("Jeton de rafraîchissement invalide");
                 });
 
         if (existingToken.isRevoked()) {
             log.warn("Attempted to use a revoked refresh token");
-            throw new IllegalArgumentException("Refresh token has been revoked");
+            throw new IllegalArgumentException("Le jeton de rafraîchissement a été révoqué");
         }
 
         if (existingToken.getExpiresAt().isBefore(Instant.now())) {
             log.warn("Attempted to use an expired refresh token");
-            throw new IllegalArgumentException("Refresh token has expired");
+            throw new IllegalArgumentException("Le jeton de rafraîchissement a expiré");
         }
 
         existingToken.setRevoked(true);

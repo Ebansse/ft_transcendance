@@ -44,14 +44,14 @@ public class ChessInvitationController {
 
         if (user == null) {
             log.warn("Chess invitation refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         if (bindingResult.hasErrors()) {
             String reason = bindingResult.getFieldErrors().stream()
                     .findFirst()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .orElse("Invalid request");
+                    .orElse("Requête invalide");
             log.warn("Chess invitation refused for {}: {}", user.getUserName(), reason);
             return ResponseEntity.badRequest().body(Map.of("error", reason));
         }
@@ -71,14 +71,14 @@ public class ChessInvitationController {
 
         if (user == null) {
             log.warn("Chess invitation acceptance refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         if (bindingResult.hasErrors()) {
             String reason = bindingResult.getFieldErrors().stream()
                     .findFirst()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .orElse("Invalid request");
+                    .orElse("Requête invalide");
             log.warn("Chess invitation acceptance refused for {}: {}", user.getUserName(), reason);
             return ResponseEntity.badRequest().body(Map.of("error", reason));
         }
@@ -97,14 +97,14 @@ public class ChessInvitationController {
 
         if (user == null) {
             log.warn("Chess invitation decline refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         if (bindingResult.hasErrors()) {
             String reason = bindingResult.getFieldErrors().stream()
                     .findFirst()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .orElse("Invalid request");
+                    .orElse("Requête invalide");
             log.warn("Chess invitation decline refused for {}: {}", user.getUserName(), reason);
             return ResponseEntity.badRequest().body(Map.of("error", reason));
         }
@@ -125,7 +125,7 @@ public class ChessInvitationController {
     public ResponseEntity<?> getPendingInvitations(@AuthenticationPrincipal User user) {
         if (user == null) {
             log.warn("Pending chess invitations refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
     List<ChessInvitationDto> invitations = chessInvitationService.getPendingInvitations(user).stream()
 

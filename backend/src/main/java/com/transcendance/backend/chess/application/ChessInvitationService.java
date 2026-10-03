@@ -59,11 +59,11 @@ public class ChessInvitationService {
         }
 
         if (chessMatchEntityRepository.existsActiveMatch(user.getIdUser())) {
-            throw new ChessException.AlreadyInMatch("You already have an active match");
+            throw new ChessException.AlreadyInMatch("Tu as déjà une partie en cours");
         }
 
         if (chessMatchEntityRepository.existsActiveMatch(opponent.getIdUser())) {
-            throw new ChessException.AlreadyInMatch("Opponent already has an active match");
+            throw new ChessException.AlreadyInMatch("L'adversaire a déjà une partie en cours");
         }
 
         if (!playerChannel.isOnline(opponent.getIdUser())) {

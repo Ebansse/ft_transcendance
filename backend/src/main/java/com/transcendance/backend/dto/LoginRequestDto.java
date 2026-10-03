@@ -13,15 +13,15 @@ import lombok.Setter;
 @NoArgsConstructor
 public class LoginRequestDto {
     
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "Format d'email invalide")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must be at least 6 characters")
+    @NotBlank(message = "Le mot de passe est obligatoire")
+    @Size(min = 6, message = "Le mot de passe doit faire au moins 6 caractères")
     private String password;
 
     // Only sent on the second attempt, when the account has 2FA enabled.
-    @Pattern(regexp = "^\\d{6}$", message = "Code must be 6 digits")
+    @Pattern(regexp = "^\\d{6}$", message = "Le code doit contenir 6 chiffres")
     private String code;
 }

@@ -127,6 +127,6 @@ public class UndercoverRoomController {
 
     private ResponseEntity<?> unauthenticated(String action) {
         log.warn("Undercover {} refused: no authenticated user", action);
-        return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+        return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
     }
 }

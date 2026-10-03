@@ -45,7 +45,7 @@ public class ChessBotService {
 
         if (moves.isEmpty()) {
             throw new IllegalStateException(
-                    "The bot has no move to play: this position is already over");
+                    "Le bot n'a aucun coup à jouer : la partie est déjà terminée");
         }
 
         if (random.nextDouble() < profile.blunderChance()) {

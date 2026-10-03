@@ -32,7 +32,7 @@ public class RefreshTokenController {
         if (refreshToken == null) {
             return ResponseEntity.status(401)
                     .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
-                    .body("Refresh token not found");
+                    .body("Jeton de rafraîchissement introuvable");
         }
         try {
             LoginResponseTokenDto loginResponse = refreshService.refreshAccessToken(refreshToken);
@@ -57,7 +57,7 @@ public class RefreshTokenController {
                     .header(HttpHeaders.SET_COOKIE, accessCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                     .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
-                    .body("Token refreshed");
+                    .body("Jeton rafraîchi");
 
         } catch (IllegalArgumentException e) {
             // Dead cookie: clear it, otherwise /login keeps rejecting with "Refresh token found"
@@ -71,7 +71,7 @@ public class RefreshTokenController {
             return ResponseEntity.status(401)
                     .header(HttpHeaders.SET_COOKIE, clearRefresh.toString())
                     .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
-                    .body(Map.of("error", "Invalid refresh token"));
+                    .body(Map.of("error", "Jeton de rafraîchissement invalide"));
         }
     }
 

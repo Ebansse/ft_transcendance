@@ -14,10 +14,10 @@ import lombok.Setter;
 @NoArgsConstructor
 public class UpdateProfileRequestDto {
 
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = "Le nom d'utilisateur est obligatoire")
     private String userName;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
+    @NotBlank(message = "L'email est obligatoire")
+    @Email(message = "Format d'email invalide")
     private String email;
 }

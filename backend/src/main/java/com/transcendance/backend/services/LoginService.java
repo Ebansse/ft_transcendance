@@ -42,17 +42,17 @@ public class LoginService {
 
         // Fetch the user by email
         User user = userService.getUserByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+                .orElseThrow(() -> new IllegalArgumentException("Email ou mot de passe invalide"));
 
         // Check if the provided password matches the stored password
         if (!userService.checkPassword(user, password)) {
             log.warn("Invalid password for email: {}", email);
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new IllegalArgumentException("Email ou mot de passe invalide");
         }
 
         if (user.getDeletedAt() != null) {
             log.warn("Can't access a deleted account");
-            throw new IllegalArgumentException("Invalid email or password");
+            throw new IllegalArgumentException("Email ou mot de passe invalide");
         }
 
         // Password is right: a 2FA account still has to prove it holds the authenticator app

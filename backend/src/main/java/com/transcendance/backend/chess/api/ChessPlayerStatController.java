@@ -35,7 +35,7 @@ public class ChessPlayerStatController {
     public ResponseEntity<?> getChessPlayerStat(@AuthenticationPrincipal User user) {
         if (user == null) {
             log.warn("Chess stats refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         ChessPlayerEntity player = chessPlayerService.getOrCreatePlayer(user.getIdUser());
@@ -47,13 +47,13 @@ public class ChessPlayerStatController {
     public ResponseEntity<?> getChessPlayerStat(@AuthenticationPrincipal User user, @PathVariable UUID userId) {
         if (user == null) {
             log.warn("Chess stats refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         Optional<User> target = userService.getUserById(userId);
         if (target.isEmpty()) {
             log.warn("Chess stats refused for {}: unknown user {}", user.getUserName(), userId);
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            return ResponseEntity.status(404).body(Map.of("error", "Utilisateur introuvable"));
         }
 
         ChessPlayerEntity player = chessPlayerService.getOrCreatePlayer(userId);

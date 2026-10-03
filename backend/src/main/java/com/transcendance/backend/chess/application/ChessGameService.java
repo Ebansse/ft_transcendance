@@ -48,10 +48,10 @@ public class ChessGameService {
             throw new ChessException.SelfPlay();
         }
         if (chessMatchRepository.existsActiveMatch(whiteUserId)) {
-            throw new ChessException.AlreadyInMatch("White player already has an active match");
+            throw new ChessException.AlreadyInMatch("Le joueur blanc a déjà une partie en cours");
         }
         if (chessMatchRepository.existsActiveMatch(blackUserId)) {
-            throw new ChessException.AlreadyInMatch("Black player already has an active match");
+            throw new ChessException.AlreadyInMatch("Le joueur noir a déjà une partie en cours");
         }
 
         Board chessBoard = new Board();
@@ -77,7 +77,7 @@ public class ChessGameService {
     public ChessMatchEntity createNewGameAgainstBot(UUID userId, ChessSide playerSide, int botLevel) {
 
         if (chessMatchRepository.existsActiveMatch(userId)) {
-            throw new ChessException.AlreadyInMatch("You already have an active match");
+            throw new ChessException.AlreadyInMatch("Tu as déjà une partie en cours");
         }
 
         ChessPlayerEntity human = chessPlayerService.getOrCreatePlayer(userId);

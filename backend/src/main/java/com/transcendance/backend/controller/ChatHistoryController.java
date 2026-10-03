@@ -46,13 +46,13 @@ public class ChatHistoryController {
 
         if (limit < 1 || limit > MAX_LIMIT) {
             log.warn("Chat history refused: limit out of range ({})", limit);
-            return ResponseEntity.badRequest().body(Map.of("error", "limit must be between 1 and " + MAX_LIMIT));
+            return ResponseEntity.badRequest().body(Map.of("error", "limit doit être compris entre 1 et " + MAX_LIMIT));
         }
         try {
             return ResponseEntity.ok(chatService.getHistory(me, userId, before, limit));
         } catch (IllegalArgumentException e) {
             log.warn("Chat history refused: {}", e.getMessage());
-            return ResponseEntity.status(403).body(Map.of("error", "Cannot read this conversation"));
+            return ResponseEntity.status(403).body(Map.of("error", "Impossible de lire cette conversation"));
         }
     }
 
@@ -65,7 +65,7 @@ public class ChatHistoryController {
             return ResponseEntity.ok(Map.of("updated", chatService.markAsRead(me, userId)));
         } catch (IllegalArgumentException e) {
             log.warn("Mark as read refused: {}", e.getMessage());
-            return ResponseEntity.status(403).body(Map.of("error", "Cannot access this conversation"));
+            return ResponseEntity.status(403).body(Map.of("error", "Impossible d'accéder à cette conversation"));
         }
     }
 }

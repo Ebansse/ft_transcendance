@@ -7,6 +7,6 @@ package com.transcendance.backend.services;
 public class TwoFactorLockedException extends RuntimeException {
 
     public TwoFactorLockedException() {
-        super("Too many attempts, try again later");
+        super("Trop de tentatives, réessaie plus tard");
     }
 }

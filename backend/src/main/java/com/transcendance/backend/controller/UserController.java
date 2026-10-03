@@ -228,7 +228,7 @@ public class UserController {
         if (!authenticatedUser.getIdUser().equals(idUser) &&
                 !userRoleService.getRoleName(authenticatedUser).equals("ADMIN")) {
             log.warn("Unauthorized profile update attempt by user id: {}", authenticatedUser.getIdUser());
-            return ResponseEntity.status(403).body(Map.of("error", "You are not authorized to update this profile."));
+            return ResponseEntity.status(403).body(Map.of("error", "Tu n'es pas autorisé à modifier ce profil."));
         }
 
         Optional<User> userOpt = userService.getUserById(idUser);
@@ -319,7 +319,7 @@ public class UserController {
         if (admin != null && admin.getIdUser().equals(idUser)) {
             log.warn("User {} tried to delete their own account", idUser);
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "You cannot delete your own account."));
+                    .body(Map.of("error", "Tu ne peux pas supprimer ton propre compte."));
         }
 
         Optional<User> userOpt = userService.getUserById(idUser);
@@ -374,6 +374,6 @@ public class UserController {
                 .header(HttpHeaders.SET_COOKIE, expiredAccessCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, expiredRefreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, SessionHintCookie.clear().toString())
-                .body("User deleted their own account");
+                .body("Compte supprimé");
     }
 }

@@ -86,7 +86,7 @@ public class ChessExceptionHandler {
     public ResponseEntity<?> concurrentUpdate(OptimisticLockingFailureException e) {
         log.warn("Chess request lost a concurrent update race: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "Match was updated meanwhile, reload the position and retry"));
+                .body(Map.of("error", "La partie a été modifiée entre-temps, recharge la position et réessaie"));
     }
 
     private ResponseEntity<?> refuse(HttpStatus status, ChessException e) {

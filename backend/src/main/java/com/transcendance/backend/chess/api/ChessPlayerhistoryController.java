@@ -46,7 +46,7 @@ public class ChessPlayerhistoryController {
     public ResponseEntity<?> getMyChesshistory(@AuthenticationPrincipal User user) {
         if (user == null) {
             log.warn("Chess history refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         Map<UUID, String> names = new HashMap<>();
@@ -65,13 +65,13 @@ public class ChessPlayerhistoryController {
     public ResponseEntity<?> getChessHistory(@AuthenticationPrincipal User user, @PathVariable UUID userId) {
         if (user == null) {
             log.warn("Chess history refused: no authenticated user");
-            return ResponseEntity.status(401).body(Map.of("error", "Not authenticated"));
+            return ResponseEntity.status(401).body(Map.of("error", "Non authentifié"));
         }
 
         Optional<User> target = userService.getUserById(userId);
         if (target.isEmpty()) {
             log.warn("Chess history refused for {}: unknown user {}", user.getUserName(), userId);
-            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            return ResponseEntity.status(404).body(Map.of("error", "Utilisateur introuvable"));
         }
 
         Map<UUID, String> names = new HashMap<>();

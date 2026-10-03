@@ -36,7 +36,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class MatchNotFoundByUserId extends ChessException {
         public MatchNotFoundByUserId(UUID userId) {
-            super("Match for user " + userId + " not found");
+            super("Aucune partie trouvée pour l'utilisateur " + userId);
         }
     }
     /**
@@ -44,7 +44,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class OpponentNotFound extends ChessException {
         public OpponentNotFound(String username) {
-            super("Opponent not found: " + username);
+            super("Adversaire introuvable : " + username);
         }
     }
 
@@ -53,7 +53,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class InvitationNotFound extends ChessException {
         public InvitationNotFound() {
-            super("No pending invitation from this player");
+            super("Aucune invitation en attente de ce joueur");
         }
     }
 
@@ -65,7 +65,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class NotAPlayer extends ChessException {
         public NotAPlayer() {
-            super("You are not a player of this match");
+            super("Tu ne participes pas à cette partie");
         }
     }
 
@@ -74,7 +74,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class NotFriends extends ChessException {
         public NotFriends() {
-            super("You are not friends with this user");
+            super("Tu n'es pas ami avec cet utilisateur");
         }
     }
 
@@ -85,7 +85,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class MatchAlreadyOver extends ChessException {
         public MatchAlreadyOver(ChessMatchStatus status) {
-            super("Match is already over: " + status);
+            super("La partie est déjà terminée : " + status);
         }
     }
 
@@ -94,7 +94,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class NotYourTurn extends ChessException {
         public NotYourTurn() {
-            super("It is not your turn");
+            super("Ce n'est pas ton tour");
         }
     }
 
@@ -113,7 +113,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class OpponentOffline extends ChessException {
         public OpponentOffline() {
-            super("Opponent is not online");
+            super("L'adversaire n'est pas en ligne");
         }
     }
 
@@ -122,7 +122,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class InvitationAlreadyHandled extends ChessException {
         public InvitationAlreadyHandled() {
-            super("Invitation has already been handled");
+            super("L'invitation a déjà été traitée");
         }
     }
 
@@ -131,7 +131,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class InvitationExpired extends ChessException {
         public InvitationExpired() {
-            super("Invitation has expired");
+            super("L'invitation a expiré");
         }
     }
 
@@ -140,7 +140,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class DuplicateInvitation extends ChessException {
         public DuplicateInvitation() {
-            super("You already have a pending invitation to this player");
+            super("Tu as déjà une invitation en attente pour ce joueur");
         }
     }
 
@@ -151,7 +151,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class MalformedMove extends ChessException {
         public MalformedMove(String move) {
-            super("Move is not valid UCI notation: " + move);
+            super("Le coup n'est pas en notation UCI valide : " + move);
         }
     }
 
@@ -162,7 +162,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class IllegalMove extends ChessException {
         public IllegalMove(String move) {
-            super("Illegal move in this position: " + move);
+            super("Coup illégal dans cette position : " + move);
         }
     }
 
@@ -171,7 +171,7 @@ public abstract class ChessException extends RuntimeException {
      */
     public static class SelfPlay extends ChessException {
         public SelfPlay() {
-            super("Cannot play against yourself");
+            super("Tu ne peux pas jouer contre toi-même");
         }
     }
 }

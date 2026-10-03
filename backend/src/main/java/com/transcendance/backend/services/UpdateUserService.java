@@ -47,23 +47,23 @@ public class UpdateUserService {
         // Check username format
         if (userService.isInvalidUsername(userName)) {
             log.error(LogMessages.INVALID_USERNAME, userName);
-            throw new IllegalArgumentException("The username provided is invalid: " + userName);
+            throw new IllegalArgumentException("Le nom d'utilisateur est invalide : " + userName);
         }
 
         // Validate email format
         if (userService.isInvalidEmail(email)) {
             log.error(LogMessages.INVALID_EMAIL, email);
-            throw new IllegalArgumentException("The email provided is invalid: " + email);
+            throw new IllegalArgumentException("L'email est invalide : " + email);
         }
 
         // The user keeping their own email or username is not a conflict.
         if (isTakenBySomeoneElse(userService.getUserByEmail(email), user)) {
             log.error(LogMessages.EMAIL_ALREADY_USED, email);
-            throw new IllegalArgumentException("The email is already used: " + email);
+            throw new IllegalArgumentException("Cet email est déjà utilisé : " + email);
         }
         if (isTakenBySomeoneElse(userService.getUserByUserName(userName), user)) {
             log.error("The username is already used. {}", userName);
-            throw new IllegalArgumentException("The username is already used: " + userName);
+            throw new IllegalArgumentException("Ce nom d'utilisateur est déjà utilisé : " + userName);
         }
 
         user.setUserName(userName);
@@ -99,22 +99,22 @@ public class UpdateUserService {
 
         if (userService.isInvalidUsername(userName)) {
             log.error(LogMessages.INVALID_USERNAME, userName);
-            throw new IllegalArgumentException("The username provided is invalid: " + userName);
+            throw new IllegalArgumentException("Le nom d'utilisateur est invalide : " + userName);
         }
         
         if (userService.isInvalidEmail(email)) {
             log.error(LogMessages.INVALID_EMAIL, email);
-            throw new IllegalArgumentException("The email provided is invalid: " + email);
+            throw new IllegalArgumentException("L'email est invalide : " + email);
         }
         
         if (isTakenBySomeoneElse(userService.getUserByEmail(email), user)) {
             log.error(LogMessages.EMAIL_ALREADY_USED, email);
-            throw new IllegalArgumentException("The email is already used: " + email);
+            throw new IllegalArgumentException("Cet email est déjà utilisé : " + email);
         }
 
         if (isTakenBySomeoneElse(userService.getUserByUserName(userName), user)) {
             log.error("The username is already used. {}", userName);
-            throw new IllegalArgumentException("The username is already used: " + userName);
+            throw new IllegalArgumentException("Ce nom d'utilisateur est déjà utilisé : " + userName);
         }
 
         user.setUserName(userName);

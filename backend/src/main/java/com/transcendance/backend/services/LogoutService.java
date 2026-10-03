@@ -32,7 +32,7 @@ public class LogoutService {
                 log.info("Refresh token revoked for user: {}", token.getUser().getEmail());
             }, () -> {
                 log.warn("Refresh token not found: {}", hashedToken);
-                throw new IllegalArgumentException("Invalid refresh token");
+                throw new IllegalArgumentException("Jeton de rafraîchissement invalide");
             });
     }
 }

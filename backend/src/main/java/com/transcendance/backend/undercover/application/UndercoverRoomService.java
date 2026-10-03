@@ -121,10 +121,10 @@ public class UndercoverRoomService {
             UndercoverRules customRules) {
         UndercoverRoom room = hostedRoom(userId);
         if (mode == null) {
-            throw new UndercoverException.InvalidRules("A mode is required");
+            throw new UndercoverException.InvalidRules("Un mode est obligatoire");
         }
         if (mode == UndercoverGameMode.CUSTOM && customRules == null) {
-            throw new UndercoverException.InvalidRules("A custom match needs its rules");
+            throw new UndercoverException.InvalidRules("Une partie personnalisée doit avoir ses règles");
         }
         room.configure(mode, customRules, clock.instant());
 
@@ -180,7 +180,7 @@ public class UndercoverRoomService {
                 .toList();
         for (String category : chosen) {
             if (!known.contains(category)) {
-                throw new UndercoverException.InvalidWordList("Unknown category: " + category);
+                throw new UndercoverException.InvalidWordList("Catégorie inconnue : " + category);
             }
         }
         return chosen;
@@ -195,13 +195,13 @@ public class UndercoverRoomService {
         }
         if (pairs.size() > UndercoverWordPair.MAX_CUSTOM_PAIRS) {
             throw new UndercoverException.InvalidWordList(
-                    "A word list holds at most " + UndercoverWordPair.MAX_CUSTOM_PAIRS + " pairs");
+                    "Une liste de mots contient au plus " + UndercoverWordPair.MAX_CUSTOM_PAIRS + " paires");
         }
 
         List<UndercoverWordPair> cleaned = new ArrayList<>(pairs.size());
         for (UndercoverWordPair pair : pairs) {
             if (pair == null) {
-                throw new UndercoverException.InvalidWordList("A pair is missing");
+                throw new UndercoverException.InvalidWordList("Une paire est manquante");
             }
             String agentsWord = cleanWord(pair.agentsWord());
             String undercoverWord = cleanWord(pair.undercoverWord());
@@ -209,7 +209,7 @@ public class UndercoverRoomService {
             // or accents would hand everyone the same word.
             if (wordMatcher.normalize(agentsWord).equals(wordMatcher.normalize(undercoverWord))) {
                 throw new UndercoverException.InvalidWordList(
-                        "The two words of a pair must differ: " + agentsWord);
+                        "Les deux mots d'une paire doivent être différents : " + agentsWord);
             }
             cleaned.add(new UndercoverWordPair(agentsWord, undercoverWord));
         }
@@ -221,11 +221,11 @@ public class UndercoverRoomService {
         // Normalized, since a word made of punctuation alone could never be
         // said nor guessed.
         if (wordMatcher.normalize(trimmed).isEmpty()) {
-            throw new UndercoverException.InvalidWordList("Every pair needs two words");
+            throw new UndercoverException.InvalidWordList("Chaque paire doit contenir deux mots");
         }
         if (trimmed.length() > UndercoverWordPair.MAX_WORD_LENGTH) {
             throw new UndercoverException.InvalidWordList(
-                    "A word is at most " + UndercoverWordPair.MAX_WORD_LENGTH + " characters long");
+                    "Un mot fait au plus " + UndercoverWordPair.MAX_WORD_LENGTH + " caractères");
         }
         return trimmed;
     }

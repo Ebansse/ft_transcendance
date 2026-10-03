@@ -65,7 +65,7 @@ public class TwoFactorController {
             return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
         } catch (QrGenerationException e) {
             log.error("QR code generation failed for user id: {}", user.getIdUser(), e);
-            return ResponseEntity.internalServerError().body(Map.of("error", "Could not generate QR code"));
+            return ResponseEntity.internalServerError().body(Map.of("error", "Impossible de générer le QR code"));
         }
     }
 
@@ -93,7 +93,7 @@ public class TwoFactorController {
 
         try {
             twoFactorService.enable(user, request.getCode());
-            return ResponseEntity.ok(Map.of("message", "Two-factor authentication enabled"));
+            return ResponseEntity.ok(Map.of("message", "Double authentification activée"));
         } catch (IllegalStateException e) {
             return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
@@ -125,7 +125,7 @@ public class TwoFactorController {
 
         try {
             twoFactorService.disable(user, request.getCode());
-            return ResponseEntity.ok(Map.of("message", "Two-factor authentication disabled"));
+            return ResponseEntity.ok(Map.of("message", "Double authentification désactivée"));
         } catch (TwoFactorLockedException e) {
             return ResponseEntity.status(429).body(Map.of("error", e.getMessage()));
         } catch (IllegalStateException e) {
@@ -163,7 +163,7 @@ public class TwoFactorController {
                 .flatMap(userService::getUserById)
                 .filter(user -> user.getDeletedAt() == null && user.isTwoFactorEnabled());
         if (pendingUser.isEmpty()) {
-            return ResponseEntity.status(401).body(Map.of("error", "Two-factor session expired"));
+            return ResponseEntity.status(401).body(Map.of("error", "Session de double authentification expirée"));
         }
         User user = pendingUser.get();
 
@@ -209,6 +209,6 @@ public class TwoFactorController {
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, clearTwoFactorCookie.toString())
                 .header(HttpHeaders.SET_COOKIE, SessionHintCookie.set().toString())
-                .body(Map.of("message", "Login successful"));
+                .body(Map.of("message", "Connexion réussie"));
     }
 }

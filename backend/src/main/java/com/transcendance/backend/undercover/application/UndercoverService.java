@@ -286,7 +286,7 @@ public class UndercoverService {
         }
         // Normalized, since punctuation is ignored: "--" names no word at all.
         if (wordMatcher.normalize(guess).isEmpty()) {
-            throw new UndercoverException.InvalidGuess("A guess cannot be empty");
+            throw new UndercoverException.InvalidGuess("La proposition ne peut pas être vide");
         }
 
         resolveMrWhiteGuess(match, guess);
@@ -415,11 +415,11 @@ public class UndercoverService {
 
         String message = text == null ? "" : text.trim();
         if (message.isEmpty()) {
-            throw new UndercoverException.InvalidChatMessage("A message cannot be empty");
+            throw new UndercoverException.InvalidChatMessage("Le message ne peut pas être vide");
         }
         if (message.length() > MAX_CHAT_LENGTH) {
             throw new UndercoverException.InvalidChatMessage(
-                    "A message is at most " + MAX_CHAT_LENGTH + " characters long");
+                    "Un message fait au plus " + MAX_CHAT_LENGTH + " caractères");
         }
 
         List<UUID> recipients = match.getParticipants().stream()
@@ -604,11 +604,11 @@ public class UndercoverService {
     private String validateClue(UndercoverMatchEntity match, UndercoverParticipantEntity speaker, String word) {
         String clue = word == null ? "" : word.trim();
         if (clue.isEmpty()) {
-            throw new UndercoverException.InvalidClue("A clue cannot be empty");
+            throw new UndercoverException.InvalidClue("L'indice ne peut pas être vide");
         }
         if (clue.length() > MAX_CLUE_LENGTH) {
             throw new UndercoverException.InvalidClue(
-                    "A clue is at most " + MAX_CLUE_LENGTH + " characters long");
+                    "Un indice fait au plus " + MAX_CLUE_LENGTH + " caractères");
         }
         // Saying the word itself would end the game for everyone. Mr White has
         // no word to give away.
@@ -618,7 +618,7 @@ public class UndercoverService {
             case MR_WHITE -> null;
         };
         if (ownWord != null && wordMatcher.matches(clue, ownWord)) {
-            throw new UndercoverException.InvalidClue("You cannot say your own word");
+            throw new UndercoverException.InvalidClue("Tu ne peux pas dire ton propre mot");
         }
         return clue;
     }
@@ -628,13 +628,13 @@ public class UndercoverService {
         UndercoverParticipantEntity target = participantAt(match, targetSeat)
                 .filter(p -> !p.isEliminated())
                 .orElseThrow(() -> new UndercoverException.InvalidVoteTarget(
-                        "No living player at seat " + targetSeat));
+                        "Aucun joueur en vie à la place " + targetSeat));
         if (target.getSeatOrder() == voter.getSeatOrder()) {
-            throw new UndercoverException.InvalidVoteTarget("You cannot vote against yourself");
+            throw new UndercoverException.InvalidVoteTarget("Tu ne peux pas voter contre toi-même");
         }
         if (match.getVoteAttempt() > 0 && !tiedSeats(match).contains(targetSeat)) {
             throw new UndercoverException.InvalidVoteTarget(
-                    "A revote is only between the tied players: " + tiedSeats(match));
+                    "Le second vote ne concerne que les joueurs à égalité : " + tiedSeats(match));
         }
         return target;
     }
@@ -684,7 +684,7 @@ public class UndercoverService {
             return UndercoverRules.defaultsFor(mode);
         }
         if (customRules == null) {
-            throw new UndercoverException.InvalidRules("A custom match needs its rules");
+            throw new UndercoverException.InvalidRules("Une partie personnalisée doit avoir ses règles");
         }
         return customRules;
     }

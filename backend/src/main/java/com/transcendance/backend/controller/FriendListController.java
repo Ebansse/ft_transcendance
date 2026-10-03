@@ -45,11 +45,11 @@ public class FriendListController {
         
         if (Username == null) {
             log.warn("Friend request failed: Username is null");
-            return ResponseEntity.status(401).body(Map.of("error", "Username is null"));
+            return ResponseEntity.status(401).body(Map.of("error", "Nom d'utilisateur manquant"));
         }
         if (bindingResult.hasErrors()) {
             log.warn("Friend request failed: Invalid username format");
-            return ResponseEntity.status(400).body(Map.of("error", "Invalid username format"));
+            return ResponseEntity.status(400).body(Map.of("error", "Format de nom d'utilisateur invalide"));
         }
         log.info("Sending friend request from {} to {}", user.getUserName(), Username.getUserName());
         try {
@@ -58,7 +58,7 @@ public class FriendListController {
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Friend request failed: {}", e.getMessage());
-            return ResponseEntity.status(401).body(Map.of("error", "Failed to send friend request"));
+            return ResponseEntity.status(401).body(Map.of("error", "Échec de l'envoi de la demande d'ami"));
         }
     }
 
@@ -67,7 +67,7 @@ public class FriendListController {
 
         if (idUser == null) {
             log.warn("Friend request failed: User ID is null");
-            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+            return ResponseEntity.status(400).body(Map.of("error", "Identifiant utilisateur manquant"));
         }
         try{
             friendListService.acceptFriendRequest(user, idUser);
@@ -75,7 +75,7 @@ public class FriendListController {
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to accept friend request: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of("error", "Failed to accept friend request"));
+            return ResponseEntity.status(400).body(Map.of("error", "Échec de l'acceptation de la demande d'ami"));
         }
     }
 
@@ -84,14 +84,14 @@ public class FriendListController {
 
         if (idUser == null) {
             log.warn("Friend request failed: User ID is null");
-            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+            return ResponseEntity.status(400).body(Map.of("error", "Identifiant utilisateur manquant"));
         }
         try{
             friendListService.declineFriendRequest(user, idUser);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to decline friend request: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of("error", "Failed to decline friend request"));
+            return ResponseEntity.status(400).body(Map.of("error", "Échec du refus de la demande d'ami"));
         }
     }
 
@@ -100,14 +100,14 @@ public class FriendListController {
 
         if (idUser == null) {
             log.warn("Friend request failed: User ID is null");
-            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+            return ResponseEntity.status(400).body(Map.of("error", "Identifiant utilisateur manquant"));
         }
         try{
             friendListService.deleteFriend(user, idUser);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to delete friend: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of("error", "Failed to delete friend"));
+            return ResponseEntity.status(400).body(Map.of("error", "Échec de la suppression de l'ami"));
         }
     }
 
@@ -116,14 +116,14 @@ public class FriendListController {
 
         if (idUser == null) {
             log.warn("Friend request failed: User ID is null");
-            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+            return ResponseEntity.status(400).body(Map.of("error", "Identifiant utilisateur manquant"));
         }
         try{
             friendListService.blockFriend(user, idUser);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to block user: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of("error", "Failed to block user"));
+            return ResponseEntity.status(400).body(Map.of("error", "Échec du blocage de l'utilisateur"));
         }
     }
 
@@ -132,14 +132,14 @@ public class FriendListController {
 
         if (idUser == null) {
             log.warn("Friend request failed: User ID is null");
-            return ResponseEntity.status(400).body(Map.of("error", "User ID is null"));
+            return ResponseEntity.status(400).body(Map.of("error", "Identifiant utilisateur manquant"));
         }
         try{
             friendListService.unblockFriend(user, idUser);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             log.error("Failed to unblock user: {}", e.getMessage());
-            return ResponseEntity.status(400).body(Map.of("error", "Failed to unblock user"));
+            return ResponseEntity.status(400).body(Map.of("error", "Échec du déblocage de l'utilisateur"));
         }
     }
 
@@ -148,7 +148,7 @@ public class FriendListController {
 
         if (user == null) {
             log.warn("Friend request failed: Username is null");
-            return ResponseEntity.status(401).body(Map.of("error", "Username is null"));
+            return ResponseEntity.status(401).body(Map.of("error", "Nom d'utilisateur manquant"));
         }
     
         List<FriendListDto> friendList = friendListService.getFriendList(user);

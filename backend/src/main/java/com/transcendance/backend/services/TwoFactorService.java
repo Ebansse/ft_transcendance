@@ -78,7 +78,7 @@ public class TwoFactorService {
     public TwoFactorSetupResponseDto generateSetup(User user) throws QrGenerationException {
         if (user.isTwoFactorEnabled()) {
             log.warn("2FA setup refused, already enabled for user id: {}", user.getIdUser());
-            throw new IllegalStateException("Two-factor authentication is already enabled");
+            throw new IllegalStateException("La double authentification est déjà activée");
         }
 
         String secret = secretGenerator.generate();
@@ -140,7 +140,7 @@ public class TwoFactorService {
         }
 
         log.warn("Invalid 2FA code for user id {} ({} failed attempt(s))", userId, attempts.count());
-        throw new IllegalArgumentException("Invalid code");
+        throw new IllegalArgumentException("Code invalide");
     }
 
     /**
@@ -199,14 +199,14 @@ public class TwoFactorService {
      */
     public void enable(User user, String code) {
         if (user.isTwoFactorEnabled()) {
-            throw new IllegalStateException("Two-factor authentication is already enabled");
+            throw new IllegalStateException("La double authentification est déjà activée");
         }
         if (user.getTotpSecret() == null) {
-            throw new IllegalStateException("Two-factor authentication setup is required first");
+            throw new IllegalStateException("Configure d'abord la double authentification");
         }
         if (!codeVerifier.isValidCode(user.getTotpSecret(), code)) {
             log.warn("Invalid 2FA code for user id: {}", user.getIdUser());
-            throw new IllegalArgumentException("Invalid code");
+            throw new IllegalArgumentException("Code invalide");
         }
 
         user.setTwoFactorEnabled(true);
@@ -228,7 +228,7 @@ public class TwoFactorService {
      */
     public void disable(User user, String code) {
         if (!user.isTwoFactorEnabled()) {
-            throw new IllegalStateException("Two-factor authentication is not enabled");
+            throw new IllegalStateException("La double authentification n'est pas activée");
         }
         verifyCode(user, code);
 

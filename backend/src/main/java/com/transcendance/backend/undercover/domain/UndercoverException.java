@@ -16,7 +16,7 @@ public abstract class UndercoverException extends RuntimeException {
 
     public static class DuplicatePlayer extends UndercoverException {
         public DuplicatePlayer() {
-            super("A player cannot take more than one seat in a match");
+            super("Un joueur ne peut pas occuper plus d'une place dans une partie");
         }
     }
 
@@ -26,7 +26,7 @@ public abstract class UndercoverException extends RuntimeException {
     public static class AlreadyInMatch extends UndercoverException {
         public AlreadyInMatch(UUID userId) {
             // The id stays out of the message: it reaches the players as is.
-            super("A player is still in another Undercover match");
+            super("Un joueur est encore dans une autre partie d'Undercover");
         }
     }
 
@@ -42,7 +42,7 @@ public abstract class UndercoverException extends RuntimeException {
 
     public static class NoWordPair extends UndercoverException {
         public NoWordPair() {
-            super("No word pair available to start a match");
+            super("Aucune paire de mots disponible pour lancer une partie");
         }
     }
 
@@ -61,7 +61,7 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class NotAPlayer extends UndercoverException {
         public NotAPlayer() {
-            super("You are not a player of this match");
+            super("Tu ne participes pas à cette partie");
         }
     }
 
@@ -71,7 +71,7 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class PlayerEliminated extends UndercoverException {
         public PlayerEliminated() {
-            super("You have been eliminated from this match");
+            super("Tu as été éliminé de cette partie");
         }
     }
 
@@ -79,7 +79,7 @@ public abstract class UndercoverException extends RuntimeException {
 
     public static class MatchAlreadyOver extends UndercoverException {
         public MatchAlreadyOver(UndercoverMatchStatus status) {
-            super("Match is already over: " + status);
+            super("La partie est déjà terminée : " + status);
         }
     }
 
@@ -89,7 +89,7 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class WrongPhase extends UndercoverException {
         public WrongPhase(UndercoverPhase expected, UndercoverPhase actual) {
-            super("This action is only allowed during " + expected + ", the match is in " + actual);
+            super("Cette action n'est autorisée que pendant " + expected + ", la partie est en " + actual);
         }
     }
 
@@ -98,7 +98,7 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class NotYourTurn extends UndercoverException {
         public NotYourTurn() {
-            super("It is not your turn");
+            super("Ce n'est pas ton tour");
         }
     }
 
@@ -108,13 +108,13 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class NotTheGuesser extends UndercoverException {
         public NotTheGuesser() {
-            super("Only the Mr White who was just eliminated can guess");
+            super("Seul le Mr White qui vient d'être éliminé peut deviner");
         }
     }
 
     public static class AlreadyVoted extends UndercoverException {
         public AlreadyVoted() {
-            super("You have already voted");
+            super("Tu as déjà voté");
         }
     }
 
@@ -152,7 +152,7 @@ public abstract class UndercoverException extends RuntimeException {
 
     public static class RoomNotFound extends UndercoverException {
         public RoomNotFound(String code) {
-            super("No room with code " + code);
+            super("Aucun salon avec le code " + code);
         }
     }
 
@@ -161,7 +161,7 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class NotInRoom extends UndercoverException {
         public NotInRoom() {
-            super("You are not in a room");
+            super("Tu n'es dans aucun salon");
         }
     }
 
@@ -170,19 +170,19 @@ public abstract class UndercoverException extends RuntimeException {
      */
     public static class NotRoomHost extends UndercoverException {
         public NotRoomHost() {
-            super("Only the host of the room can do that");
+            super("Seul l'hôte du salon peut faire ça");
         }
     }
 
     public static class RoomFull extends UndercoverException {
         public RoomFull(int capacity) {
-            super("This room is full (" + capacity + " players)");
+            super("Ce salon est complet (" + capacity + " joueurs)");
         }
     }
 
     public static class NotEnoughPlayers extends UndercoverException {
         public NotEnoughPlayers(int minimum) {
-            super("At least " + minimum + " players are needed to start");
+            super("Il faut au moins " + minimum + " joueurs pour commencer");
         }
     }
 }

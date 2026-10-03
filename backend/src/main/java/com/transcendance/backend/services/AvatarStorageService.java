@@ -33,11 +33,11 @@ public class AvatarStorageService {
 
     public String store(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new IllegalArgumentException("The file is empty");
+            throw new IllegalArgumentException("Le fichier est vide");
         }
 
         if (file.getSize() > avatarProperties.getMaxSizeBytes()) {
-            throw new IllegalArgumentException("The file is too large");
+            throw new IllegalArgumentException("Le fichier est trop volumineux");
         }
 
         String extension = detectImageFormat(file);
@@ -82,19 +82,19 @@ public class AvatarStorageService {
 
             Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
             if (!readers.hasNext()) {
-                throw new IllegalArgumentException("The file is not a valid image.");
+                throw new IllegalArgumentException("Le fichier n'est pas une image valide.");
             }
 
             String format = readers.next().getFormatName().toLowerCase();
 
             if (!ALLOWED_FORMATS.contains(format)) {
-                throw new IllegalArgumentException("The image format is not allowed. Allowed formats: " + ALLOWED_FORMATS);
+                throw new IllegalArgumentException("Format d'image non autorisé. Formats acceptés : " + ALLOWED_FORMATS);
             }
 
             return format.equals("jpeg") ? "jpg" : format;
 
         } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to read the image file.", e);
+            throw new IllegalArgumentException("Impossible de lire l'image.", e);
         }
     }
 }
