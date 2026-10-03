@@ -19,6 +19,7 @@ import {
 } from '../lib/actions.ts'
 import type { TwoFactorSetupDto } from '../lib/actions.ts'
 import { ApiError, errorMessage } from '../lib/apiClient.ts'
+import page from '../style/page.module.css'
 import s from './ProfilePage.module.css'
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/
@@ -241,7 +242,7 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
       <PageHeader title="Profil" subtitle="Ta photo, ton pseudo et ton adresse e-mail." />
 
       {!authChecked ? null : !isLoggedIn || !user ? (
-        <p className={s.denied}>Connecte-toi pour accéder à ton profil.</p>
+        <p className={page.denied}>Connecte-toi pour accéder à ton profil.</p>
       ) : (
         <>
           <section className={s.section} aria-labelledby="profile-avatar-title">
@@ -281,13 +282,13 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
           <section className={s.section} aria-labelledby="profile-identity-title">
             <SectionTitle id="profile-identity-title">Identité</SectionTitle>
             <form className={s.form} onSubmit={submitIdentity} noValidate>
-              <div className={s.field}>
-                <label className={s.label} htmlFor="profile-username">
+              <div className={page.field}>
+                <label className={page.label} htmlFor="profile-username">
                   Pseudo
                 </label>
                 <input
                   id="profile-username"
-                  className={idErrors.userName ? `${s.input} ${s.inputError}` : s.input}
+                  className={idErrors.userName ? `${page.input} ${s.input} ${s.inputError}` : `${page.input} ${s.input}`}
                   type="text"
                   value={userName}
                   autoComplete="username"
@@ -296,13 +297,13 @@ export function ProfilePage({ onNavigate }: ProfilePageProps) {
                 {idErrors.userName && <p className={s.error}>{idErrors.userName}</p>}
               </div>
 
-              <div className={s.field}>
-                <label className={s.label} htmlFor="profile-email">
+              <div className={page.field}>
+                <label className={page.label} htmlFor="profile-email">
                   E-mail
                 </label>
                 <input
                   id="profile-email"
-                  className={idErrors.email ? `${s.input} ${s.inputError}` : s.input}
+                  className={idErrors.email ? `${page.input} ${s.input} ${s.inputError}` : `${page.input} ${s.input}`}
                   type="email"
                   value={email}
                   autoComplete="email"

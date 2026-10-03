@@ -13,6 +13,7 @@ import {
 } from '../lib/actions.ts'
 import { errorMessage } from '../lib/apiClient.ts'
 import { formatDateTime } from '../lib/format.ts'
+import page from '../style/page.module.css'
 import s from './StatsPage.module.css'
 
 const RESULT_LABELS: Record<ChessResult, string> = {
@@ -121,9 +122,9 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
       />
 
       {!authChecked ? null : !isLoggedIn ? (
-        <p className={s.denied}>Connecte-toi pour voir tes statistiques.</p>
+        <p className={page.denied}>Connecte-toi pour voir tes statistiques.</p>
       ) : loading ? (
-        <p className={s.state}>Chargement des statistiques…</p>
+        <p className={page.state}>Chargement des statistiques…</p>
       ) : error ? (
         <p className={s.error}>{error}</p>
       ) : (
@@ -134,7 +135,7 @@ export function StatsPage({ onNavigate }: StatsPageProps) {
               {tiles.map((tile) => (
                 <li key={tile.key} className={s.tile}>
                   <span className={s.tileValue}>{tile.value}</span>
-                  <span className={s.tileLabel}>{tile.label}</span>
+                  <span className={page.label}>{tile.label}</span>
                 </li>
               ))}
             </ul>

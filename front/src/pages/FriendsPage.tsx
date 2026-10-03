@@ -20,6 +20,7 @@ import {
 } from '../lib/actions.ts'
 import { errorMessage } from '../lib/apiClient.ts'
 import { formatDateTime } from '../lib/format.ts'
+import page from '../style/page.module.css'
 import s from './FriendsPage.module.css'
 
 function split(rows: FriendListDto[]) {
@@ -227,19 +228,19 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
       />
 
       {!authChecked ? null : !isLoggedIn ? (
-        <p className={s.denied}>Connecte-toi pour voir ta liste d’amis.</p>
+        <p className={page.denied}>Connecte-toi pour voir ta liste d’amis.</p>
       ) : (
         <>
           <section aria-labelledby="friends-add-title">
             <SectionTitle id="friends-add-title">Ajouter un ami</SectionTitle>
             <form className={s.form} onSubmit={submitRequest}>
-              <label className={s.label} htmlFor="friend-username">
+              <label className={page.label} htmlFor="friend-username">
                 Pseudo exact du joueur
               </label>
               <div className={s.formRow}>
                 <input
                   id="friend-username"
-                  className={s.input}
+                  className={`${page.input} ${s.input}`}
                   type="text"
                   value={userName}
                   autoComplete="off"
@@ -255,7 +256,7 @@ export function FriendsPage({ onNavigate }: FriendsPageProps) {
             </form>
           </section>
 
-          {loading && <p className={s.state}>Chargement de la liste…</p>}
+          {loading && <p className={page.state}>Chargement de la liste…</p>}
           {error && <p className={s.error}>{error}</p>}
           {actionError && <p className={s.error}>{actionError}</p>}
 

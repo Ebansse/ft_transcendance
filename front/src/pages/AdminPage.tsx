@@ -16,7 +16,7 @@ import {
 } from '../lib/actions.ts'
 import { errorMessage } from '../lib/apiClient.ts'
 import { formatDateTime } from '../lib/format.ts'
-import s from './AdminPage.module.css'
+import page from '../style/page.module.css'
 
 type AdminPageProps = {
   onNavigate: (action: string) => void
@@ -127,7 +127,7 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
       />
 
       {!isAdmin ? (
-        <p className={s.denied}>
+        <p className={page.denied}>
           Cette page est réservée aux administrateurs. Si tu penses que c'est une erreur,
           reconnecte-toi.
         </p>
@@ -135,8 +135,8 @@ export function AdminPage({ onNavigate }: AdminPageProps) {
         <section aria-labelledby="admin-users-title">
           <SectionTitle id="admin-users-title">Utilisateurs</SectionTitle>
 
-          {loading && <p className={s.state}>Chargement des comptes…</p>}
-          {error && <p className={s.state}>{error}</p>}
+          {loading && <p className={page.state}>Chargement des comptes…</p>}
+          {error && <p className={page.state}>{error}</p>}
 
           {!loading && !error && (
             <Tableau

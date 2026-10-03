@@ -56,16 +56,11 @@
 }
 
 .field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  composes: field from './page.module.css';
 }
 
 .label {
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--card-ink-dim);
+  composes: label from './page.module.css';
 }
 
 .input {

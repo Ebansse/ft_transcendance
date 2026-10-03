@@ -15,6 +15,7 @@ import { errorMessage } from '../lib/apiClient.ts'
 import { START_FEN, capturesOf, squaresOf } from '../lib/chessBoard.ts'
 import type { ChessMatchDto, ChessSide } from '../lib/chessClient.ts'
 import { useChessMatch } from '../ws/useChessMatch.ts'
+import page from '../style/page.module.css'
 import s from './ChessPage.module.css'
 
 type ChessPageProps = {
@@ -142,7 +143,7 @@ function MoveList({ rounds }: { rounds: Round[] }) {
 
 /** Page Échecs : sans partie serveur le plateau reste au départ et inerte ; avec partie, chess.js applique les règles pour l'affichage, le serveur reste juge. */
 export function ChessPage({ onNavigate }: ChessPageProps) {
-  const { user } = useAuthModal()
+  const { user, isLoggedIn, authChecked } = useAuthModal()
   const online = useChessMatch()
   const { match, mySide, isMyTurn, serverMove } = online
 
@@ -379,6 +380,16 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
   const whiteName = match === null ? '—' : mySide === 'WHITE' ? myName : theirName
   const blackName = match === null ? '—' : mySide === 'BLACK' ? myName : theirName
 
+  /* Après tous les hooks : un visiteur non connecté ne voit pas le plateau. */
+  if (!authChecked || !isLoggedIn || !user) {
+    return (
+      <AppLayout current="nav:chess" onNavigate={onNavigate}>
+        <PageHeader title="Échecs" subtitle="Parties en ligne entre amis ou contre le bot." />
+        {authChecked && <p className={page.denied}>Connecte-toi pour jouer aux échecs.</p>}
+      </AppLayout>
+    )
+  }
+
   return (
     <AppLayout current="nav:chess" onNavigate={onNavigate}>
       <PageHeader
@@ -389,7 +400,6 @@ export function ChessPage({ onNavigate }: ChessPageProps) {
             : 'Partie en ligne : les coups de l’adversaire arrivent en temps réel.'
         }
       />
-
       <section className={s.layout} aria-labelledby="chess-board-title">
         <div>
           <SectionTitle id="chess-board-title">Plateau</SectionTitle>

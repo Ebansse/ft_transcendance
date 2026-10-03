@@ -6,6 +6,7 @@ import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
 import { errorMessage } from '../lib/apiClient.ts'
 import { deleteMyAccount } from '../lib/gdpr.ts'
+import page from '../style/page.module.css'
 import s from './SettingsPage.module.css'
 
 type Busy = 'export' | 'delete' | null
@@ -52,7 +53,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
       />
 
       {!authChecked ? null : !isLoggedIn ? (
-        <p className={s.denied}>Connecte-toi pour accéder à tes paramètres.</p>
+        <p className={page.denied}>Connecte-toi pour accéder à tes paramètres.</p>
       ) : (
         <>
           {error && <p className={s.error}>{error}</p>}
@@ -87,7 +88,7 @@ export function SettingsPage({ onNavigate }: SettingsPageProps) {
                   </label>
                   <input
                     id="settings-confirm-name"
-                    className={s.input}
+                    className={`${page.input} ${s.input}`}
                     type="text"
                     value={confirmName}
                     autoComplete="off"

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { useChat } from '../chat/chatContext.ts'
 import { useSocket } from '../ws/socketContext.ts'
 import { Button } from './Button.tsx'
+import page from '../style/page.module.css'
 import s from './ChatConversation.module.css'
 
 function connectionLabel(status: string) {
@@ -122,12 +123,12 @@ export function ChatConversation({ targetId, targetName, compact = false }: Chat
       {statusLabel && <p className={s.state}>{statusLabel}</p>}
 
       <form className={s.form} onSubmit={handleSend}>
-        <label className={s.srOnly} htmlFor={inputId}>
+        <label className="sr-only" htmlFor={inputId}>
           Message pour {targetName}
         </label>
         <input
           id={inputId}
-          className={s.input}
+          className={`${page.input} ${s.input}`}
           type="text"
           value={draft}
           maxLength={1000}

@@ -5,6 +5,7 @@ import { AppLayout } from '../components/AppLayout.tsx'
 import { ChatConversation } from '../components/ChatConversation.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { SectionTitle } from '../components/SectionTitle.tsx'
+import page from '../style/page.module.css'
 import s from './ChatPage.module.css'
 
 const RECENT_LIMIT = 5
@@ -64,7 +65,7 @@ export function ChatPage({ onNavigate }: ChatPageProps) {
       <PageHeader title="Messages" subtitle="Discute en direct avec tes amis." />
 
       {!authChecked ? null : !isLoggedIn ? (
-        <p className={s.denied}>Connecte-toi pour accéder à la messagerie.</p>
+        <p className={page.denied}>Connecte-toi pour accéder à la messagerie.</p>
       ) : (
         <div className={s.layout}>
           <aside className={s.sidebar}>
