@@ -19,7 +19,7 @@ type UndercoverPageProps = {
 /** Trois écrans selon ce que le serveur dit du compte : une partie en cours
  *  prime sur une salle, et sans l'un ni l'autre on est au lobby. */
 export function UndercoverPage({ onNavigate }: UndercoverPageProps) {
-  const { user, isLoggedIn, authChecked, openModal } = useAuthModal()
+  const { user, isLoggedIn, authChecked } = useAuthModal()
   const undercover = useUndercover()
   const { room, match, stats, loading, pending, error } = undercover
 
