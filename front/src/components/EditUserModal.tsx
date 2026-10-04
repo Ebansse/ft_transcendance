@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import type { UpdateUserPayload, UserPublicProfileDto } from '../lib/actions.ts'
@@ -48,7 +49,7 @@ export function EditUserModal({ user, pending = false, error, onClose, onSave }:
           Modifier le compte
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

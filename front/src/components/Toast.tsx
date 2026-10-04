@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import s from './Toast.module.css'
 
@@ -52,7 +53,7 @@ export function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id
       <div className={s.head}>
         <p className={s.title}>{item.title}</p>
         <Button variant="ghost" ariaLabel="Fermer la notification" onClick={() => onDismiss(item.id)}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

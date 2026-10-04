@@ -1,3 +1,15 @@
+import type { LucideIcon } from 'lucide-react'
+import {
+  ChartBar,
+  Crown,
+  House,
+  MessageCircle,
+  Settings,
+  Shield,
+  User,
+  Users,
+  VenetianMask,
+} from 'lucide-react'
 import { Button } from './Button.tsx'
 import { UserAvatar } from './UserAvatar.tsx'
 import { useAuthModal } from '../auth/authModalContext.ts'
@@ -9,7 +21,7 @@ const RECENT_LIMIT = 5
 type NavItem = {
   action: string
   label: string
-  icon: string
+  icon: LucideIcon
 }
 
 type NavGroup = {
@@ -20,35 +32,35 @@ type NavGroup = {
 const GROUPS: NavGroup[] = [
   {
     title: 'Navigation',
-    items: [{ action: 'nav:home', label: 'Accueil', icon: '🏠' }],
+    items: [{ action: 'nav:home', label: 'Accueil', icon: House }],
   },
   {
     title: 'Jeux',
     items: [
-      { action: 'nav:chess', label: 'Échecs', icon: '♟️' },
-      { action: 'nav:undercover', label: 'Undercover', icon: '🕵️' },
+      { action: 'nav:chess', label: 'Échecs', icon: Crown },
+      { action: 'nav:undercover', label: 'Undercover', icon: VenetianMask },
     ],
   },
   {
     title: 'Social',
     items: [
-      { action: 'nav:friends', label: 'Amis', icon: '👥' },
-      { action: 'nav:chat', label: 'Chat', icon: '💬' },
+      { action: 'nav:friends', label: 'Amis', icon: Users },
+      { action: 'nav:chat', label: 'Chat', icon: MessageCircle },
     ],
   },
   {
     title: 'Compte',
     items: [
-      { action: 'nav:stats', label: 'Stats & historique', icon: '📊' },
-      { action: 'nav:profile', label: 'Profil', icon: '🙂' },
-      { action: 'nav:settings', label: 'Paramètres', icon: '⚙️' },
+      { action: 'nav:stats', label: 'Stats & historique', icon: ChartBar },
+      { action: 'nav:profile', label: 'Profil', icon: User },
+      { action: 'nav:settings', label: 'Paramètres', icon: Settings },
     ],
   },
 ]
 
 const ADMIN_GROUP: NavGroup = {
   title: 'Administration',
-  items: [{ action: 'nav:admin', label: 'Admin', icon: '🛡️' }],
+  items: [{ action: 'nav:admin', label: 'Admin', icon: Shield }],
 }
 
 const BADGE_LABELS: Record<string, string> = {
@@ -90,7 +102,7 @@ export function Sidebar({ open, current, onNavigate }: SidebarProps) {
                 <span className={item.action === current ? `${s.item} ${s.itemActive}` : s.item}>
                   <Button variant="nav" fullWidth onClick={() => onNavigate(item.action)}>
                     <span aria-hidden="true" className={s.icon}>
-                      {item.icon}
+                      <item.icon size={18} />
                     </span>
                     <span className={s.label}>{item.label}</span>
                     {badges[item.action] ? (

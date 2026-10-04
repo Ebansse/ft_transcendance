@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import { Menu } from 'lucide-react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AuthStatus } from './AuthStatus.tsx'
 import { Button } from './Button.tsx'
@@ -28,7 +29,7 @@ export function AppLayout({ current, onNavigate, children }: AppLayoutProps) {
               ariaLabel={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
               onClick={() => setMenuOpen((open) => !open)}
             >
-              ☰
+              <Menu size={20} />
             </Button>
           </span>
         }

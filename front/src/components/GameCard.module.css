@@ -64,15 +64,9 @@
   overflow: hidden;
 }
 
-/* Contour ivoire en ombres pleines pour détacher le pion noir ; il saute via le rembourrage (pas un transform) pour garder l'écran immobile. */
+/* Icône ivoire avec ombre bordeaux pleine ; elle saute via le rembourrage (pas un transform) pour garder l'écran immobile. */
 .icon {
-  text-shadow:
-    2px 0 0 var(--ivory),
-    -2px 0 0 var(--ivory),
-    0 2px 0 var(--ivory),
-    0 -2px 0 var(--ivory),
-    4px 4px 0 var(--bordeaux);
-  animation: knight-hop 2.8s var(--ease) 2.4s infinite;
+  filter: drop-shadow(4px 4px 0 var(--bordeaux));
 }
 
 .title {

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import type { ChessSide } from '../lib/chessClient.ts'
@@ -37,7 +38,7 @@ export function ChessBotModal({
           Jouer contre le bot
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

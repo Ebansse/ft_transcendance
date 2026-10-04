@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { X } from 'lucide-react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { Button } from '../components/Button.tsx'
@@ -49,18 +50,13 @@ export function UndercoverPage({ onNavigate }: UndercoverPageProps) {
         <p className={s.error} role="alert">
           {error}
           <Button variant="ghost" ariaLabel="Fermer" onClick={undercover.clearError}>
-            ✕
+            <X size={18} />
           </Button>
         </p>
       )}
 
       {authChecked && !isLoggedIn ? (
-        <section className={s.card}>
-          <p className={s.lead}>Connectez-vous pour jouer à Undercover.</p>
-          <Button variant="primary" onClick={() => openModal('login')}>
-            Se connecter
-          </Button>
-        </section>
+          <p className={s.lead}>Connecte-toi pour jouer à Undercover.</p>
       ) : loading ? (
         <p className={s.hint}>Chargement…</p>
       ) : match !== null ? (

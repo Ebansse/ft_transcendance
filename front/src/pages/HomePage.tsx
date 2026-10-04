@@ -1,3 +1,4 @@
+import { Crown, VenetianMask } from 'lucide-react'
 import { useAuthModal } from '../auth/authModalContext.ts'
 import { AppLayout } from '../components/AppLayout.tsx'
 import { GameCard } from '../components/GameCard.tsx'
@@ -9,13 +10,13 @@ const GAMES = [
   {
     action: 'nav:chess',
     name: 'Échecs',
-    icon: '♟️',
+    icon: Crown,
     description: 'Le grand classique. Parties classées, historique complet de tes coups.',
   },
   {
     action: 'nav:undercover',
     name: 'Undercover',
-    icon: '🕵️',
+    icon: VenetianMask,
     description: 'Un mot pour tous, un autre pour l’undercover. Donne tes indices sans te trahir.',
   },
 ]

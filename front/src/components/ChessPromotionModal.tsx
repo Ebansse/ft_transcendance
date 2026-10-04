@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { glyphOf, nameOf } from '../lib/chessBoard.ts'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
@@ -33,7 +34,7 @@ export function ChessPromotionModal({
           Promotion
         </h2>
         <Button variant="ghost" ariaLabel="Annuler le coup" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

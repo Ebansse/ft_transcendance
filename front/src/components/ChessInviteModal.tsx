@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import { getFriendList, type FriendListDto } from '../lib/actions.ts'
@@ -84,7 +85,7 @@ export function ChessInviteModal({
           Inviter un(e) ami(e)
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

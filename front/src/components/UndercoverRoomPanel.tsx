@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Check } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { getUndercoverCategories } from '../lib/actions.ts'
 import {
@@ -56,7 +57,13 @@ export function UndercoverRoomPanel({
         <div className={s.codeRow}>
           <span className={s.code}>{room.code}</span>
           <Button variant="secondary" onClick={() => void copyCode()}>
-            {copied ? 'Copié ✓' : 'Copier'}
+            {copied ? (
+              <>
+                Copié <Check size={16} />
+              </>
+            ) : (
+              'Copier'
+            )}
           </Button>
         </div>
         <p className={s.hint}>Partagez ce code : vos amis le saisissent pour rejoindre la salle.</p>
@@ -253,7 +260,13 @@ function HostSettings({ room, pending, onConfigure }: HostSettingsProps) {
             onChange={(value) => set('undercoverWinOnParity', value)}
           />
           <Button type="submit" variant="primary" fullWidth disabled={pending}>
-            {saved ? 'Réglages enregistrés ✓' : 'Enregistrer les réglages'}
+            {saved ? (
+              <>
+                Réglages enregistrés <Check size={16} />
+              </>
+            ) : (
+              'Enregistrer les réglages'
+            )}
           </Button>
           <p className={s.hint}>Les règles sont vérifiées au lancement, selon le nombre de joueurs.</p>
         </form>
@@ -419,7 +432,13 @@ function HostWords({ room, pending, onChooseWords }: HostWordsProps) {
             fullWidth
             disabled={pending || pairs.length === 0 || errors.length > 0 || !dirty}
           >
-            {!dirty && savedPairs.length > 0 ? 'Liste enregistrée ✓' : 'Enregistrer la liste'}
+            {!dirty && savedPairs.length > 0 ? (
+              <>
+                Liste enregistrée <Check size={16} />
+              </>
+            ) : (
+              'Enregistrer la liste'
+            )}
           </Button>
         </form>
       )}

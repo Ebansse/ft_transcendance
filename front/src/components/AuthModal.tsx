@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import type { AuthMode } from '../auth/authModalContext.ts'
@@ -119,7 +120,7 @@ export function AuthModal({
           {wording.title}
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 

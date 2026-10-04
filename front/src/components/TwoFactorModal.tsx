@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { X } from 'lucide-react'
 import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import type { TwoFactorSetupDto } from '../lib/actions.ts'
@@ -43,7 +44,7 @@ export function TwoFactorModal({ mode, setup, pending = false, error, onSubmit, 
           {wording.title}
         </h2>
         <Button variant="ghost" ariaLabel="Fermer" onClick={onClose}>
-          ✕
+          <X size={18} />
         </Button>
       </div>
 
