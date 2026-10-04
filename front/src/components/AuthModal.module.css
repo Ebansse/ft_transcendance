@@ -97,6 +97,27 @@
   color: var(--danger);
 }
 
+/* Lien discret mais repérable : moutarde soulignée, aligné sous le mot de passe. */
+.forgot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.3rem;
+}
+
+.forgot a {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--accent-bright);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 160ms ease;
+}
+
+.forgot a:hover {
+  color: var(--accent-hot);
+}
+
 .globalError {
   composes: globalError from '../style/dialog.module.css';
 

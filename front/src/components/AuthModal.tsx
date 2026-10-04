@@ -3,6 +3,7 @@ import { Button } from './Button.tsx'
 import { useDialog } from './useDialog.ts'
 import type { AuthMode } from '../auth/authModalContext.ts'
 import { ApiError } from '../lib/apiClient.ts'
+import { forgotPassword } from '../lib/actions.ts'
 import s from './AuthModal.module.css'
 
 export type SignupForm = {
@@ -186,6 +187,17 @@ export function AuthModal({
               onChange={(value) => updateLogin('password', value)}
               autoComplete="current-password"
             />
+            <div className={s.forgot}>
+              <a
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault()
+                  forgotPassword()
+                }}
+              >
+                Mot de passe oublié ?
+              </a>
+            </div>
           </>
         )}
 
