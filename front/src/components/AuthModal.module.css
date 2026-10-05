@@ -124,6 +124,23 @@
   margin: 0;
 }
 
+.hint {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ivory-dim);
+}
+
+.success {
+  margin: 0;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  color: var(--green-bright);
+  background: rgba(143, 191, 106, 0.1);
+  border-left: 2px solid var(--green-bright);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
 .submit {
   display: grid;
   gap: 0.55rem;

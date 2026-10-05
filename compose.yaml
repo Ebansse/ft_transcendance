@@ -19,6 +19,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "127.0.0.1:8025:8025" # web UI to read captured emails
     restart: unless-stopped
 
   db:

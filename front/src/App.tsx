@@ -8,6 +8,7 @@ import { FriendsPage } from './pages/FriendsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage.tsx'
 import { ProfilePage } from './pages/ProfilePage.tsx'
+import { ResetPasswordPage } from './pages/ResetPasswordPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
 import { StatsPage } from './pages/StatsPage.tsx'
 import { TermsPage } from './pages/TermsPage.tsx'
@@ -28,6 +29,7 @@ const PAGES = {
   'nav:settings': { path: '/settings', Component: SettingsPage },
   'nav:privacy': { path: '/privacy', Component: PrivacyPolicyPage },
   'nav:terms': { path: '/terms', Component: TermsPage },
+  'nav:reset-password': { path: '/reset-password', Component: ResetPasswordPage },
 } as const
 
 const CHAT_WITH = 'nav:chat:'

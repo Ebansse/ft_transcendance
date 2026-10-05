@@ -37,6 +37,13 @@ const WORDING = {
     oauth42: 'Se connecter via 42',
     firstField: '#login-email',
   },
+  forgot: {
+    title: 'Mot de passe oublié',
+    submit: 'Envoyer le lien',
+    submitting: 'Envoi…',
+    oauth42: null,
+    firstField: '#forgot-email',
+  },
 }
 
 type AuthModalProps = {
@@ -62,12 +69,15 @@ export function AuthModal({
   notice,
 }: AuthModalProps) {
   const isSignup = mode === 'signup'
-  const wording = isSignup ? WORDING.signup : WORDING.login
+  const isForgot = mode === 'forgot'
+  const wording = WORDING[mode]
 
   const dialog = useDialog(isOpen, wording.firstField, onClose)
 
   const [signup, setSignup] = useState<SignupForm>(EMPTY_SIGNUP)
   const [login, setLogin] = useState<LoginForm>(EMPTY_LOGIN)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [success, setSuccess] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [globalError, setGlobalError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -75,12 +85,14 @@ export function AuthModal({
   useEffect(() => {
     setFieldErrors({})
     setGlobalError(null)
+    setSuccess(null)
   }, [isOpen, mode])
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     setFieldErrors({})
     setGlobalError(null)
+    setSuccess(null)
 
     if (isSignup && signup.password !== signup.confirmedPassword) {
       setFieldErrors({ confirmedPassword: 'Les mots de passe ne correspondent pas.' })
@@ -89,9 +101,13 @@ export function AuthModal({
 
     setPending(true)
     try {
-      await (isSignup ? onSignup(signup) : onLogin(login))
-      setSignup(EMPTY_SIGNUP)
-      setLogin(EMPTY_LOGIN)
+      if (isForgot) {
+        setSuccess((await forgotPassword(forgotEmail)).message)
+      } else {
+        await (isSignup ? onSignup(signup) : onLogin(login))
+        setSignup(EMPTY_SIGNUP)
+        setLogin(EMPTY_LOGIN)
+      }
     } catch (err) {
       if (err instanceof ApiError && Object.keys(err.fieldErrors).length > 0) {
         setFieldErrors(err.fieldErrors)
@@ -125,12 +141,38 @@ export function AuthModal({
       </div>
 
       <div className={s.tabs} role="tablist" aria-label="Mode d'authentification">
-        <Tab label="Connexion" selected={!isSignup} onSelect={() => onModeChange('login')} />
+        <Tab label="Connexion" selected={mode === 'login'} onSelect={() => onModeChange('login')} />
         <Tab label="Inscription" selected={isSignup} onSelect={() => onModeChange('signup')} />
       </div>
 
       <form className={s.form} onSubmit={submit} noValidate>
-        {isSignup ? (
+        {isForgot ? (
+          <>
+            <p className={s.hint}>
+              Entre l'email de ton compte : tu recevras un lien pour choisir un nouveau mot de passe.
+            </p>
+            <Field
+              id="forgot-email"
+              label="Email"
+              type="email"
+              value={forgotEmail}
+              error={fieldErrors.email}
+              onChange={setForgotEmail}
+              autoComplete="email"
+            />
+            <div className={s.forgot}>
+              <a
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault()
+                  onModeChange('login')
+                }}
+              >
+                Retour à la connexion
+              </a>
+            </div>
+          </>
+        ) : isSignup ? (
           <>
             <Field
               id="signup-username"
@@ -193,13 +235,20 @@ export function AuthModal({
                 href="#"
                 onClick={(event) => {
                   event.preventDefault()
-                  forgotPassword()
+                  setForgotEmail(login.email)
+                  onModeChange('forgot')
                 }}
               >
                 Mot de passe oublié ?
               </a>
             </div>
           </>
+        )}
+
+        {success && (
+          <p className={s.success} role="status">
+            {success}
+          </p>
         )}
 
         {(globalError ?? notice) && (
@@ -212,9 +261,11 @@ export function AuthModal({
           <Button type="submit" variant="primary" fullWidth disabled={pending}>
             {pending ? wording.submitting : wording.submit}
           </Button>
-          <Button variant="42" fullWidth disabled={pending} onClick={onOAuth42}>
-            {wording.oauth42}
-          </Button>
+          {wording.oauth42 && (
+            <Button variant="42" fullWidth disabled={pending} onClick={onOAuth42}>
+              {wording.oauth42}
+            </Button>
+          )}
         </div>
       </form>
     </dialog>

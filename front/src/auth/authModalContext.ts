@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { UserPublicProfileDto } from '../lib/actions.ts'
 
-export type AuthMode = 'login' | 'signup'
+export type AuthMode = 'login' | 'signup' | 'forgot'
 
 export type AuthModalValue = {
   isOpen: boolean

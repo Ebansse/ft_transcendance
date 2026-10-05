@@ -250,4 +250,12 @@ export function unlink42Account() {
   return api.post<void>('/auth/42/unlink')
 }
 
-export function forgotPassword() {}
+export type MessageResponse = { message: string }
+
+export function forgotPassword(email: string) {
+  return api.post<MessageResponse>('/auth/forgot-password', { email })
+}
+
+export function resetPassword(token: string, password: string, confirmedPassword: string) {
+  return api.post<MessageResponse>('/auth/reset-password', { token, password, confirmedPassword })
+}

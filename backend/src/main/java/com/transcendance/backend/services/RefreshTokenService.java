@@ -90,7 +90,7 @@ public class RefreshTokenService {
      *
      * @param user the user whose other active sessions must be revoked
      */
-    private void revokeActiveSessions(User user) {
+    public void revokeActiveSessions(User user) {
         List<RefreshToken> refreshTokenList = refreshTokenRepository.findByUserAndRevokedFalse(user);
         for (RefreshToken refreshToken : refreshTokenList) {
             refreshToken.setRevoked(true);

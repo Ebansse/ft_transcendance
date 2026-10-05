@@ -41,7 +41,9 @@ public class SecurityConfig {
                                                                 "/api/auth/login",
                                                                 "/api/auth/refresh-token",
                                                                 "/api/auth/logout",
-                                                                "/api/auth/2fa/login")
+                                                                "/api/auth/2fa/login",
+                                                                "/api/auth/forgot-password",
+                                                                "/api/auth/reset-password")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.GET,
                                                                 "/api/default-avatar.png",

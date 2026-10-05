@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.transcendance.backend.model.User;
+import com.transcendance.backend.repository.PasswordResetTokenRepository;
 import com.transcendance.backend.repository.RefreshTokenRepository;
 import com.transcendance.backend.repository.UserRoleRepository;
 
@@ -22,6 +23,7 @@ public class DeleteUserService {
     private final UserService userService;
     private final UserRoleRepository userRoleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final AvatarStorageService avatarStorageService;
 
     /**
@@ -43,6 +45,7 @@ public class DeleteUserService {
         log.info("Deleting user id: {}", user.getIdUser());
 
         refreshTokenRepository.deleteByUser(user);
+        passwordResetTokenRepository.deleteByUser(user);
         userRoleRepository.deleteByUser(user);
 
         user.setUserName("Utilisateur supprimé " + user.getIdUser().toString().substring(0, 8));
